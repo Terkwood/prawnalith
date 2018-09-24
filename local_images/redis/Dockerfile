@@ -13,4 +13,6 @@ RUN make -j4
 RUN make test
 RUN make install
 
-ENTRYPOINT tail -f /dev/null
+EXPOSE 6379
+
+ENTRYPOINT redis
