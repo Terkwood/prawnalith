@@ -7,3 +7,7 @@ services:
     ports:
      - "1883:1883"
      - "8883:8883"
+  telegraf:  ## DOES THIS WORK?! :-D
+    image: "influxdb:telegraf"
+  influx:
+    image: "influxdb:influxdb"
