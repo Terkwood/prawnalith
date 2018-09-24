@@ -13,3 +13,5 @@ services:
     image: "telegraf:1.6"
   influxdb:
     image: "influxdb:latest"
+    ports:
+      - "8086:8086"
