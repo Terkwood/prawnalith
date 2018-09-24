@@ -17,4 +17,4 @@ RUN make install
 
 EXPOSE 6379
 
-ENTRYPOINT src/redis-server
+ENTRYPOINT src/redis-server --protected-mode no
