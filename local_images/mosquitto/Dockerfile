@@ -1,20 +1,42 @@
 FROM prawnalith/local/base
 
-# provides mosquitto
-RUN echo "deb http://archive.raspbian.org/raspbian jessie main contrib non-free" >> /etc/apt/sources.list
-RUN apt-get update
-# should be able to improve this
-RUN wget http://repo.mosquitto.org/debian/mosquitto-repo.gpg.key 
-RUN apt-key add mosquitto-repo.gpg.key
-RUN wget -P /etc/apt/sources.list.d/ http://repo.mosquitto.org/debian/mosquitto-jessie.list
-# Required for old libssl which mosquitto depends on
-# see https://github.com/eclipse/mosquitto/issues/529#issuecomment-356787605
-RUN echo "deb http://archive.raspbian.org/raspbian jessie main contrib non-free" >> /etc/apt/sources.list
-RUN apt-get install -y mosquitto --allow-unauthenticated
-RUN apt-get install -y mosquitto-clients --allow-unauthenticated
+ENV C_ARES_VERSION=1.14.0 \ 
+    MOSQUITTO_VERSION=1.5.2
+
+RUN apt-get install -y cmake libssl-dev libwebsockets-dev uuid-dev libc-ares-dev
+
+WORKDIR "/temp_build"
+
+RUN wget http://c-ares.haxx.se/download/c-ares-$C_ARES_VERSION.tar.gz
+RUN tar -xvf c-ares-$C_ARES_VERSION.tar.gz
+
+WORKDIR "/temp_build/c-ares-$C_ARES_VERSION"
+
+RUN ./configure
+# -j4 switch allows building on all 4 cores
+RUN make -j4
+RUN make install
+
+WORKDIR "/temp_build"
+
+RUN wget http://mosquitto.org/files/source/mosquitto-$MOSQUITTO_VERSION.tar.gz
+RUN tar xavf mosquitto-$MOSQUITTO_VERSION.tar.gz
+
+WORKDIR "/temp_build/mosquitto-$MOSQUITTO_VERSION"
+
+RUN apt-get install -y g++
+RUN cmake -DWITH_WEBSOCKETS=ON .
+RUN make -j4
+RUN make install
+
+WORKDIR "/"
+
+RUN rm -rf /temp_build
+
+RUN useradd -r -m -d /var/lib/mosquitto -s /usr/sbin/nologin -g nogroup mosquitto
 
 # Expose for mosquitto
 EXPOSE 1883
 EXPOSE 8883
 
-ENTRYPOINT /usr/sbin/mosquitto
+ENTRYPOINT /usr/local/sbin/mosquitto
