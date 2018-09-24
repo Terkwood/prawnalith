@@ -9,5 +9,5 @@ services:
      - "8883:8883"
   telegraf:  
     image: "telegraf:1.6"
-  influx:
-    image: "influxdb:influxdb"
+  influxdb:
+    image: "influxdb:latest"
