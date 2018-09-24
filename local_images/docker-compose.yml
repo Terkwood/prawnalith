@@ -3,7 +3,7 @@ services:
   redis:
     build: redis/.
     ports:
-      - "6379:6379"
+      - "36379:6379"
   mosquitto:
     build: mosquitto/.
     ports:
