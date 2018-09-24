@@ -17,4 +17,4 @@ RUN make install
 
 EXPOSE 6379
 
-ENTRYPOINT redis
+ENTRYPOINT src/redis-server
