@@ -2,6 +2,8 @@ version: '3'
 services:
   redis:
     build: redis/.
+    ports:
+      - "6379:6379"
   mosquitto:
     build: mosquitto/.
     ports:
