@@ -1,0 +1,17 @@
+version: '3'
+services:
+  redis:
+    build: redis/.
+    ports:
+      - "36379:6379"
+  mosquitto:
+    build: mosquitto/.
+    ports:
+     - "1883:1883"
+     - "8883:8883"
+  telegraf:  
+    image: "telegraf:1.6"
+  influxdb:
+    image: "influxdb:latest"
+    ports:
+      - "8086:8086"

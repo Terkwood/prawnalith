@@ -1,23 +1,9 @@
-FROM arm32v7/debian
+FROM prawnalith/local_base_image
 
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH=/usr/local/cargo/bin:$PATH \
     RUST_VERSION=1.29.0
-
-# provides mosquitto
-RUN echo "deb http://archive.raspbian.org/raspbian jessie main contrib non-free" >> /etc/apt/sources.list
-RUN apt-get update
-RUN apt-get install -my wget gnupg curl
-RUN wget http://repo.mosquitto.org/debian/mosquitto-repo.gpg.key 
-RUN apt-key add mosquitto-repo.gpg.key
-RUN wget -P /etc/apt/sources.list.d/ http://repo.mosquitto.org/debian/mosquitto-jessie.list
-RUN apt-get install -y apt-transport-https
-# Required for old libssl which mosquitto depends on
-# see https://github.com/eclipse/mosquitto/issues/529#issuecomment-356787605
-RUN echo "deb http://archive.raspbian.org/raspbian jessie main contrib non-free" >> /etc/apt/sources.list
-RUN apt-get install -y mosquitto --allow-unauthenticated
-RUN apt-get install -y mosquitto-clients --allow-unauthenticated
 
 RUN set -eux; \
     dpkgArch="$(dpkg --print-architecture)"; \
@@ -44,7 +30,11 @@ RUN git clone https://github.com/SergioBenitez/Rocket
 WORKDIR "/Rocket"
 RUN git checkout v0.3.16
 WORKDIR "/Rocket/examples/hello_world"
-RUN apt-get install -y gcc
 RUN rustup default nightly
 RUN cargo build
-CMD ["cargo","run"]
+
+# Expose for mosquitto
+EXPOSE 1883
+EXPOSE 8883
+
+ENTRYPOINT tail -f /dev/null
