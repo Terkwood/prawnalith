@@ -12,7 +12,7 @@ services:
   telegraf:  
     image: "telegraf:1.6"
     volumes:
-      - "./telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro"
+      - "./telegraf.conf:/etc/telegraf/telegraf.conf:ro"
   influxdb:
     image: "influxdb:latest"
     ports:
