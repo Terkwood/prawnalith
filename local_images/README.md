@@ -28,6 +28,14 @@ cp sample_telegraf.conf telegraf.conf
 vi telegraf.conf
 ```
 
-### Resources
+### Sample Influx Queries
+
+Basic stuff, but...
+
+```
+influx -database 'prawnalith' -execute 'select * from mqtt_consumer order by time DESC LIMIT 10'
+```
+
+## Resources
 
 - Useful description of how to tie Influx & Telegraf together, on ARM, using only docker containers: https://community.influxdata.com/t/influxdata-docker-on-arm/2493
