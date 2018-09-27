@@ -11,6 +11,9 @@ services:
      - "8883:8883"
   telegraf:  
     image: "telegraf:1.6"
+    # make sure you mount telegraf/telegraf.conf 
+    # eg
+    #
   influxdb:
     image: "influxdb:latest"
     ports:
