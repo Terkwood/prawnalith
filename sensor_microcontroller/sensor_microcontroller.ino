@@ -2,12 +2,26 @@
 #include <DallasTemperature.h>
 #include <WiFiClient.h>
 #include <ESP8266WiFi.h>
+#include <PubSubClient.h>
 
 // WIFI SETUP
-const char* ssid = "SSID";
-const char* password = "PASSWORD";
+const char* ssid = "NOPE"; 
+const char* password = "NADA";
 
-// DS18B20 setup
+
+
+// MQTT SETUP
+const char* mqtt_broker = "NUH-UH";
+const char* mqtt_topic  = "test/test";
+WiFiClient wifi_client;
+PubSubClient mqtt_client(wifi_client);
+#define MQTT_MESSAGE_SIZE 128
+char mqtt_message[MQTT_MESSAGE_SIZE];
+
+
+
+
+// DS18B20 SETUP
 #define ONE_WIRE_PIN D3
 #define MAX_ONE_WIRE_DEVICES 15
 
@@ -23,10 +37,6 @@ long last_temp_measurement_ms;
 // how often to measure temperature
 const int temp_measurement_freq_ms = 5000;
 
-// these are updated every time we take a reading
-float last_temp_c[MAX_ONE_WIRE_DEVICES];
-float last_temp_f[MAX_ONE_WIRE_DEVICES];
-
 // Various resolutions are available for DS18B20 temp sensor
 // See https://cdn-shop.adafruit.com/datasheets/DS18B20.pdf
 /*
@@ -39,6 +49,7 @@ float last_temp_f[MAX_ONE_WIRE_DEVICES];
 const int DS18B20_RESOLUTION = 12;
 
 
+
 String DeviceIdToString(DeviceAddress deviceAddress)
 {
    String s;
@@ -49,6 +60,35 @@ String DeviceIdToString(DeviceAddress deviceAddress)
    }
    
    return s;
+}
+
+void InitMQTT() {
+  // We'll need to randomly generate a client ID later.
+  randomSeed(micros());
+
+  mqtt_client.setServer(mqtt_broker, 1883);
+}
+
+// Thanks to https://github.com/knolleary/pubsubclient/blob/master/examples/mqtt_esp8266/mqtt_esp8266.ino
+void ConnectMQTT() {
+  // Loop until we're connected
+  while (!mqtt_client.connected()) {
+    Serial.print("Connecting to MQTT broker...");
+    // Create a random client ID
+    String clientId = "esp8266_";
+    clientId += String(random(0xffff), HEX);
+    
+    // Attempt to connect
+    if (mqtt_client.connect(clientId.c_str())) {
+      Serial.println("MQTT connected");
+    } else {
+      Serial.print("MQTT connection failed, rc=");
+      Serial.print(mqtt_client.state());
+      Serial.println(" ...trying again in 5 seconds");
+      
+      delay(5000);
+    }
+  }
 }
 
 void InitWifi() {
@@ -115,20 +155,37 @@ void setup() {
 
   InitWifi();
 
+  InitMQTT();
+
   InitDS18B20();
 }
 
 void loop() {
-  long current_time = millis();
+  long now = millis();
 
-  if (temp_measurement_freq_ms + last_temp_measurement_ms < current_time) {
+  if (!mqtt_client.connected()) {
+    ConnectMQTT();
+  }
+  mqtt_client.loop();
+
+
+  if (temp_measurement_freq_ms + last_temp_measurement_ms < now) {
     for (int i = 0; i < temp_sensor_count; i++) {
       float celsius_reading = DS18B20.getTempC(device_addresses[i]);
       float fahrenheit_reading = DS18B20.getTempF(device_addresses[i]);
+
+      // publish formatted message to MQTT topic
+      snprintf(
+        mqtt_message,
+        MQTT_MESSAGE_SIZE,
+        "{ \"device_id\": \"%s\", \"temp_c\": %.2f, \"temp_f\": %.2f }",
+        DeviceIdToString(device_addresses[i]).c_str(),  // snprintf wants a const char*
+        celsius_reading,
+        fahrenheit_reading
+      );
+      mqtt_client.publish(mqtt_topic, mqtt_message);
       
-      last_temp_c[i] = celsius_reading;
-      last_temp_f[i] = fahrenheit_reading;
-      
+      // let there be terminal spam
       Serial.print(DeviceIdToString(device_addresses[i]));
       Serial.print(": ");
       Serial.print(celsius_reading);
