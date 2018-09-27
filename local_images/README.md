@@ -13,6 +13,21 @@ The idea is to have ESP8266 and other Pis pushing data to an MQTT broker which i
 
 We plan to write a [very minimal HTTP service](rocket/) which will present data that can be consumed by the frontend.
 
+## Telegraf Configuration
+
+We use [Telegraf](https://www.influxdata.com/time-series-platform/telegraf/) to transfer sensor data from the local MQTT broker into InfluxDB, to mirror basic sensor data from the local MQTT broker into the cloud MQTT broker, and to push messages about temp, pH levels, etc to local LED screens.
+
+Telegraf is driven by a configuration file _which must be present in the same directory as docker-compose.yml_.
+
+You can find an [example of a sample configuration here](sample_telegraf.conf).
+
+To start up your own instance, try copying the sample config, then editing it yourself:
+
+```
+cp sample_telegraf.conf telegraf.conf
+vi telegraf.conf
+```
+
 ### Resources
 
 - Useful description of how to tie Influx & Telegraf together, on ARM, using only docker containers: https://community.influxdata.com/t/influxdata-docker-on-arm/2493
