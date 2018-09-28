@@ -35,5 +35,5 @@ RUN rustup update && cargo update
 RUN cargo build --release
 
 EXPOSE 8000
-ENTRYPOINT ROCKET_ADDRESS=0.0.0.0 /Rocket/target/release/hello_world
+ENTRYPOINT ROCKET_ADDRESS=0.0.0.0 ROCKET_PORT=80 /Rocket/target/release/hello_world
 
