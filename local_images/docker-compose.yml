@@ -3,7 +3,7 @@ services:
   rocket:
     build: rocket/.
     ports:
-      - "80:8000"
+      - "0.0.0.0:8000:8000"
   redis:
     build: redis/.
     ports:
@@ -16,10 +16,10 @@ services:
   telegraf:  
     image: "telegraf:1.6"
     volumes:
-      - "./telegraf.conf:/etc/telegraf/telegraf.conf:ro"
+      - "$PWD/telegraf.conf:/etc/telegraf/telegraf.conf:ro"
   influxdb:
     image: "influxdb:latest"
     ports:
       - "8086:8086"
     volumes:
-      - "./influxdb_volume:/var/lib/influxdb"
+      - "$PWD/influxdb_volume:/var/lib/influxdb"
