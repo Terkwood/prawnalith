@@ -1,4 +1,4 @@
-FROM prawnalith/local_base_image
+FROM prawnalith/local/base
 
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
