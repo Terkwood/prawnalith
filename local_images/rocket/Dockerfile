@@ -31,10 +31,7 @@ WORKDIR "/Rocket"
 RUN git checkout v0.3.16
 WORKDIR "/Rocket/examples/hello_world"
 RUN rustup default nightly
-RUN cargo build
 
-# Expose for mosquitto
-EXPOSE 1883
-EXPOSE 8883
+EXPOSE 8000
+ENTRYPOINT cargo run
 
-ENTRYPOINT tail -f /dev/null
