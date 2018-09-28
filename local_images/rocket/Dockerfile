@@ -1,4 +1,4 @@
-FROM prawnalith/local_base_image
+FROM prawnalith/local/base
 
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
@@ -31,10 +31,9 @@ WORKDIR "/Rocket"
 RUN git checkout v0.3.16
 WORKDIR "/Rocket/examples/hello_world"
 RUN rustup default nightly
-RUN cargo build
+RUN rustup update && cargo update
+RUN cargo build --release
 
-# Expose for mosquitto
-EXPOSE 1883
-EXPOSE 8883
+EXPOSE 8000
+ENTRYPOINT ROCKET_ADDRESS=0.0.0.0 ROCKET_PORT=80 /Rocket/target/release/hello_world
 
-ENTRYPOINT tail -f /dev/null
