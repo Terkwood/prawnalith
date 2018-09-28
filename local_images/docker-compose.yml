@@ -1,5 +1,9 @@
 version: '3'
 services:
+  rocket:
+    build: rocket/.
+    ports:
+      - "80:8000"
   redis:
     build: redis/.
     ports:
@@ -17,3 +21,5 @@ services:
     image: "influxdb:latest"
     ports:
       - "8086:8086"
+    volumes:
+      - "./influxdb_volume:/var/lib/influxdb"
