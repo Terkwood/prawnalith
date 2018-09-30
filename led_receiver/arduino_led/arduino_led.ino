@@ -6,15 +6,12 @@
 #define  TX 9   // This digital IO pin on Arduino connects to TX pin of ESP
 SoftwareSerial esp8266(RX, TX);
 
-// for some reason this likes being 192 much more than it likes being 256 (the value on the other side)
-const byte serial_push_size = 192;
+// for some reason this likes being smaller than 256 (the value on the other side)
+const byte serial_push_size = 128;
 char received_chars[serial_push_size];
 
 boolean new_data = false;
 
-static int last_printed_ms = 0;
-const int print_freq_ms = 5000;
-static int now;
  
 // receives messages which are guaranteed to have
 // { start and end markers }
@@ -65,9 +62,6 @@ LedControl lc=LedControl(10,13,11,4); //
 // pin 11 is connected to LOAD pin 12
 // 4 as we are using 4 segments
 
-const char safe_text_backup[] PROGMEM ={"  FOX   \0"};
-
-const char try_happy_text[] PROGMEM = { "YES \0" }; 
 
 char scroll_text[serial_push_size] = { "OK\0" };
 
@@ -1023,28 +1017,25 @@ void setup(){
   esp8266.begin(9600);
 
   init_leds();
-  
-  
 }
 
-void loop(){ 
-  /*
-    now = millis();
-    if (now > last_printed_ms + print_freq_ms) {
-      last_printed_ms = now;
-      Serial.println(received_chars);
-    }*/
-    
-    recv();
-    Serial.print("received chars: ");
-    Serial.println(received_chars);
-    
-    strlcpy(scroll_text, received_chars, serial_push_size);
-    Serial.print("scroll text   : ");
-    Serial.println(scroll_text);
-    scroll_message(try_happy_text);
 
-    load_buffer_long((int) 'y');
+static int last_scroll_ms = 0;
+const int scroll_freq_ms = 15000;
+void loop(){
+    recv();
+    
+    int now = millis();
+    if (now > last_scroll_ms + scroll_freq_ms) {
+      strlcpy(scroll_text, received_chars, serial_push_size);
+      Serial.print("scroll text   : ");
+      Serial.println(scroll_text);
+  
+      for (int i = 0; i < serial_push_size; i++) {
+        load_buffer_long((int) scroll_text[i]);
+      }
+      last_scroll_ms = millis();
+    }
     
     //scroll_font();
 
