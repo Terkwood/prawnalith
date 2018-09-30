@@ -16,16 +16,17 @@ void setup() {
   esp8266.begin(9600);
 }
 
-int last_printed_ms = 0;
-int print_freq_ms = 5000;
-
+static int last_printed_ms = 0;
+const int print_freq_ms = 5000;
+static int now;
+ 
 void loop() {
   recv();
 
-  int now = millis();
+  now = millis();
   if (now > last_printed_ms + print_freq_ms) {
-    Serial.println(received_chars);
     last_printed_ms = now;
+    Serial.println(received_chars);
   }
 } 
 
