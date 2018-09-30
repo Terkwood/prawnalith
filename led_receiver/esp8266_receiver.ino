@@ -155,7 +155,8 @@ void ConnectMQTT() {
 
   
 void setup() {
-  Serial.begin(115200);
+  // SoftwareSerial library (arduino side) doesn't want higher baud than 9600
+  Serial.begin(9600);
   
   InitWifi();
 
