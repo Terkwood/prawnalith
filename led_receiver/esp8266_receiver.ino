@@ -94,8 +94,9 @@ char push_data[SERIAL_PUSH_SIZE];
 bool push_ready = false;
 
 void SubscribeCallback(char* topic, byte* payload, unsigned int payload_length) {
- memcpy(push_data, payload, payload_length);
- push_ready = true;
+  push_ready = false;
+  memcpy(push_data, payload, payload_length);
+  push_ready = true;
 }
 
 
