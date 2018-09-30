@@ -5,8 +5,8 @@
 SoftwareSerial esp8266(RX,TX); 
 
 // ATTRIBUTION LINK: http://forum.arduino.cc/index.php?topic=396450.0
-const byte numChars = 32;
-char receivedChars[numChars];   // an array to store the received data
+#define SERIAL_PUSH_SIZE 256
+char receivedChars[SERIAL_PUSH_SIZE];   // an array to store the received data
 bool newData = false;
 
 void recvWithEndMarker() {
@@ -14,14 +14,14 @@ void recvWithEndMarker() {
     char endMarker = '\n';
     char rc;
     newData = false;
-    while (esp8266.available() > 0 && newData == false) {
+    while (esp8266.available() > 0 && newData == false /*&& ndx < SERIAL_PUSH_SIZE*/) {
         rc = esp8266.read();
 
         if (rc != endMarker) {
             receivedChars[ndx] = rc;
             ndx++;
-            if (ndx >= numChars) {
-                ndx = numChars - 1;
+            if (ndx >= SERIAL_PUSH_SIZE) {
+                ndx = SERIAL_PUSH_SIZE - 1;
             }
         }
         else {
@@ -30,8 +30,9 @@ void recvWithEndMarker() {
             newData = true;
         }
 
-        Serial.println(receivedChars);
+        
     }
+    Serial.println(receivedChars);
 }
 
 
@@ -46,5 +47,5 @@ void setup() {
 
 void loop() {
   recvWithEndMarker();
-  delay(3333);
+  delay(1000);
 }
