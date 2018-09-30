@@ -1,8 +1,8 @@
 // Thanks to Chilli_Paste for working out a reliable receiver
 // See https://forum.arduino.cc/index.php?topic=514970.0
 #include <SoftwareSerial.h>
-#define  RX 10   // This digital IO pin on Arduino connects to RX pin of ESP
-#define  TX 11   // This digital IO pin on Arduino connects to TX pin of ESP
+#define  RX 8   // This digital IO pin on Arduino connects to RX pin of ESP
+#define  TX 9   // This digital IO pin on Arduino connects to TX pin of ESP
 SoftwareSerial esp8266(RX, TX);
 
 // for some reason this likes being 192 much more than it likes being 256 (the value on the other side)
