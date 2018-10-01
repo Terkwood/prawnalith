@@ -45,6 +45,10 @@ fn redis_connection_string(config: Config) -> String {
     )
 }
 
+fn get_num_tanks(conn: redis::Connection) -> Result<i64, redis::RedisError> {
+    redis::cmd("GET").arg("prawnalith/tanks").query(&conn)
+}
+
 fn main() {
     dotenv::dotenv().expect("Unable to load .env file");
 
@@ -55,9 +59,6 @@ fn main() {
 
     let redis_client = redis::Client::open(&redis_connection_string(config)[..]).unwrap();
     let redis_conn = redis_client.get_connection().unwrap();
-    let tanks: i32 = redis::cmd("GET")
-        .arg("prawnalith/tanks")
-        .query(&redis_conn)
-        .unwrap();
-    println!("Tanks: {:?}", tanks);
+
+    println!("Tanks: {:?}", get_num_tanks(redis_conn).unwrap());
 }
