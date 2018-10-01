@@ -1,5 +1,6 @@
 #[macro_use]
 extern crate serde_derive;
+extern crate dotenv;
 extern crate envy;
 
 #[derive(Deserialize, Debug)]
@@ -13,5 +14,11 @@ struct Config {
 }
 
 fn main() {
-    println!("Hello, world!");
+  
+  dotenv::dotenv().expect("Unable to read .env file");
+  
+  match envy::from_env::<Config>() {
+    Ok(config) => println!("{:?}", config),
+    Err(e) => println!("Unable to parse config ({})", e),
+};
 }
