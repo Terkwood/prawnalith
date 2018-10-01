@@ -4,7 +4,7 @@ extern crate dotenv;
 extern crate envy;
 extern crate redis;
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 struct Config {
     redis_auth: Option<String>,
     redis_host: Option<String>,
@@ -34,7 +34,7 @@ fn redis_connection_string(config: Config) -> String {
     };
 
     format!(
-        "redis://{}{}:{}/",
+        "redis://{}{}:{}",
         auth_string,
         config
             .redis_host
