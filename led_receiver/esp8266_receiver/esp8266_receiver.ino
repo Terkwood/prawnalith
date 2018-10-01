@@ -6,11 +6,11 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 
-const char* ssid = "LOCAL_SSID";      
-const char* password = "LOCAL_SSID_PASS";
+const char* ssid = "SSID";      
+const char* password = "PASS";
 
-const char* mqtt_broker = "your_broker";
-const char* mqtt_topic = "your_topic"; 
+const char* mqtt_broker = "BROKER_HOST";
+const char* mqtt_topic = "prawnalith/led"; 
 
 
 
@@ -29,21 +29,19 @@ const char* p_mqtt_subscribed =   "# MQTT_SUBSCRIBED ";
 // They are expected to be a single line, and are pre-formatted
 // to fit the LED.
 // 
-//     MSG Tank 0 Temp 81.50°F pH 7.01 Tank 1 Temp 82.03°F pH 6.89
+//     { Tank 0 Temp 81.50°F pH 7.01 Tank 1 Temp 82.03°F pH 6.89 }
 // 
 // Initialization spam and connectivity metadata.
 //
 // In terms of the LED display processing,
-// if a line starts with #, ignore it.
+// if a line starts with #, ignore it. In practice,
+// the Arduino side doesn't need to implement any filtering,
+// as long as it waits 10-15 seconds before polling the
+// Serial connection.
 //
 // ESP will broadcast these messages on startup,
 // and MQTT-related connection messages may flow
 // during the process execution.
-// 
-// The arduino should use `strcmp` to match the
-// first character of any line, and throw out
-// metadata messages, all of which are prefixed
-// with #.
 //
 // Metadata message formats.
 //
@@ -87,9 +85,7 @@ WiFiClient wifi_client;
 PubSubClient mqtt_client(wifi_client);
 
 #define SERIAL_PUSH_SIZE 256
-#define PUSH_PREFIX_LENGTH 4
 
-const char* push_prefix = "MSG ";
 char push_data[SERIAL_PUSH_SIZE];
 bool push_ready = false;
 
@@ -176,7 +172,6 @@ void loop() {
   
   int now = millis();
   if (now > last_push_ms + push_freq_ms) {
-    Serial.print(push_prefix);
     Serial.println(push_data);
     last_push_ms = now;
   }
