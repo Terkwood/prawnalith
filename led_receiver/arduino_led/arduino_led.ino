@@ -1,9 +1,8 @@
-
 // Thanks to Chilli_Paste for working out a reliable receiver
 // See https://forum.arduino.cc/index.php?topic=514970.0
 #include <SoftwareSerial.h>
-#define  RX 8   // This digital IO pin on Arduino connects to RX pin of ESP
-#define  TX 9   // This digital IO pin on Arduino connects to TX pin of ESP
+#define  RX 8   // digital IO pin on Arduino connects to RX pin of ESP
+#define  TX 9   // digital IO pin on Arduino connects to TX pin of ESP
 SoftwareSerial esp8266(RX, TX);
 
 // for some reason this likes being smaller than 256 (the value on the other side)
@@ -55,15 +54,15 @@ const long scroll_delay = 75;   // adjust scrolling speed
 
 unsigned long buffer_long [14] = {0}; 
 
-LedControl lc=LedControl(10,13,11,4); // 
+LedControl lc=LedControl(10,13,11,4);
 
 // pin 10 is connected to the MAX7219 pin 1
 // pin 13 is connected to the CLK pin 13
 // pin 11 is connected to LOAD pin 12
-// 4 as we are using 4 segments
+// Using 4 LED segments
 
 
-char scroll_text[serial_push_size] = { "OK\0" };
+char scroll_text[serial_push_size] = { "   OK\0" };
 
 void init_leds() {
      for (int x=0; x<num_devices; x++){
@@ -941,27 +940,6 @@ const char font5x7 [] PROGMEM = {      //Numeric Font Matrix (Arranged as 7x fon
     5
 };
 
-void scroll_font() {
-    for (int counter=0x20; counter<0x80; counter++){
-        load_buffer_long(counter);
-        delay(500);
-    }
-}
-
-// Scroll Message
-void scroll_message(const char * messageString) {
-    int counter = 0;
-    int my_char=0;
-    do {
-        // read back a char 
-        my_char =  pgm_read_byte_near(messageString + counter); 
-        if (my_char != 0){
-            load_buffer_long(my_char);
-        }
-        counter++;
-    } 
-    while (my_char != 0);
-}
 // Load character into scroll buffer
 void load_buffer_long(int ascii){
     if (ascii >= 0x20 && ascii <=0x7f){
@@ -1028,7 +1006,7 @@ void loop(){
     int now = millis();
     if (now > last_scroll_ms + scroll_freq_ms) {
       strlcpy(scroll_text, received_chars, serial_push_size);
-      Serial.print("scroll text   : ");
+      Serial.print("Display: ");
       Serial.println(scroll_text);
   
       for (int i = 0; i < serial_push_size; i++) {
@@ -1036,8 +1014,4 @@ void loop(){
       }
       last_scroll_ms = millis();
     }
-    
-    //scroll_font();
-
-
 }
