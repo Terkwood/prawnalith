@@ -1,5 +1,7 @@
 # Prawn Tank LED Heads-Up Display
 
+![doc/led_demo.jpg](doc/led_demo.jpg)
+
 This directory contains C code which implements an artifact
 that receives status updates on the overall prawn tank system.
 We use LED matrix electronics to display the status updates.
