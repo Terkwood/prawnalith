@@ -13,7 +13,7 @@ from the MQTT channel into the Arduino.
 
 ## Wiring diagram
 
-[This is how we wired up the ESP8266 and the Arduino](doc/LED_receiver.jpeg)
+![This is how we wired up the ESP8266 and the Arduino](doc/LED_receiver_wiring.jpeg)
 
 ## Troubleshooting
 
