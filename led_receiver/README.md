@@ -17,3 +17,6 @@ from the MQTT channel into the Arduino.
 
 ## Troubleshooting
 
+![ESP troubleshooting crib notes](doc/esp_troubleshooting.jpeg)
+
+We found [this link to be particularly helpful](https://randomnerdtutorials.com/esp8266-troubleshooting-guide/).  _If all else fails, and you're unable to upload code to the ESP8266, ground GPIO 0!_
