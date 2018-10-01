@@ -4,6 +4,8 @@ extern crate dotenv;
 extern crate envy;
 extern crate redis;
 
+use redis::Commands;
+
 #[derive(Deserialize, Debug, Clone)]
 struct Config {
     redis_auth: Option<String>,
@@ -45,8 +47,12 @@ fn redis_connection_string(config: Config) -> String {
     )
 }
 
-fn get_num_tanks(conn: redis::Connection) -> Result<i64, redis::RedisError> {
-    redis::cmd("GET").arg("prawnalith/tanks").query(&conn)
+fn get_num_tanks(conn: &redis::Connection) -> Result<i64, redis::RedisError> {
+    conn.get("prawnalith/tanks")
+}
+
+fn get_temp_ph(conn: &redis::Connection, tank: i64) -> Result<Vec<Option<f64>>, redis::RedisError> {
+    conn.hget(format!("prawnalith/tanks/{}", tank), vec!["temp", "ph"])
 }
 
 fn main() {
@@ -60,5 +66,7 @@ fn main() {
     let redis_client = redis::Client::open(&redis_connection_string(config)[..]).unwrap();
     let redis_conn = redis_client.get_connection().unwrap();
 
-    println!("Tanks: {:?}", get_num_tanks(redis_conn).unwrap());
+    let num_tanks = get_num_tanks(&redis_conn).unwrap();
+    (1..num_tanks + 1)
+        .for_each(move |t| println!("Tank {}: {:?}", t, get_temp_ph(&redis_conn, t).unwrap()));
 }
