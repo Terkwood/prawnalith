@@ -55,7 +55,7 @@ fn main() {
 
     let redis_client = redis::Client::open(&redis_connection_string(config)[..]).unwrap();
     let redis_conn = redis_client.get_connection().unwrap();
-    let tanks: Vec<String> = redis::cmd("SMEMBERS")
+    let tanks: i32 = redis::cmd("GET")
         .arg("prawnalith/tanks")
         .query(&redis_conn)
         .unwrap();
