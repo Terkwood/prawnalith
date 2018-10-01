@@ -1,0 +1,9 @@
+[package]
+name = "led_status_helper"
+version = "0.1.0"
+authors = ["Terkwood <metaterkhorn@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+mqtt-protocol = "0.5"
+redis = "0.9.1"
