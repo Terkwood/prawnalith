@@ -78,10 +78,6 @@ fn main() {
     // see http://www.steves-internet-guide.com/mqtt-keep-alive-by-example/
     let mqtt_keep_alive = &config.mqtt_keep_alive.unwrap_or(10);
     let mqtt_topic = &config.mqtt_topic;
-    let mqtt_channel_filter: (TopicFilter, QualityOfService) = (
-        TopicFilter::new(mqtt_topic.to_string()).unwrap(),
-        QualityOfService::Level0,
-    );
     let sensor_id_mapping_name = &config
         .sensor_id_mapping_name
         .unwrap_or("external_sensor_id".to_string());
@@ -106,6 +102,27 @@ fn main() {
     mqtt_conn.set_clean_session(true);
     let mut buf = Vec::new();
     mqtt_conn.encode(&mut buf).unwrap();
+    mqtt_stream.write_all(&buf[..]).unwrap();
+
+    let connack = ConnackPacket::decode(&mut mqtt_stream).unwrap();
+    println!("CONNACK {:?}", connack);
+
+    if connack.connect_return_code() != ConnectReturnCode::ConnectionAccepted {
+        panic!(
+            "Failed to connect to server, return code {:?}",
+            connack.connect_return_code()
+        );
+    }
+
+    let mqtt_channel_filter: (TopicFilter, QualityOfService) = (
+        TopicFilter::new(mqtt_topic.to_string()).unwrap(),
+        QualityOfService::Level0,
+    );
+
+    println!("Applying channel filters {:?} ...", mqtt_channel_filter);
+    let sub = SubscribePacket::new(10, vec![mqtt_channel_filter]);
+    let mut buf = Vec::new();
+    sub.encode(&mut buf).unwrap();
     mqtt_stream.write_all(&buf[..]).unwrap();
 
     {
