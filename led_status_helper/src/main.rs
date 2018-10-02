@@ -25,12 +25,6 @@ enum TempUnit {
     C,
 }
 
-impl Default for TempUnit {
-    fn default() -> TempUnit {
-        TempUnit::F
-    }
-}
-
 impl Default for Config {
     fn default() -> Config {
         Config {
@@ -40,7 +34,7 @@ impl Default for Config {
             mqtt_host: Some("127.0.0.1".to_string()),
             mqtt_port: Some(1883),
             mqtt_topic: "led_message".to_string(),
-            temp_unit: None,
+            temp_unit: Some(TempUnit::F),
         }
     }
 }
@@ -148,7 +142,9 @@ fn main() {
 
     let status = generate_status(
         &redis_conn,
-        &config.temp_unit.unwrap_or(TempUnit::default()),
+        &config
+            .temp_unit
+            .unwrap_or(Config::default().temp_unit.unwrap()),
     );
     println!("{}", status.unwrap());
 }
