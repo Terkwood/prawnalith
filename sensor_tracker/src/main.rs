@@ -8,8 +8,8 @@ extern crate redis;
 use redis::Commands;
 use uuid::Uuid;
 
-fn generate_client_id(namespace: &str) -> String {
-    format!("/{}/sensor_tracker/{}", namespace, Uuid::new_v4())
+fn generate_client_id() -> String {
+    format!("sensor_tracker/{}", Uuid::new_v4())
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -30,6 +30,12 @@ fn main() {
         Ok(config) => config,
         Err(e) => panic!("Unable to parse config ({})", e),
     };
+
+    let redis_host = &config.redis_host.unwrap_or("127.0.0.1".to_string());
+    let redis_port = &config.redis_port.unwrap_or(6379);
+    let redis_namespace = &config.redis_namespace.unwrap_or("".to_string());
+    let mqtt_host = &config.mqtt_host.unwrap_or("127.0.0.1".to_string());
+    let mqtt_port = &config.redis_port.unwrap_or(1883);
 
     let z = i64::from_str_radix("1f", 16);
 }
