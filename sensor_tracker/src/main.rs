@@ -28,6 +28,7 @@ struct Config {
     mqtt_host: Option<String>,
     mqtt_port: Option<u16>,
     mqtt_topic: String,
+    mqtt_keep_alive: Option<u16>,
 }
 
 fn main() {
@@ -43,6 +44,7 @@ fn main() {
     let redis_namespace = &config.redis_namespace.unwrap_or("".to_string());
     let mqtt_host = &config.mqtt_host.unwrap_or("127.0.0.1".to_string());
     let mqtt_port = &config.redis_port.unwrap_or(1883);
+    let mqtt_keep_alive = &config.mqtt_keep_alive.unwrap_or(10); // mqtt spec states that this is measured in secs
 
     let z = i64::from_str_radix("1f", 16);
 }
