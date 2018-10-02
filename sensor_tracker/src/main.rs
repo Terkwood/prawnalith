@@ -43,7 +43,7 @@ fn redis_connection_string(host: &str, port: Option<u16>, auth: Option<String>) 
     format!("redis://{}{}{}", auth_string, host, port_portion)
 }
 
-fn generate_temp_sensor_id(hex_string: &str) -> Result<Uuid, uuid::parser::ParseError> {
+fn generate_sensor_id(hex_string: &str) -> Result<Uuid, uuid::parser::ParseError> {
     let uuid_namespace = Uuid::parse_str(&format!("0000000000000000{}", hex_string)[..])?;
     Ok(Uuid::new_v5(
         &uuid_namespace,
@@ -87,5 +87,16 @@ fn main() {
     let mut mqtt_stream = TcpStream::connect(mqtt_server_addr).unwrap();
     println!("Connected!");
 
-    let z = i64::from_str_radix("1f", 16);
+    {
+        let ext_sensor_id = "28654597090000e4";
+        println!("external sensor id             : {}", ext_sensor_id);
+        println!(
+            "external sensor id (as decimal): {}",
+            i64::from_str_radix(ext_sensor_id, 16).unwrap()
+        );
+        println!(
+            "internal sensor ID             : {}",
+            generate_sensor_id(ext_sensor_id).unwrap()
+        );
+    }
 }
