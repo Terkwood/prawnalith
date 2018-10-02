@@ -3,17 +3,12 @@
 extern crate serde_derive;
 extern crate dotenv;
 extern crate envy;
-extern crate mqtt;
 extern crate redis;
+extern crate rumqtt;
 extern crate uuid;
 
 use std::io::{self, Write};
 use std::net::TcpStream;
-
-use mqtt::control::variable_header::ConnectReturnCode;
-use mqtt::packet::*;
-use mqtt::TopicFilter;
-use mqtt::{Decodable, Encodable, QualityOfService};
 
 use redis::Commands;
 use uuid::Uuid;
@@ -68,10 +63,8 @@ fn main() {
     };
 
     // A MASSIVE BLOCK OF DEFAULT CONFIGURATIONS LIVES HERE!
-    let redis_host = &config.redis_host.unwrap_or("127.0.0.1".to_string());
-    let redis_port: Option<u16> = config.redis_port;
     let redis_namespace = &config.redis_namespace.unwrap_or("".to_string());
-    let redis_auth: Option<String> = config.redis_auth;
+
     let mqtt_host = &config.mqtt_host.unwrap_or("127.0.0.1".to_string());
     let mqtt_port = &config.mqtt_port.unwrap_or(1883);
     // mqtt spec states that this is measured in secs
@@ -83,48 +76,61 @@ fn main() {
         .unwrap_or("external_sensor_id".to_string());
 
     // Set up redis client
-    let redis_client =
-        redis::Client::open(&redis_connection_string(redis_host, redis_port, redis_auth)[..])
-            .unwrap();
+    let redis_client = {
+        let redis_host = &config.redis_host.unwrap_or("127.0.0.1".to_string());
+        let redis_port: u16 = config.redis_port.unwrap_or(6379);
+        let redis_auth: Option<String> = config.redis_auth;
+
+        let rci = redis::ConnectionInfo {
+            addr: Box::new(redis::ConnectionAddr::Tcp(
+                redis_host.to_string(),
+                redis_port,
+            )),
+            db: 0,
+            passwd: redis_auth,
+        };
+        redis::Client::open(rci).unwrap()
+    };
     let redis_conn = redis_client.get_connection().unwrap();
 
-    // Open TCP connection to MQTT broker
-    let mqtt_server_addr = format!("{}:{}", mqtt_host, mqtt_port);
-    println!(
-        "Opening TCP connection to MQTT server {:?} ... ",
-        mqtt_server_addr
-    );
-    let mut mqtt_stream = TcpStream::connect(mqtt_server_addr).unwrap();
-    println!("Connected!");
-    let mqtt_client_id = generate_mqtt_client_id();
-    println!("Client identifier {:?}", mqtt_client_id);
-    let mut mqtt_conn = ConnectPacket::new("MQTT", mqtt_client_id);
-    mqtt_conn.set_clean_session(true);
-    let mut buf = Vec::new();
-    mqtt_conn.encode(&mut buf).unwrap();
-    mqtt_stream.write_all(&buf[..]).unwrap();
-
-    let connack = ConnackPacket::decode(&mut mqtt_stream).unwrap();
-    println!("CONNACK {:?}", connack);
-
-    if connack.connect_return_code() != ConnectReturnCode::ConnectionAccepted {
-        panic!(
-            "Failed to connect to server, return code {:?}",
-            connack.connect_return_code()
+    /*
+        // Open TCP connection to MQTT broker
+        let mqtt_server_addr = format!("{}:{}", mqtt_host, mqtt_port);
+        println!(
+            "Opening TCP connection to MQTT server {:?} ... ",
+            mqtt_server_addr
         );
-    }
-
-    let mqtt_channel_filter: (TopicFilter, QualityOfService) = (
-        TopicFilter::new(mqtt_topic.to_string()).unwrap(),
-        QualityOfService::Level0,
-    );
-
-    println!("Applying channel filters {:?} ...", mqtt_channel_filter);
-    let sub = SubscribePacket::new(10, vec![mqtt_channel_filter]);
-    let mut buf = Vec::new();
-    sub.encode(&mut buf).unwrap();
-    mqtt_stream.write_all(&buf[..]).unwrap();
-
+        let mut mqtt_stream = TcpStream::connect(mqtt_server_addr).unwrap();
+        println!("Connected!");
+        let mqtt_client_id = generate_mqtt_client_id();
+        println!("Client identifier {:?}", mqtt_client_id);
+        let mut mqtt_conn = ConnectPacket::new("MQTT", mqtt_client_id);
+        mqtt_conn.set_clean_session(true);
+        let mut buf = Vec::new();
+        mqtt_conn.encode(&mut buf).unwrap();
+        mqtt_stream.write_all(&buf[..]).unwrap();
+    
+        let connack = ConnackPacket::decode(&mut mqtt_stream).unwrap();
+        println!("CONNACK {:?}", connack);
+    
+        if connack.connect_return_code() != ConnectReturnCode::ConnectionAccepted {
+            panic!(
+                "Failed to connect to server, return code {:?}",
+                connack.connect_return_code()
+            );
+        }
+    
+        let mqtt_channel_filter: (TopicFilter, QualityOfService) = (
+            TopicFilter::new(mqtt_topic.to_string()).unwrap(),
+            QualityOfService::Level0,
+        );
+    
+        println!("Applying channel filters {:?} ...", mqtt_channel_filter);
+        let sub = SubscribePacket::new(10, vec![mqtt_channel_filter]);
+        let mut buf = Vec::new();
+        sub.encode(&mut buf).unwrap();
+        mqtt_stream.write_all(&buf[..]).unwrap();
+    */
     {
         let ext_sensor_id = "28654597090000e4";
         println!("external sensor id             : {}", ext_sensor_id);

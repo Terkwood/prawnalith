@@ -5,18 +5,10 @@ extern crate dotenv;
 extern crate envy;
 extern crate redis;
 
-use std::env;
-use std::io::{self, Write};
-use std::net::TcpStream;
 use std::slice::SliceConcatExt;
-use std::thread;
-
-use mqtt::control::variable_header::ConnectReturnCode;
-use mqtt::packet::*;
-use mqtt::{Decodable, Encodable, QualityOfService};
-use mqtt::{TopicFilter, TopicName};
 
 use redis::Commands;
+use rumqtt::{MqttClient, MqttOptions, QoS};
 
 use uuid::Uuid;
 
@@ -29,53 +21,30 @@ struct Config {
     mqtt_host: Option<String>,
     mqtt_port: Option<u16>,
     mqtt_topic: String,
-    temp_unit: Option<TempUnit>,
+    temp_unit: Option<char>,
     msg_start_char: Option<char>,
     msg_end_char: Option<char>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
-enum TempUnit {
-    F,
-    C,
-}
+struct MsgStartChar(char);
+#[derive(Deserialize, Debug, Clone)]
+struct MsgEndChar(char);
 
-impl Default for Config {
-    fn default() -> Config {
-        Config {
-            redis_auth: None,
-            redis_host: Some("127.0.0.1".to_string()),
-            redis_port: Some(6379),
-            redis_namespace: None,
-            mqtt_host: Some("127.0.0.1".to_string()),
-            mqtt_port: Some(1883),
-            mqtt_topic: "led_message".to_string(),
-            temp_unit: Some(TempUnit::F),
-            msg_start_char: Some('{'),
-            msg_end_char: Some('}'),
-        }
+impl Default for MsgStartChar {
+    fn default() -> MsgStartChar {
+        MsgStartChar('{')
     }
 }
 
-fn generate_mqtt_client_id() -> String {
-    format!("led_status/{}", Uuid::new_v4())
+impl Default for MsgEndChar {
+    fn default() -> MsgEndChar {
+        MsgEndChar('}')
+    }
 }
 
-fn redis_connection_string(config: &Config) -> String {
-    let auth_string = match &config.redis_auth {
-        Some(a) => format!(":{}@", a),
-        None => "".to_string(),
-    };
-
-    let host_portion: &String = &config
-        .redis_host
-        .clone()
-        .unwrap_or(Config::default().redis_host.unwrap());
-    let port_portion: u16 = config
-        .redis_port
-        .unwrap_or(Config::default().redis_port.unwrap());
-
-    format!("redis://{}{}:{}", auth_string, host_portion, port_portion)
+fn generate_mq_client_id() -> String {
+    format!("led_status/{}", Uuid::new_v4())
 }
 
 fn get_num_tanks(conn: &redis::Connection, namespace: &str) -> Result<i64, redis::RedisError> {
@@ -122,7 +91,7 @@ fn get_temp_ph(
 
 fn generate_status(
     conn: &redis::Connection,
-    temp_unit: &TempUnit,
+    temp_unit: &char,
     msg_start_char: &char,
     msg_end_char: &char,
     namespace: &str,
@@ -139,10 +108,10 @@ fn generate_status(
                 let tank_string = format!("#{}:", tank);
                 let temp_string = maybe_temp
                     .map(move |t| match temp_unit {
-                        TempUnit::F => t.f,
-                        TempUnit::C => t.c,
+                        'c' | 'C' => t.c,
+                        _ => t.f,
                     })
-                    .map(|t| format!(" {}°{:?}", t, temp_unit))
+                    .map(|t| format!(" {}°{}", t, temp_unit.to_ascii_uppercase()))
                     .unwrap_or("".to_string());
                 let ph_string: String = maybe_ph
                     .map(move |level| format!(" {} pH", level))
@@ -154,11 +123,7 @@ fn generate_status(
         })
         .collect();
 
-    status_results.map(|ss| {
-        let msg_start = format!("{}", msg_start_char);
-        let msg_end = format!("{}", msg_end_char);
-        msg_start + &ss.join(" ") + &msg_end
-    })
+    status_results.map(|ss| msg_start_char.to_string() + &ss.join(" ") + &msg_end_char.to_string())
 }
 
 fn main() {
@@ -169,21 +134,54 @@ fn main() {
         Err(e) => panic!("Unable to parse config ({})", e),
     };
 
-    let redis_client = redis::Client::open(&redis_connection_string(&config)[..]).unwrap();
+    let redis_client = {
+        let redis_host = &config.redis_host.unwrap_or("127.0.0.1".to_string());
+        let redis_port: u16 = config.redis_port.unwrap_or(6379);
+        let redis_auth: Option<String> = config.redis_auth;
+
+        let rci = redis::ConnectionInfo {
+            addr: Box::new(redis::ConnectionAddr::Tcp(
+                redis_host.to_string(),
+                redis_port,
+            )),
+            db: 0,
+            passwd: redis_auth,
+        };
+        redis::Client::open(rci).unwrap()
+    };
     let redis_conn = redis_client.get_connection().unwrap();
 
     let status = generate_status(
         &redis_conn,
-        &config
-            .temp_unit
-            .unwrap_or(Config::default().temp_unit.unwrap()),
-        &config
-            .msg_start_char
-            .unwrap_or(Config::default().msg_start_char.unwrap()),
-        &config
-            .msg_end_char
-            .unwrap_or(Config::default().msg_end_char.unwrap()),
+        &config.temp_unit.unwrap_or('F'),
+        &config.msg_start_char.unwrap_or(MsgStartChar::default().0),
+        &config.msg_end_char.unwrap_or(MsgEndChar::default().0),
         &config.redis_namespace.unwrap_or("".to_string()),
     );
-    println!("{}", status.unwrap());
+
+    let mut mq_request_handler = {
+        // Specify client connection options
+        let opts: MqttOptions = MqttOptions::new()
+            .set_keep_alive(5)
+            .set_reconnect(3)
+            .set_client_id(generate_mq_client_id())
+            .set_broker(
+                &format!(
+                    "{}:{}",
+                    &config.mqtt_host.unwrap_or("127.0.0.1".to_string()),
+                    &config.mqtt_port.unwrap_or(1883)
+                )[..],
+            );
+        MqttClient::start(opts, None).expect("MQTT client couldn't start")
+    };
+
+    mq_request_handler
+        .publish(
+            &config.mqtt_topic,
+            QoS::Level0,
+            status.unwrap().clone().into_bytes(),
+        )
+        .unwrap();
+
+    std::thread::sleep(std::time::Duration::from_millis(1000));
 }
