@@ -1,2 +1,4 @@
 telegraf.conf
+grafana_volume
+telegraf_volume
 influxdb_volume
