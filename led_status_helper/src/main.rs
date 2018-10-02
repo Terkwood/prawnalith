@@ -121,13 +121,13 @@ fn generate_status(
                         TempUnit::F => t.f,
                         TempUnit::C => t.c,
                     })
-                    .map(|t| format!(" {}", t))
+                    .map(|t| format!(" {}°{:?}", t, temp_unit))
                     .unwrap_or("".to_string());
                 let ph_string: String = maybe_ph
-                    .map(move |level| format!(" {}", level))
+                    .map(move |level| format!(" {} pH", level))
                     .unwrap_or("".to_string());
 
-                format!("#{}:{}{}", tank, temp_string, ph_string)
+                format!("#{}:{}{}  ", tank, temp_string, ph_string)
             })
         })
         .collect();
