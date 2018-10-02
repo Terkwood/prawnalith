@@ -5,8 +5,20 @@ extern crate dotenv;
 extern crate envy;
 extern crate redis;
 
-use redis::Commands;
+use std::env;
+use std::io::{self, Write};
+use std::net::TcpStream;
 use std::slice::SliceConcatExt;
+use std::thread;
+
+use mqtt::control::variable_header::ConnectReturnCode;
+use mqtt::packet::*;
+use mqtt::{Decodable, Encodable, QualityOfService};
+use mqtt::{TopicFilter, TopicName};
+
+use redis::Commands;
+
+use uuid::Uuid;
 
 #[derive(Deserialize, Debug, Clone)]
 struct Config {
@@ -43,6 +55,10 @@ impl Default for Config {
             msg_end_char: Some('}'),
         }
     }
+}
+
+fn generate_mqtt_client_id() -> String {
+    format!("led_status/{}", Uuid::new_v4())
 }
 
 fn redis_connection_string(config: &Config) -> String {
@@ -82,9 +98,10 @@ fn c_to_f(temp_c: f64) -> f64 {
 fn get_temp_ph(
     conn: &redis::Connection,
     tank: i64,
+    namespace: &str,
 ) -> Result<(Option<Temp>, Option<f64>), redis::RedisError> {
     let numbers: Vec<Option<f64>> = conn.hget(
-        format!("prawnalith/tanks/{}", tank),
+        format!("{}/tanks/{}", namespace, tank),
         vec!["temp_f", "temp_c", "ph"],
     )?;
     let (temp_f, temp_c) = (numbers.get(0), numbers.get(1));
@@ -114,7 +131,7 @@ fn generate_status(
 
     let status_results: Result<Vec<String>, redis::RedisError> = (1..num_tanks + 1)
         .map(move |tank| {
-            get_temp_ph(&conn, tank).map(move |(maybe_temp, maybe_ph)| {
+            get_temp_ph(&conn, tank, namespace).map(move |(maybe_temp, maybe_ph)| {
                 if let (&None, &None) = (&maybe_temp, &maybe_ph) {
                     return "".to_string(); // nothing to format
                 }

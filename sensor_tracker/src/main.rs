@@ -15,10 +15,6 @@ use mqtt::{Decodable, Encodable, QualityOfService};
 use redis::Commands;
 use uuid::Uuid;
 
-fn generate_client_id() -> String {
-    format!("sensor_tracker/{}", Uuid::new_v4())
-}
-
 #[derive(Deserialize, Debug, Clone)]
 struct Config {
     redis_auth: Option<String>,
@@ -29,6 +25,10 @@ struct Config {
     mqtt_port: Option<u16>,
     mqtt_topic: String,
     mqtt_keep_alive: Option<u16>,
+}
+
+fn generate_mqtt_client_id() -> String {
+    format!("sensor_tracker/{}", Uuid::new_v4())
 }
 
 fn redis_connection_string(host: &str, port: Option<u16>, auth: Option<String>) -> String {
@@ -65,6 +65,15 @@ fn main() {
     // mqtt spec states that this is measured in secs
     // see http://www.steves-internet-guide.com/mqtt-keep-alive-by-example/
     let mqtt_keep_alive = &config.mqtt_keep_alive.unwrap_or(10);
+    let mqtt_topic = &config.mqtt_topic;
+    let mqtt_channel_filter: (TopicFilter, QualityOfService) = (
+        TopicFilter::new(mqtt_topic.to_string()).unwrap(),
+        QualityOfService::Level0,
+    );
+    let mqtt_server_addr = format!("{}:{}", mqtt_host, mqtt_port);
+    println!("Connecting to MQTT server {:?} ... ", mqtt_server_addr);
+    let mut mqtt_stream = TcpStream::connect(mqtt_server_addr).unwrap();
+    println!("Connected!");
 
     let z = i64::from_str_radix("1f", 16);
 }
