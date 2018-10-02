@@ -3,9 +3,11 @@
 extern crate serde_derive;
 extern crate dotenv;
 extern crate envy;
+extern crate mqtt;
 extern crate redis;
 extern crate uuid;
 
+use std::io::{self, Write};
 use std::net::TcpStream;
 
 use mqtt::control::variable_header::ConnectReturnCode;
@@ -98,6 +100,13 @@ fn main() {
     );
     let mut mqtt_stream = TcpStream::connect(mqtt_server_addr).unwrap();
     println!("Connected!");
+    let mqtt_client_id = generate_mqtt_client_id();
+    println!("Client identifier {:?}", mqtt_client_id);
+    let mut mqtt_conn = ConnectPacket::new("MQTT", mqtt_client_id);
+    mqtt_conn.set_clean_session(true);
+    let mut buf = Vec::new();
+    mqtt_conn.encode(&mut buf).unwrap();
+    mqtt_stream.write_all(&buf[..]).unwrap();
 
     {
         let ext_sensor_id = "28654597090000e4";
