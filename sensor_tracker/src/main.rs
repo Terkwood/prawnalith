@@ -4,6 +4,7 @@ extern crate serde_derive;
 extern crate dotenv;
 extern crate envy;
 extern crate redis;
+extern crate uuid;
 
 use std::net::TcpStream;
 
@@ -42,6 +43,14 @@ fn redis_connection_string(host: &str, port: Option<u16>, auth: Option<String>) 
     format!("redis://{}{}{}", auth_string, host, port_portion)
 }
 
+fn generate_temp_sensor_id(hex_string: &str) -> Result<Uuid, uuid::parser::ParseError> {
+    let uuid_namespace = Uuid::parse_str(&format!("0000000000000000{}", hex_string)[..])?;
+    Ok(Uuid::new_v5(
+        &uuid_namespace,
+        "temp_sensor_external_id".as_bytes(),
+    ))
+}
+
 fn main() {
     dotenv::dotenv().expect("Unable to load .env file");
 
@@ -57,9 +66,7 @@ fn main() {
 
     let rconn_str = redis_connection_string(redis_host, redis_port, redis_auth);
     println!("{}", rconn_str);
-    let redis_client =
-        redis::Client::open(&rconn_str[..])
-            .unwrap();
+    let redis_client = redis::Client::open(&rconn_str[..]).unwrap();
     let redis_conn = redis_client.get_connection().unwrap();
 
     let mqtt_host = &config.mqtt_host.unwrap_or("127.0.0.1".to_string());
@@ -73,7 +80,10 @@ fn main() {
         QualityOfService::Level0,
     );
     let mqtt_server_addr = format!("{}:{}", mqtt_host, mqtt_port);
-    println!("Opening TCP connection to MQTT server {:?} ... ", mqtt_server_addr);
+    println!(
+        "Opening TCP connection to MQTT server {:?} ... ",
+        mqtt_server_addr
+    );
     let mut mqtt_stream = TcpStream::connect(mqtt_server_addr).unwrap();
     println!("Connected!");
 
