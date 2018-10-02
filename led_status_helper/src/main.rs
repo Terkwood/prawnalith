@@ -13,6 +13,7 @@ struct Config {
     redis_auth: Option<String>,
     redis_host: Option<String>,
     redis_port: Option<u16>,
+    redis_namespace: Option<String>,
     mqtt_host: Option<String>,
     mqtt_port: Option<u16>,
     mqtt_topic: String,
@@ -33,6 +34,7 @@ impl Default for Config {
             redis_auth: None,
             redis_host: Some("127.0.0.1".to_string()),
             redis_port: Some(6379),
+            redis_namespace: None,
             mqtt_host: Some("127.0.0.1".to_string()),
             mqtt_port: Some(1883),
             mqtt_topic: "led_message".to_string(),
@@ -60,8 +62,8 @@ fn redis_connection_string(config: &Config) -> String {
     format!("redis://{}{}:{}", auth_string, host_portion, port_portion)
 }
 
-fn get_num_tanks(conn: &redis::Connection) -> Result<i64, redis::RedisError> {
-    conn.get("prawnalith/tanks")
+fn get_num_tanks(conn: &redis::Connection, namespace: &str) -> Result<i64, redis::RedisError> {
+    conn.get(format!("{}/tanks", namespace))
 }
 
 struct Temp {
@@ -106,8 +108,9 @@ fn generate_status(
     temp_unit: &TempUnit,
     msg_start_char: &char,
     msg_end_char: &char,
+    namespace: &str,
 ) -> Result<String, redis::RedisError> {
-    let num_tanks = get_num_tanks(&conn)?;
+    let num_tanks = get_num_tanks(&conn, namespace)?;
 
     let status_results: Result<Vec<String>, redis::RedisError> = (1..num_tanks + 1)
         .map(move |tank| {
@@ -163,6 +166,7 @@ fn main() {
         &config
             .msg_end_char
             .unwrap_or(Config::default().msg_end_char.unwrap()),
+        &config.redis_namespace.unwrap_or("".to_string()),
     );
     println!("{}", status.unwrap());
 }
