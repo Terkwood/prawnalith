@@ -39,7 +39,7 @@ fn redis_connection_string(host: &str, port: Option<u16>, auth: Option<String>) 
 
     let port_portion: String = port.map(|p| format!(":{}", p)).unwrap_or("".to_string());
 
-    format!("redis://{}{}:{}", auth_string, host, port_portion)
+    format!("redis://{}{}{}", auth_string, host, port_portion)
 }
 
 fn main() {
@@ -55,13 +55,15 @@ fn main() {
     let redis_namespace = &config.redis_namespace.unwrap_or("".to_string());
     let redis_auth: Option<String> = config.redis_auth;
 
+    let rconn_str = redis_connection_string(redis_host, redis_port, redis_auth);
+    println!("{}", rconn_str);
     let redis_client =
-        redis::Client::open(&redis_connection_string(redis_host, redis_port, redis_auth)[..])
+        redis::Client::open(&rconn_str[..])
             .unwrap();
     let redis_conn = redis_client.get_connection().unwrap();
 
     let mqtt_host = &config.mqtt_host.unwrap_or("127.0.0.1".to_string());
-    let mqtt_port = &config.redis_port.unwrap_or(1883);
+    let mqtt_port = &config.mqtt_port.unwrap_or(1883);
     // mqtt spec states that this is measured in secs
     // see http://www.steves-internet-guide.com/mqtt-keep-alive-by-example/
     let mqtt_keep_alive = &config.mqtt_keep_alive.unwrap_or(10);
@@ -71,7 +73,7 @@ fn main() {
         QualityOfService::Level0,
     );
     let mqtt_server_addr = format!("{}:{}", mqtt_host, mqtt_port);
-    println!("Connecting to MQTT server {:?} ... ", mqtt_server_addr);
+    println!("Opening TCP connection to MQTT server {:?} ... ", mqtt_server_addr);
     let mut mqtt_stream = TcpStream::connect(mqtt_server_addr).unwrap();
     println!("Connected!");
 
