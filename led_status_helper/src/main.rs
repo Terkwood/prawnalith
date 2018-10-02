@@ -17,6 +17,8 @@ struct Config {
     mqtt_port: Option<u16>,
     mqtt_topic: String,
     temp_unit: Option<TempUnit>,
+    msg_start_char: Option<char>,
+    msg_end_char: Option<char>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -35,6 +37,8 @@ impl Default for Config {
             mqtt_port: Some(1883),
             mqtt_topic: "led_message".to_string(),
             temp_unit: Some(TempUnit::F),
+            msg_start_char: Some('{'),
+            msg_end_char: Some('}'),
         }
     }
 }
@@ -100,6 +104,8 @@ fn get_temp_ph(
 fn generate_status(
     conn: &redis::Connection,
     temp_unit: &TempUnit,
+    msg_start_char: &char,
+    msg_end_char: &char,
 ) -> Result<String, redis::RedisError> {
     let num_tanks = get_num_tanks(&conn)?;
 
@@ -110,6 +116,7 @@ fn generate_status(
                     return "".to_string(); // nothing to format
                 }
 
+                let tank_string = format!("#{}:", tank);
                 let temp_string = maybe_temp
                     .map(move |t| match temp_unit {
                         TempUnit::F => t.f,
@@ -120,13 +127,18 @@ fn generate_status(
                 let ph_string: String = maybe_ph
                     .map(move |level| format!(" {} pH", level))
                     .unwrap_or("".to_string());
+                let trailing_space = "  ";
 
-                format!("#{}:{}{}  ", tank, temp_string, ph_string)
+                tank_string + &temp_string + &ph_string + trailing_space
             })
         })
         .collect();
 
-    status_results.map(|ss| ss.join(" "))
+    status_results.map(|ss| {
+        let msg_start = format!("{}", msg_start_char);
+        let msg_end = format!("{}", msg_end_char);
+        msg_start + &ss.join(" ") + &msg_end
+    })
 }
 
 fn main() {
@@ -145,6 +157,12 @@ fn main() {
         &config
             .temp_unit
             .unwrap_or(Config::default().temp_unit.unwrap()),
+        &config
+            .msg_start_char
+            .unwrap_or(Config::default().msg_start_char.unwrap()),
+        &config
+            .msg_end_char
+            .unwrap_or(Config::default().msg_end_char.unwrap()),
     );
     println!("{}", status.unwrap());
 }
