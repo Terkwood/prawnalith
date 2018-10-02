@@ -5,6 +5,13 @@ extern crate dotenv;
 extern crate envy;
 extern crate redis;
 
+use std::net::TcpStream;
+
+use mqtt::control::variable_header::ConnectReturnCode;
+use mqtt::packet::*;
+use mqtt::TopicFilter;
+use mqtt::{Decodable, Encodable, QualityOfService};
+
 use redis::Commands;
 use uuid::Uuid;
 
