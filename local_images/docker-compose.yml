@@ -4,6 +4,8 @@ services:
     image: "grafana/grafana"
     ports:
       - "3000:3000"
+    volumes:
+      - "$PWD/grafana_volume:/etc/grafana"
   rocket:
     build: rocket/.
     ports:
@@ -20,7 +22,7 @@ services:
   telegraf:  
     image: "telegraf:1.6"
     volumes:
-      - "$PWD/telegraf.conf:/etc/telegraf/telegraf.conf:ro"
+      - "$PWD/telegraf_volume/telegraf.conf:/etc/telegraf/telegraf.conf:ro"
   influxdb:
     image: "influxdb:latest"
     ports:
