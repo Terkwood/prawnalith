@@ -5,7 +5,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-            #- "$PWD/grafana_volume/etc/grafana:/etc/grafana"
+      - "$PWD/grafana_volume/etc/grafana:/etc/grafana"
       - "$PWD/grafana_volume/var/lib/grafana:/var/lib/grafana"
   rocket:
     build: rocket/.
