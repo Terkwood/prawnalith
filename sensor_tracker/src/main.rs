@@ -32,5 +32,4 @@ fn main() {
     };
 
     let z = i64::from_str_radix("1f", 16);
-    println!("z = {}",z);
 }
