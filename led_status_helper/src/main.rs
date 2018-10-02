@@ -90,8 +90,8 @@ fn get_temp_ph(
     let (temp_f, temp_c) = (numbers.get(0), numbers.get(1));
     let temp = match (temp_f, temp_c) {
         (Some(&Some(f)), Some(&Some(c))) => Some(Temp { f, c }),
-        (None, Some(&Some(c))) => Some(Temp { f: c_to_f(c), c }),
-        (Some(&Some(f)), None) => Some(Temp { f, c: f_to_c(f) }),
+        (_, Some(&Some(c))) => Some(Temp { f: c_to_f(c), c }),
+        (Some(&Some(f)), _) => Some(Temp { f, c: f_to_c(f) }),
         _ => None,
     };
     let ph = match numbers.get(2) {
