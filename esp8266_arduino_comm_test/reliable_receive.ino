@@ -1,4 +1,8 @@
-// Thanks to Chilli_Paste for working out a reliable receiver
+// This allows you to reliably send messages which have
+// a start character and an end character.
+
+// LET THE ATTRIBUTION BE KNOWN:
+// Thanks to Chilli_Paste for working out the code:
 // See https://forum.arduino.cc/index.php?topic=514970.0
 #include <SoftwareSerial.h>
 #define  RX 8   // digital IO pin on Arduino connects to RX pin of ESP
@@ -49,9 +53,8 @@ void recv() {
 
 void setup(){
   Serial.begin(9600);
-  esp8266.begin(9600);
-
-  init_leds();
+  esp8266.begin(9600);  // obey 9600 baud when using SoftwareSerial
+                        // with a NodeMCU ESP8266
 }
 
 
