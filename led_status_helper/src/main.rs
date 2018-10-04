@@ -22,25 +22,6 @@ struct Config {
     mqtt_port: Option<u16>,
     mqtt_topic: String,
     temp_unit: Option<char>,
-    msg_start_char: Option<char>,
-    msg_end_char: Option<char>,
-}
-
-#[derive(Deserialize, Debug, Clone)]
-struct MsgStartChar(char);
-#[derive(Deserialize, Debug, Clone)]
-struct MsgEndChar(char);
-
-impl Default for MsgStartChar {
-    fn default() -> MsgStartChar {
-        MsgStartChar('{')
-    }
-}
-
-impl Default for MsgEndChar {
-    fn default() -> MsgEndChar {
-        MsgEndChar('}')
-    }
 }
 
 fn generate_mq_client_id() -> String {
@@ -92,8 +73,6 @@ fn get_temp_ph(
 fn generate_status(
     conn: &redis::Connection,
     temp_unit: &char,
-    msg_start_char: &char,
-    msg_end_char: &char,
     namespace: &str,
 ) -> Result<String, redis::RedisError> {
     let num_tanks = get_num_tanks(&conn, namespace)?;
@@ -123,7 +102,7 @@ fn generate_status(
         })
         .collect();
 
-    status_results.map(|ss| msg_start_char.to_string() + &ss.join(" ") + &msg_end_char.to_string())
+    status_results.map(|ss| ss.join(" "))
 }
 
 fn main() {
@@ -154,8 +133,6 @@ fn main() {
     let status = generate_status(
         &redis_conn,
         &config.temp_unit.unwrap_or('F'),
-        &config.msg_start_char.unwrap_or(MsgStartChar::default().0),
-        &config.msg_end_char.unwrap_or(MsgEndChar::default().0),
         &config.redis_namespace.unwrap_or("".to_string()),
     );
 
