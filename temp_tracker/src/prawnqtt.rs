@@ -1,6 +1,5 @@
 use super::model::TempMessage;
 use rumqtt::{MqttCallback, MqttClient, MqttOptions};
-
 use uuid::Uuid;
 
 pub fn mq_client(mq_host: &str, mq_port: u16, mq_keep_alive: u16) -> rumqtt::MqttClient {
@@ -9,8 +8,11 @@ pub fn mq_client(mq_host: &str, mq_port: u16, mq_keep_alive: u16) -> rumqtt::Mqt
         let deser: Result<TempMessage, _> =
             serde_json::from_str(std::str::from_utf8(&*msg.payload).unwrap());
         match deser {
-            Ok(s) => println!("\t{:?}", s),
             Err(_) => println!("\t[!] couldn't deserialize [!]"),
+            Ok(temp) => {
+                println!("\t{:?}", temp);
+                unimplemented!()
+            }
         }
     };
     let mq_message_callback = MqttCallback::new().on_message(callback);
