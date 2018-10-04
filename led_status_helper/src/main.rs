@@ -160,5 +160,6 @@ fn main() {
         )
         .unwrap();
 
+    // let the other thread do its thing before we exit
     std::thread::sleep(std::time::Duration::from_millis(1000));
 }
