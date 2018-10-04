@@ -14,6 +14,7 @@ use uuid::Uuid;
 mod config;
 mod prawnqtt;
 mod predis;
+mod temp_message;
 
 /// `external_device_id` is usually reported as a
 /// e.g. "28654597090000e4"
@@ -55,14 +56,11 @@ fn main() {
     let external_device_namespace = &redis_ctx.get_external_device_namespace().unwrap();
     println!("external device namespace is {}", external_device_namespace);
 
-    let mut mq_message_callback = MqttCallback::new().on_message(|msg| {
-        println!("Received payload: {:?}", msg);
-    });
-    let mut mq_req_handler =
-        prawnqtt::mq_request_handler(mq_message_callback, mq_host, *mq_port, *mq_keep_alive);
+    let _mq_req_handler = prawnqtt::mq_client(mq_host, *mq_port, *mq_keep_alive);
 
     // next:
     // deserialize json from temp sensor channel
     // query & update redis
     // publish message to led channel
+    loop {}
 }
