@@ -10,6 +10,8 @@ extern crate uuid;
 use std::io::{self, Write};
 use std::net::TcpStream;
 
+use rumqtt::{MqttClient, MqttOptions, QoS};
+
 use redis::Commands;
 use uuid::Uuid;
 
@@ -23,7 +25,6 @@ struct Config {
     mqtt_port: Option<u16>,
     mqtt_topic: String,
     mqtt_keep_alive: Option<u16>,
-    sensor_id_mapping_name: Option<String>,
 }
 
 fn generate_mqtt_client_id() -> String {
@@ -123,9 +124,15 @@ fn main() {
     // see http://www.steves-internet-guide.com/mqtt-keep-alive-by-example/
     let mqtt_keep_alive = &config.mqtt_keep_alive.unwrap_or(10);
     let mqtt_topic = &config.mqtt_topic;
-    let sensor_id_mapping_name = &config
-        .sensor_id_mapping_name
-        .unwrap_or("external_sensor_id".to_string());
+    let mut mq_request_handler = {
+        // Specify client connection options
+        let opts: MqttOptions = MqttOptions::new()
+            .set_keep_alive(*mqtt_keep_alive)
+            .set_reconnect(3)
+            .set_client_id(generate_mqtt_client_id())
+            .set_broker(&format!("{}:{}", mqtt_host, mqtt_port)[..]);
+        MqttClient::start(opts, None).expect("MQTT client couldn't start")
+    };
 
     // Set up redis client
     let redis_client = {
