@@ -29,40 +29,15 @@ fn generate_sensor_id(
     Ok(Uuid::new_v5(&uuid_namespace, mapping_name.as_bytes()))
 }
 
-struct RedisOpts {
-    conn: redis::Connection,
-    namespace: String,
-}
-
-/*
-{
-        let ext_sensor_id = "28654597090000e4";
-        println!("external sensor id             : {}", ext_sensor_id);
-        
-        println!(
-            "external sensor id (tiny UUID) : {}",
-            Uuid::parse_str(&format!("0000000000000000{}", "28654597090000e4")[..]).unwrap()
-        );
-        println!(
-            "mapping name                   : {}",
-            sensor_id_mapping_name
-        );
-        println!(
-            "internal sensor ID             : {}",
-            generate_sensor_id(ext_sensor_id, sensor_id_mapping_name).unwrap()
-        );
-    }
-    */
-
 /// This is the "name" field that will be used to form a V5 UUID
-fn get_external_device_namespace(opts: &RedisOpts) -> Result<Uuid, redis::RedisError> {
-    let key = format!("{}/external_device_namespace", opts.namespace);
-    let r: Option<String> = opts.conn.get(&key)?;
+fn get_external_device_namespace(ctx: &predis::RedisContext) -> Result<Uuid, redis::RedisError> {
+    let key = format!("{}/external_device_namespace", ctx.namespace);
+    let r: Option<String> = ctx.conn.get(&key)?;
 
     match r {
         None => {
             let it = Uuid::new_v4();
-            opts.conn.set(key, it.to_string())?;
+            ctx.conn.set(key, it.to_string())?;
             Ok(it)
         }
         Some(s) => {
@@ -86,10 +61,7 @@ fn compute_internal_id(
 fn main() {
     dotenv::dotenv().expect("Unable to load .env file");
 
-    let config = match envy::from_env::<config::Config>() {
-        Ok(config) => config,
-        Err(e) => panic!("Unable to parse config ({})", e),
-    };
+    let config = config::Config::new();
 
     // DEFAULT CONFIGURATIONS LIVE HERE!
     let mq_host = &config.mqtt_host.unwrap_or("127.0.0.1".to_string());
@@ -99,28 +71,19 @@ fn main() {
     let mq_keep_alive = &config.mqtt_keep_alive.unwrap_or(10);
     let mq_topic = &config.mqtt_topic;
 
-    // Set up redis client
-    let redis_client = {
+    let redis_ctx = {
         let redis_host = &config.redis_host.unwrap_or("127.0.0.1".to_string());
         let redis_port: u16 = config.redis_port.unwrap_or(6379);
         let redis_auth: Option<String> = config.redis_auth;
-
-        let rci = redis::ConnectionInfo {
-            addr: Box::new(redis::ConnectionAddr::Tcp(
-                redis_host.to_string(),
-                redis_port,
-            )),
-            db: 0,
-            passwd: redis_auth,
-        };
-        redis::Client::open(rci).unwrap()
-    };
-    let redis_opts = RedisOpts {
-        conn: redis_client.get_connection().unwrap(),
-        namespace: config.redis_namespace.unwrap_or("".to_string()),
+        predis::RedisContext::new(
+            redis_host.to_string(),
+            redis_port,
+            redis_auth,
+            config.redis_namespace.unwrap_or("".to_string()),
+        )
     };
 
-    let external_device_namespace = get_external_device_namespace(&redis_opts).unwrap();
+    let external_device_namespace = get_external_device_namespace(&redis_ctx).unwrap();
     println!("external device namespace is {}", external_device_namespace);
 
     let mut mq_message_callback = MqttCallback::new().on_message(|msg| {

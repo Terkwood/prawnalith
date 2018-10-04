@@ -4,6 +4,7 @@ use uuid::Uuid;
 fn generate_mq_client_id() -> String {
     format!("sensor_tracker/{}", Uuid::new_v4())
 }
+
 pub fn mq_request_handler(
     mq_message_callback: MqttCallback,
     mq_host: &str,
