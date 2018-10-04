@@ -548,19 +548,6 @@ version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
-name = "sensor_tracker"
-version = "0.1.0"
-dependencies = [
- "dotenv 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "envy 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "redis 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "rumqtt 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_derive 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
- "uuid 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
 name = "serde"
 version = "1.0.79"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -627,6 +614,19 @@ dependencies = [
  "quote 0.6.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "syn 0.14.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "unicode-xid 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "temp_tracker"
+version = "0.1.0"
+dependencies = [
+ "dotenv 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "envy 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "redis 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rumqtt 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_derive 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
+ "uuid 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
