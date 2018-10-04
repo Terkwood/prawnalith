@@ -4,12 +4,12 @@ use uuid::Uuid;
 
 pub fn mq_client(mq_host: &str, mq_port: u16, mq_keep_alive: u16) -> rumqtt::MqttClient {
     let callback = |msg: rumqtt::Message| {
-        println!("Received payload: {:?}", msg);
+        println!("Received payload:\n\t{:?}", msg);
         let deser: Result<TempMessage, _> =
             serde_json::from_str(std::str::from_utf8(&*msg.payload).unwrap());
         match deser {
-            Ok(s) => println!("deserialized = {:?}", s),
-            Err(_) => println!("[!] couldn't deserialize [!]"),
+            Ok(s) => println!("\t{:?}", s),
+            Err(_) => println!("\t[!] couldn't deserialize [!]"),
         }
     };
     let mq_message_callback = MqttCallback::new().on_message(callback);
