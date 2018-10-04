@@ -50,11 +50,24 @@ pub fn receive_updates(update_r: channel::Receiver<model::TempMessage>, redis_ct
         match update_r.recv() {
             Some(temp) => {
                 println!("\tReceived redis temp update: {:?}", temp);
-                println!(
-                    "\tInternal ID for device: {}",
-                    temp.id(&redis_ctx.get_external_device_namespace().unwrap())
-                        .unwrap()
-                );
+                let device_id = temp
+                    .id(&redis_ctx.get_external_device_namespace().unwrap())
+                    .unwrap();
+                println!("\tInternal ID for device: {}", device_id);
+                let rn = &redis_ctx.namespace;
+
+                // add this sensor to member set if it's never been seen before
+                //unimplemented!();
+
+                // lookup associated tank
+                let assoc_tank_num: Result<Option<u16>, _> = redis_ctx
+                    .conn
+                    .hget(format!("{}/temp_sensors/{}", rn, device_id), "tank");
+
+                let _ = assoc_tank_num
+                    .iter()
+                    .flatten()
+                    .map(|t| println!("tank # {}", t));
                 println!("");
             }
             _ => {}
