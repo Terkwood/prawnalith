@@ -97,7 +97,19 @@ fn generate_status(
                     .unwrap_or("".to_string());
                 let trailing_space = " ";
 
-                tank_string + &temp_string + &ph_string + trailing_space
+                let message = tank_string + &temp_string + &ph_string + trailing_space;
+
+                // finally, right-align the message so it lays out nicely on the LEDs
+                let l = message.to_string().len();
+                if l <= 16 {
+                  format!("{: >16}", message)
+                } else if l <= 32 {
+                  format!("{: >32}", message)
+                } else if l <= 64 {
+                  format!("{: >64}", message)
+                } else {
+                  format!("{: >128}", message)
+                }
             })
         })
         .collect();
