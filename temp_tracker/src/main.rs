@@ -11,8 +11,6 @@ extern crate uuid;
 use std::thread;
 use std::time::Duration;
 
-use rumqtt::{MqttCallback, MqttClient, MqttOptions, QoS};
-
 mod config;
 mod model;
 mod prawnqtt;
@@ -42,35 +40,12 @@ fn main() {
             config.redis_namespace.unwrap_or("".to_string()),
         )
     };
+
     let (update_s, update_r) = crossbeam_channel::bounded(5);
 
     thread::spawn(move || predis::receive_updates(update_r, &redis_ctx));
 
-    let on_temp_update = move |msg: rumqtt::Message| {
-        println!("Received payload:\n\t{:?}", msg);
-        let deser: Result<model::TempMessage, _> =
-            serde_json::from_str(std::str::from_utf8(&*msg.payload).unwrap());
-        match deser {
-            Err(_) => println!("\t[!] couldn't deserialize [!]"),
-            Ok(temp) => {
-                println!("\t{:?}", temp);
-
-                update_s.send(temp)
-            }
-        }
-    };
-
-    let mq_message_callback = MqttCallback::new().on_message(on_temp_update);
-
-    // Specify client connection options
-    let opts: MqttOptions = MqttOptions::new()
-        .set_keep_alive(*mq_keep_alive)
-        .set_reconnect(3)
-        .set_client_id(prawnqtt::generate_mq_client_id())
-        .set_broker(&format!("{}:{}", mq_host, mq_port)[..]);
-    let _ = MqttClient::start(opts, Some(mq_message_callback))
-        .expect("MQTT client couldn't start")
-        .subscribe(vec![(mq_topic, QoS::Level0)]);
+    let _ = prawnqtt::start_mqtt(update_s, mq_host, *mq_port, &mq_topic, *mq_keep_alive);
 
     thread::sleep(Duration::from_secs(std::u64::MAX));
 }

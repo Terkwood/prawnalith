@@ -42,6 +42,9 @@ impl RedisContext {
     }
 }
 
+/// We declare this crossbeam_channel update receiver
+/// so that we avoid a hellish realm of static lifetimes,
+/// dropped borrows, and wielded sorrows.
 pub fn receive_updates(update_r: channel::Receiver<model::TempMessage>, redis_ctx: &RedisContext) {
     loop {
         match update_r.recv() {
