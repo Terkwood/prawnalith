@@ -9,7 +9,6 @@ extern crate uuid;
 
 use rumqtt::MqttCallback;
 
-use redis::Commands;
 use uuid::Uuid;
 
 mod config;
@@ -27,23 +26,6 @@ fn generate_sensor_id(
 ) -> Result<Uuid, uuid::parser::ParseError> {
     let uuid_namespace = Uuid::parse_str(&format!("0000000000000000{}", hex_string)[..])?;
     Ok(Uuid::new_v5(&uuid_namespace, mapping_name.as_bytes()))
-}
-
-/// This is the "name" field that will be used to form a V5 UUID
-fn get_external_device_namespace(ctx: &predis::RedisContext) -> Result<Uuid, redis::RedisError> {
-    let key = format!("{}/external_device_namespace", ctx.namespace);
-    let r: Option<String> = ctx.conn.get(&key)?;
-
-    match r {
-        None => {
-            let it = Uuid::new_v4();
-            ctx.conn.set(key, it.to_string())?;
-            Ok(it)
-        }
-        Some(s) => {
-            Ok(Uuid::parse_str(&s[..]).unwrap()) // fine.  just panic then.
-        }
-    }
 }
 
 /// `external_device_id` is usually reported as a
@@ -83,7 +65,7 @@ fn main() {
         )
     };
 
-    let external_device_namespace = get_external_device_namespace(&redis_ctx).unwrap();
+    let external_device_namespace = &redis_ctx.get_external_device_namespace().unwrap();
     println!("external device namespace is {}", external_device_namespace);
 
     let mut mq_message_callback = MqttCallback::new().on_message(|msg| {
