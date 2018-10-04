@@ -15,19 +15,6 @@ mod config;
 mod prawnqtt;
 mod predis;
 
-/// parses a hexadecimal string  (e.g. "28654597090000e4") into
-/// a UUID v5.  the hex string is used to make a small UUID,
-/// which serves as the namespace for the resulting V5 UUID.
-/// this makes translation relatively easy between external
-/// id and internal ID.
-fn generate_sensor_id(
-    hex_string: &str,
-    mapping_name: &str,
-) -> Result<Uuid, uuid::parser::ParseError> {
-    let uuid_namespace = Uuid::parse_str(&format!("0000000000000000{}", hex_string)[..])?;
-    Ok(Uuid::new_v5(&uuid_namespace, mapping_name.as_bytes()))
-}
-
 /// `external_device_id` is usually reported as a
 /// e.g. "28654597090000e4"
 fn compute_internal_id(
