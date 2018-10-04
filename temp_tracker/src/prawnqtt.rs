@@ -1,12 +1,16 @@
+use super::model::TempMessage;
 use rumqtt::{MqttCallback, MqttClient, MqttOptions, QoS};
 use uuid::Uuid;
 
 pub fn mq_client(mq_host: &str, mq_port: u16, mq_keep_alive: u16) -> rumqtt::MqttClient {
     let callback = |msg: rumqtt::Message| {
         println!("Received payload: {:?}", msg);
-        //let deserialized: temp_message::TempMessage = serde_json::from_str(&msg.payload).unwrap();
-        //println!("deserialized = {:?}", deserialized);
-        println!();
+        let deser: Result<TempMessage, _> =
+            serde_json::from_str(std::str::from_utf8(&*msg.payload).unwrap());
+        match deser {
+            Ok(s) => println!("deserialized = {:?}", s),
+            Err(_) => println!("[!] couldn't deserialize [!]"),
+        }
     };
     let mq_message_callback = MqttCallback::new().on_message(callback);
 

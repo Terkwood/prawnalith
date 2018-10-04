@@ -15,9 +15,9 @@ use rumqtt::{MqttCallback, QoS};
 use uuid::Uuid;
 
 mod config;
+pub mod model;
 mod prawnqtt;
 mod predis;
-mod temp_message;
 
 /// `external_device_id` is usually reported as a
 /// e.g. "28654597090000e4"
