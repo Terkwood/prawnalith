@@ -1,5 +1,7 @@
 use redis;
 
+use std::time::SystemTime;
+
 use super::model;
 use crossbeam_channel as channel;
 use redis::Commands;
@@ -50,27 +52,64 @@ pub fn receive_updates(update_r: channel::Receiver<model::TempMessage>, redis_ct
         match update_r.recv() {
             Some(temp) => {
                 println!("\tReceived redis temp update: {:?}", temp);
-                let device_id = temp
-                    .id(&redis_ctx.get_external_device_namespace().unwrap())
-                    .unwrap();
-                println!("\tInternal ID for device: {}", device_id);
+                let device_id: String = format!(
+                    "{}",
+                    temp.id(&redis_ctx.get_external_device_namespace().unwrap())
+                        .unwrap()
+                );
+                println!("\tDevice ID (internal): {}", device_id);
                 let rn = &redis_ctx.namespace;
 
-                // add this sensor to member set if it's never been seen before
-                //unimplemented!();
+                // add to the member set if it doesn't already exist
+                let _ = redis::cmd("SADD")
+                    .arg(format!("{}/temp_sensors", rn))
+                    .arg(&device_id)
+                    .execute(&redis_ctx.conn);
 
                 // lookup associated tank
-                let assoc_tank_num: Result<Option<u16>, _> = redis_ctx
-                    .conn
-                    .hget(format!("{}/temp_sensors/{}", rn, device_id), "tank");
+                let temp_sensor_hash_key =
+                    &format!("{}/temp_sensors/{}", rn, device_id).to_string();
 
-                let _ = assoc_tank_num
-                    .iter()
-                    .flatten()
-                    .map(|t| println!("tank # {}", t));
+                let assoc_tank_num: Result<Option<u16>, _> =
+                    redis_ctx.conn.hget(temp_sensor_hash_key, "tank");
+
+                let _ = assoc_tank_num.iter().for_each(|maybe_t| {
+                    if let Some(tank_num) = maybe_t {
+                        // We found the tank associated with this
+                        // sensor ID, so we should update that tank's
+                        // current temp reading.
+                        println!("tank # {:?}", tank_num)
+                    } else {
+                        // We know that there's no associated "tank"
+                        // field for this key.  Let's make sure the key
+                        // itself exists.
+
+                        redis_ctx
+                            .conn
+                            .exists(temp_sensor_hash_key)
+                            .iter()
+                            .for_each(|e: &bool| {
+                                if !e {
+                                    // new temp sensor, make note of when it is created
+                                    let _: Result<bool, _> = redis_ctx.conn.hset(
+                                        temp_sensor_hash_key,
+                                        "created",
+                                        epoch_secs(),
+                                    );
+                                }
+                            });
+                    }
+                });
                 println!("");
             }
             _ => {}
         }
     }
+}
+
+fn epoch_secs() -> u64 {
+    SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap()
+        .as_secs()
 }
