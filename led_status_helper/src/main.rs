@@ -102,13 +102,13 @@ fn generate_status(
                 // finally, right-align the message so it lays out nicely on the LEDs
                 let l = message.to_string().len();
                 if l <= 16 {
-                  format!("{: >16}", message)
+                    format!("{: >16}", message)
                 } else if l <= 32 {
-                  format!("{: >32}", message)
+                    format!("{: >32}", message)
                 } else if l <= 64 {
-                  format!("{: >64}", message)
+                    format!("{: >64}", message)
                 } else {
-                  format!("{: >128}", message)
+                    format!("{: >128}", message)
                 }
             })
         })
