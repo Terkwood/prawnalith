@@ -54,6 +54,60 @@ fn generate_sensor_id(
     Ok(Uuid::new_v5(&uuid_namespace, mapping_name.as_bytes()))
 }
 
+struct RedisOpts {
+    conn: redis::Connection,
+    namespace: String,
+}
+
+/*
+{
+        let ext_sensor_id = "28654597090000e4";
+        println!("external sensor id             : {}", ext_sensor_id);
+        
+        println!(
+            "external sensor id (tiny UUID) : {}",
+            Uuid::parse_str(&format!("0000000000000000{}", "28654597090000e4")[..]).unwrap()
+        );
+        println!(
+            "mapping name                   : {}",
+            sensor_id_mapping_name
+        );
+        println!(
+            "internal sensor ID             : {}",
+            generate_sensor_id(ext_sensor_id, sensor_id_mapping_name).unwrap()
+        );
+    }
+    */
+
+/// This is the "name" field that will be used to form a V5 UUID
+fn get_external_device_namespace(opts: &RedisOpts) -> Result<Uuid, redis::RedisError> {
+    let key = format!("{}/external_device_namespace", opts.namespace);
+    let r: Option<String> = opts.conn.get(&key)?;
+
+    match r {
+        None => {
+            let it = Uuid::new_v4();
+            opts.conn.set(key, it.to_string())?;
+            Ok(it)
+        }
+        Some(s) => {
+            Ok(Uuid::parse_str(&s[..]).unwrap()) // fine.  just panic then.
+        }
+    }
+}
+
+/// `external_device_id` is usually reported as a
+/// e.g. "28654597090000e4"
+fn compute_internal_id(
+    external_device_id: &str,
+    external_device_namespace: Uuid,
+) -> Result<Uuid, uuid::parser::ParseError> {
+    Ok(Uuid::new_v5(
+        &external_device_namespace,
+        external_device_id.as_bytes(),
+    ))
+}
+
 fn main() {
     dotenv::dotenv().expect("Unable to load .env file");
 
@@ -63,8 +117,6 @@ fn main() {
     };
 
     // A MASSIVE BLOCK OF DEFAULT CONFIGURATIONS LIVES HERE!
-    let redis_namespace = &config.redis_namespace.unwrap_or("".to_string());
-
     let mqtt_host = &config.mqtt_host.unwrap_or("127.0.0.1".to_string());
     let mqtt_port = &config.mqtt_port.unwrap_or(1883);
     // mqtt spec states that this is measured in secs
@@ -91,64 +143,8 @@ fn main() {
         };
         redis::Client::open(rci).unwrap()
     };
-    let redis_conn = redis_client.get_connection().unwrap();
-
-    /*
-        // Open TCP connection to MQTT broker
-        let mqtt_server_addr = format!("{}:{}", mqtt_host, mqtt_port);
-        println!(
-            "Opening TCP connection to MQTT server {:?} ... ",
-            mqtt_server_addr
-        );
-        let mut mqtt_stream = TcpStream::connect(mqtt_server_addr).unwrap();
-        println!("Connected!");
-        let mqtt_client_id = generate_mqtt_client_id();
-        println!("Client identifier {:?}", mqtt_client_id);
-        let mut mqtt_conn = ConnectPacket::new("MQTT", mqtt_client_id);
-        mqtt_conn.set_clean_session(true);
-        let mut buf = Vec::new();
-        mqtt_conn.encode(&mut buf).unwrap();
-        mqtt_stream.write_all(&buf[..]).unwrap();
-    
-        let connack = ConnackPacket::decode(&mut mqtt_stream).unwrap();
-        println!("CONNACK {:?}", connack);
-    
-        if connack.connect_return_code() != ConnectReturnCode::ConnectionAccepted {
-            panic!(
-                "Failed to connect to server, return code {:?}",
-                connack.connect_return_code()
-            );
-        }
-    
-        let mqtt_channel_filter: (TopicFilter, QualityOfService) = (
-            TopicFilter::new(mqtt_topic.to_string()).unwrap(),
-            QualityOfService::Level0,
-        );
-    
-        println!("Applying channel filters {:?} ...", mqtt_channel_filter);
-        let sub = SubscribePacket::new(10, vec![mqtt_channel_filter]);
-        let mut buf = Vec::new();
-        sub.encode(&mut buf).unwrap();
-        mqtt_stream.write_all(&buf[..]).unwrap();
-    */
-    {
-        let ext_sensor_id = "28654597090000e4";
-        println!("external sensor id             : {}", ext_sensor_id);
-        println!(
-            "external sensor id (as decimal): {}",
-            i64::from_str_radix(ext_sensor_id, 16).unwrap()
-        );
-        println!(
-            "external sensor id (tiny UUID) : {}",
-            Uuid::parse_str(&format!("0000000000000000{}", "28654597090000e4")[..]).unwrap()
-        );
-        println!(
-            "mapping name                   : {}",
-            sensor_id_mapping_name
-        );
-        println!(
-            "internal sensor ID             : {}",
-            generate_sensor_id(ext_sensor_id, sensor_id_mapping_name).unwrap()
-        );
-    }
+    let redis_opts = RedisOpts {
+        conn: redis_client.get_connection().unwrap(),
+        namespace: config.redis_namespace.unwrap_or("".to_string()),
+    };
 }
