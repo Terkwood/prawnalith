@@ -12,20 +12,9 @@ use rumqtt::MqttCallback;
 use redis::Commands;
 use uuid::Uuid;
 
+mod config;
 mod prawnqtt;
 mod predis;
-
-#[derive(Deserialize, Debug, Clone)]
-struct Config {
-    redis_auth: Option<String>,
-    redis_host: Option<String>,
-    redis_port: Option<u16>,
-    redis_namespace: Option<String>,
-    mqtt_host: Option<String>,
-    mqtt_port: Option<u16>,
-    mqtt_topic: String,
-    mqtt_keep_alive: Option<u16>,
-}
 
 /// parses a hexadecimal string  (e.g. "28654597090000e4") into
 /// a UUID v5.  the hex string is used to make a small UUID,
@@ -97,7 +86,7 @@ fn compute_internal_id(
 fn main() {
     dotenv::dotenv().expect("Unable to load .env file");
 
-    let config = match envy::from_env::<Config>() {
+    let config = match envy::from_env::<config::Config>() {
         Ok(config) => config,
         Err(e) => panic!("Unable to parse config ({})", e),
     };
