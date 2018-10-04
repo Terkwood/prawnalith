@@ -7,10 +7,13 @@ extern crate redis;
 extern crate rumqtt;
 extern crate uuid;
 
-use rumqtt::{MqttCallback, MqttClient, MqttOptions, QoS};
+use rumqtt::MqttCallback;
 
 use redis::Commands;
 use uuid::Uuid;
+
+mod prawnqtt;
+mod predis;
 
 #[derive(Deserialize, Debug, Clone)]
 struct Config {
@@ -22,21 +25,6 @@ struct Config {
     mqtt_port: Option<u16>,
     mqtt_topic: String,
     mqtt_keep_alive: Option<u16>,
-}
-
-fn generate_mq_client_id() -> String {
-    format!("sensor_tracker/{}", Uuid::new_v4())
-}
-
-fn redis_connection_string(host: &str, port: Option<u16>, auth: Option<String>) -> String {
-    let auth_string = match auth {
-        Some(a) => format!(":{}@", a),
-        None => "".to_string(),
-    };
-
-    let port_portion: String = port.map(|p| format!(":{}", p)).unwrap_or("".to_string());
-
-    format!("redis://{}{}{}", auth_string, host, port_portion)
 }
 
 /// parses a hexadecimal string  (e.g. "28654597090000e4") into
@@ -149,13 +137,6 @@ fn main() {
     let mut mq_message_callback = MqttCallback::new().on_message(|msg| {
         println!("Received payload: {:?}", msg);
     });
-    let mut mq_request_handler = {
-        // Specify client connection options
-        let opts: MqttOptions = MqttOptions::new()
-            .set_keep_alive(*mq_keep_alive)
-            .set_reconnect(3)
-            .set_client_id(generate_mq_client_id())
-            .set_broker(&format!("{}:{}", mq_host, mq_port)[..]);
-        MqttClient::start(opts, Some(mq_message_callback)).expect("MQTT client couldn't start")
-    };
+    let mut mq_req_handler =
+        prawnqtt::mq_request_handler(mq_message_callback, mq_host, *mq_port, *mq_keep_alive);
 }
