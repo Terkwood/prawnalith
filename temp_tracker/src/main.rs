@@ -73,4 +73,9 @@ fn main() {
     });
     let mut mq_req_handler =
         prawnqtt::mq_request_handler(mq_message_callback, mq_host, *mq_port, *mq_keep_alive);
+
+    // next:
+    // deserialize json from temp sensor channel
+    // query & update redis
+    // publish message to led channel
 }
