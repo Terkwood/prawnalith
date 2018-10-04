@@ -95,7 +95,7 @@ fn generate_status(
                 let ph_string: String = maybe_ph
                     .map(move |level| format!(" {} pH", level))
                     .unwrap_or("".to_string());
-                let trailing_space = "  ";
+                let trailing_space = " ";
 
                 tank_string + &temp_string + &ph_string + trailing_space
             })
