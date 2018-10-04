@@ -10,21 +10,26 @@ pub fn start_mqtt(
     mq_topic: &str,
     mq_keep_alive: u16,
 ) {
-    let on_temp_update = move |msg: rumqtt::Message| {
-        println!("Received payload:\n\t{:?}", msg);
+    let deserialize_and_forward = move |msg: rumqtt::Message| {
+        println!("Message on {:?}", msg.topic);
         let deser: Result<model::TempMessage, _> =
             serde_json::from_str(std::str::from_utf8(&*msg.payload).unwrap());
         match deser {
-            Err(_) => println!("\t[!] couldn't deserialize [!]"),
-            Ok(temp) => {
-                println!("\t{:?}", temp);
-
+            Err(_) => println!(
+                "\t[!] couldn't deserialize payload [!]\n\t[!]\t{:?}\t[!]",
+                msg
+            ),
+            Ok(temp) =>
+            // forward the message to someone who can handle it
+            // without having to deal with sync restrictions
+            // on our local redis connection, etc
+            {
                 update_s.send(temp)
             }
         }
     };
 
-    let mq_message_callback = MqttCallback::new().on_message(on_temp_update);
+    let mq_message_callback = MqttCallback::new().on_message(deserialize_and_forward);
 
     // Specify client connection options
     let opts: MqttOptions = MqttOptions::new()

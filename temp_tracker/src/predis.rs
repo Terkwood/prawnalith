@@ -49,15 +49,13 @@ pub fn receive_updates(update_r: channel::Receiver<model::TempMessage>, redis_ct
     loop {
         match update_r.recv() {
             Some(temp) => {
-                println!(
-                    "Received redis temp update message in redis thread: {:?}",
-                    temp
-                );
+                println!("\tReceived redis temp update: {:?}", temp);
                 println!(
                     "\tInternal ID for device: {}",
                     temp.id(&redis_ctx.get_external_device_namespace().unwrap())
                         .unwrap()
                 );
+                println!("");
             }
             _ => {}
         }
