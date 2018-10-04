@@ -1,5 +1,6 @@
 use super::model::TempMessage;
-use rumqtt::{MqttCallback, MqttClient, MqttOptions, QoS};
+use rumqtt::{MqttCallback, MqttClient, MqttOptions};
+
 use uuid::Uuid;
 
 pub fn mq_client(mq_host: &str, mq_port: u16, mq_keep_alive: u16) -> rumqtt::MqttClient {
