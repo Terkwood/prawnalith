@@ -93,11 +93,10 @@ fn generate_status(
                     .map(|t| format!(" {}°{}", t, temp_unit.to_ascii_uppercase()))
                     .unwrap_or("".to_string());
                 let ph_string: String = maybe_ph
-                    .map(move |level| format!(" {} pH", level))
+                    .map(move |level| format!(" pH {}", level))
                     .unwrap_or("".to_string());
-                let trailing_space = " ";
 
-                let message = tank_string + &temp_string + &ph_string + trailing_space;
+                let message = tank_string + &temp_string + &ph_string;
 
                 // finally, right-align the message so it lays out nicely on the LEDs
                 let l = message.to_string().len();
