@@ -7,7 +7,10 @@ extern crate redis;
 extern crate rumqtt;
 extern crate uuid;
 
-use rumqtt::MqttCallback;
+use std::thread;
+use std::time::Duration;
+
+use rumqtt::{MqttCallback, QoS};
 
 use uuid::Uuid;
 
@@ -56,11 +59,11 @@ fn main() {
     let external_device_namespace = &redis_ctx.get_external_device_namespace().unwrap();
     println!("external device namespace is {}", external_device_namespace);
 
-    let _mq_req_handler = prawnqtt::mq_client(mq_host, *mq_port, *mq_keep_alive);
-
+    let _ = prawnqtt::mq_client(mq_host, *mq_port, *mq_keep_alive)
+        .subscribe(vec![(mq_topic, QoS::Level0)]);
     // next:
     // deserialize json from temp sensor channel
     // query & update redis
     // publish message to led channel
-    loop {}
+    thread::sleep(Duration::from_secs(std::u64::MAX));
 }
