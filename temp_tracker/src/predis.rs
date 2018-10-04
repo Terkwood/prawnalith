@@ -1,5 +1,7 @@
 use redis;
 
+use super::model;
+use crossbeam_channel as channel;
 use redis::Commands;
 use uuid::Uuid;
 
@@ -36,6 +38,25 @@ impl RedisContext {
             Some(s) => {
                 Ok(Uuid::parse_str(&s[..]).unwrap()) // fine.  just panic then.
             }
+        }
+    }
+}
+
+pub fn receive_updates(update_r: channel::Receiver<model::TempMessage>, redis_ctx: &RedisContext) {
+    loop {
+        match update_r.recv() {
+            Some(temp) => {
+                println!(
+                    "Received redis temp update message in redis thread: {:?}",
+                    temp
+                );
+                println!(
+                    "\tInternal ID for device: {}",
+                    temp.id(&redis_ctx.get_external_device_namespace().unwrap())
+                        .unwrap()
+                );
+            }
+            _ => {}
         }
     }
 }

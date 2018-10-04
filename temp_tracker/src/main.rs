@@ -1,4 +1,5 @@
 #![feature(slice_concat_ext)]
+extern crate crossbeam_channel;
 #[macro_use]
 extern crate serde_derive;
 extern crate dotenv;
@@ -10,12 +11,10 @@ extern crate uuid;
 use std::thread;
 use std::time::Duration;
 
-use rumqtt::{MqttCallback, QoS};
-use rumqtt::{MqttClient, MqttOptions};
-use uuid::Uuid;
+use rumqtt::{MqttCallback, MqttClient, MqttOptions, QoS};
 
 mod config;
-pub mod model;
+mod model;
 mod prawnqtt;
 mod predis;
 
@@ -43,11 +42,11 @@ fn main() {
             config.redis_namespace.unwrap_or("".to_string()),
         )
     };
+    let (update_s, update_r) = crossbeam_channel::bounded(5);
 
-    let external_device_namespace = redis_ctx.get_external_device_namespace().unwrap();
-    println!("external device namespace is {}", external_device_namespace);
+    thread::spawn(move || predis::receive_updates(update_r, &redis_ctx));
 
-    let callback = move |msg: rumqtt::Message| {
+    let on_temp_update = move |msg: rumqtt::Message| {
         println!("Received payload:\n\t{:?}", msg);
         let deser: Result<model::TempMessage, _> =
             serde_json::from_str(std::str::from_utf8(&*msg.payload).unwrap());
@@ -55,15 +54,13 @@ fn main() {
             Err(_) => println!("\t[!] couldn't deserialize [!]"),
             Ok(temp) => {
                 println!("\t{:?}", temp);
-                println!(
-                    "\tInternal ID for device: {}",
-                    model::compute_internal_id(&temp.device_id, &external_device_namespace).unwrap()
-                );
+
+                update_s.send(temp)
             }
         }
     };
 
-    let mq_message_callback = MqttCallback::new().on_message(callback);
+    let mq_message_callback = MqttCallback::new().on_message(on_temp_update);
 
     // Specify client connection options
     let opts: MqttOptions = MqttOptions::new()
@@ -71,13 +68,9 @@ fn main() {
         .set_reconnect(3)
         .set_client_id(prawnqtt::generate_mq_client_id())
         .set_broker(&format!("{}:{}", mq_host, mq_port)[..]);
-    let mq_cli = MqttClient::start(opts, Some(mq_message_callback))
+    let _ = MqttClient::start(opts, Some(mq_message_callback))
         .expect("MQTT client couldn't start")
         .subscribe(vec![(mq_topic, QoS::Level0)]);
 
-    // next:
-    // deserialize json from temp sensor channel
-    // query & update redis
-    // publish message to led channel
     thread::sleep(Duration::from_secs(std::u64::MAX));
 }

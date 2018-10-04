@@ -11,12 +11,11 @@ pub struct TempMessage {
 
 /// `external_device_id` is usually reported as a
 /// e.g. "28654597090000e4"
-pub fn compute_internal_id(
-    external_device_id: &str,
-    external_device_namespace: &Uuid,
-) -> Result<Uuid, uuid::parser::ParseError> {
-    Ok(Uuid::new_v5(
-        &external_device_namespace,
-        external_device_id.as_bytes(),
-    ))
+impl TempMessage {
+    pub fn id(&self, external_device_namespace: &Uuid) -> Result<Uuid, uuid::parser::ParseError> {
+        Ok(Uuid::new_v5(
+            &external_device_namespace,
+            self.device_id.as_bytes(),
+        ))
+    }
 }
