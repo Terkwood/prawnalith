@@ -7,10 +7,7 @@ extern crate redis;
 extern crate rumqtt;
 extern crate uuid;
 
-use std::io::{self, Write};
-use std::net::TcpStream;
-
-use rumqtt::{MqttClient, MqttOptions, QoS};
+use rumqtt::{MqttCallback, MqttClient, MqttOptions, QoS};
 
 use redis::Commands;
 use uuid::Uuid;
@@ -27,7 +24,7 @@ struct Config {
     mqtt_keep_alive: Option<u16>,
 }
 
-fn generate_mqtt_client_id() -> String {
+fn generate_mq_client_id() -> String {
     format!("sensor_tracker/{}", Uuid::new_v4())
 }
 
@@ -117,22 +114,13 @@ fn main() {
         Err(e) => panic!("Unable to parse config ({})", e),
     };
 
-    // A MASSIVE BLOCK OF DEFAULT CONFIGURATIONS LIVES HERE!
-    let mqtt_host = &config.mqtt_host.unwrap_or("127.0.0.1".to_string());
-    let mqtt_port = &config.mqtt_port.unwrap_or(1883);
+    // DEFAULT CONFIGURATIONS LIVE HERE!
+    let mq_host = &config.mqtt_host.unwrap_or("127.0.0.1".to_string());
+    let mq_port = &config.mqtt_port.unwrap_or(1883);
     // mqtt spec states that this is measured in secs
     // see http://www.steves-internet-guide.com/mqtt-keep-alive-by-example/
-    let mqtt_keep_alive = &config.mqtt_keep_alive.unwrap_or(10);
-    let mqtt_topic = &config.mqtt_topic;
-    let mut mq_request_handler = {
-        // Specify client connection options
-        let opts: MqttOptions = MqttOptions::new()
-            .set_keep_alive(*mqtt_keep_alive)
-            .set_reconnect(3)
-            .set_client_id(generate_mqtt_client_id())
-            .set_broker(&format!("{}:{}", mqtt_host, mqtt_port)[..]);
-        MqttClient::start(opts, None).expect("MQTT client couldn't start")
-    };
+    let mq_keep_alive = &config.mqtt_keep_alive.unwrap_or(10);
+    let mq_topic = &config.mqtt_topic;
 
     // Set up redis client
     let redis_client = {
@@ -153,5 +141,21 @@ fn main() {
     let redis_opts = RedisOpts {
         conn: redis_client.get_connection().unwrap(),
         namespace: config.redis_namespace.unwrap_or("".to_string()),
+    };
+
+    let external_device_namespace = get_external_device_namespace(&redis_opts).unwrap();
+    println!("external device namespace is {}", external_device_namespace);
+
+    let mut mq_message_callback = MqttCallback::new().on_message(|msg| {
+        println!("Received payload: {:?}", msg);
+    });
+    let mut mq_request_handler = {
+        // Specify client connection options
+        let opts: MqttOptions = MqttOptions::new()
+            .set_keep_alive(*mq_keep_alive)
+            .set_reconnect(3)
+            .set_client_id(generate_mq_client_id())
+            .set_broker(&format!("{}:{}", mq_host, mq_port)[..]);
+        MqttClient::start(opts, Some(mq_message_callback)).expect("MQTT client couldn't start")
     };
 }
