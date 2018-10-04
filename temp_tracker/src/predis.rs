@@ -97,10 +97,12 @@ pub fn receive_updates(update_r: channel::Receiver<model::TempMessage>, redis_ct
                             .for_each(|e: &bool| {
                                 if !e {
                                     // new temp sensor, make note of when it is created
-                                    let _: Result<bool, _> = redis_ctx.conn.hset(
+                                    let _: Result<Vec<bool>, _> = redis_ctx.conn.hset_multiple(
                                         temp_sensor_hash_key,
-                                        "created",
-                                        epoch_secs(),
+                                        &vec![
+                                            ("created", format!("{}", epoch_secs())),
+                                            ("ext_device_id", temp.device_id.to_string()),
+                                        ][..],
                                     );
                                 }
                             });
