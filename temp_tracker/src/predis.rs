@@ -78,7 +78,13 @@ pub fn receive_updates(update_r: channel::Receiver<model::TempMessage>, redis_ct
                         // We found the tank associated with this
                         // sensor ID, so we should update that tank's
                         // current temp reading.
-                        println!("tank # {:?}", tank_num)
+                        let tank_key = format!("{}/tanks/{}", rn, tank_num);
+                        let _: Result<bool, _> =
+                            redis_ctx.conn.hset(&tank_key, "temp_f", temp.temp_f);
+                        let _: Result<bool, _> =
+                            redis_ctx.conn.hset(&tank_key, "temp_c", temp.temp_c);
+                        let _: Result<bool, _> =
+                            redis_ctx.conn.hset(&tank_key, "temp_updated", epoch_secs());
                     } else {
                         // We know that there's no associated "tank"
                         // field for this key.  Let's make sure the key
