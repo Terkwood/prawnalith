@@ -12,7 +12,7 @@ services:
     ports:
       - "0.0.0.0:80:80"
   redis:
-    build: redis/.
+    image: "arm32v7/redis" 
     ports:
       - "36379:6379"
   mosquitto:
