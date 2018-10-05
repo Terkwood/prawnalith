@@ -2,6 +2,8 @@
 
 Various programs to manage sensor data from a freshwater prawn grow, and make it available from anywhere in the world, via a minimal UI.
 
+![](demo.gif)
+
 ## Resources 
 
 - Background: https://twitter.com/Terkwood/status/1044992354178994178?s=19
