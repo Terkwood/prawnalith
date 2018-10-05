@@ -1,71 +1,124 @@
-// Thanks to Chilli_Paste for working out a reliable receiver
-// See https://forum.arduino.cc/index.php?topic=514970.0
-#include <SoftwareSerial.h>
-#define  RX 8   // digital IO pin on Arduino connects to RX pin of ESP
-#define  TX 9   // digital IO pin on Arduino connects to TX pin of ESP
-SoftwareSerial esp8266(RX, TX);
+// LET THE ATTRIBUTION BE KNOWN!
+// The LED Control routines which form a subsection of this file were sourced from
+// https://tronixstuff.com/2013/10/11/tutorial-arduino-max7219-led-display-driver-ic/
 
-// for some reason this likes being smaller than 256 (the value on the other side)
-const byte serial_push_size = 128;
-char received_chars[serial_push_size];
+// They have been adapted to suit our Prawn-Growing-Delicious needs.
 
-boolean new_data = false;
+#include <WiFiClient.h>
+#include <ESP8266WiFi.h>
+#include <PubSubClient.h>
+#include <LedControl.h>
 
- 
-// receives messages which are guaranteed to have
-// { start and end markers }
-void recv() {
-  static boolean recv_in_progress = false;
-  static byte ndx = 0;
-  char start_marker = '{';
-  char end_marker = '}';
-  char rc;
-  while (esp8266.available() > 0 && new_data == false) {
-    rc = esp8266.read();
-    if (recv_in_progress == true) {
-      if (rc != end_marker) {
-        received_chars[ndx] = rc;
-        ndx++;
-        if (ndx >= serial_push_size) {
-          ndx = serial_push_size - 1;
-        }
-      }
-      else {
-        received_chars[ndx] = '\0'; // terminate the string
-        recv_in_progress = false;
-        ndx = 0;
-        new_data = true;
-      }
-    }
-    else if (rc == start_marker) {
-      recv_in_progress = true;
-    }
-  }
-  new_data = false;
+
+const char* ssid = "YOUR_SSID";             
+const char* password = "YOUR_PASS";         
+
+const char* mqtt_broker = "YOUR_BROKER";    
+const char* mqtt_topic = "YOUR_TOPIC";
+
+
+
+
+// startup spam.  only useful for when 
+// you connect to the serial monitor.
+const char* p_init_complete =     "# INIT_COMPLETE";
+const char* p_wifi_connected =    "# WIFI_CONNECTED ";
+const char* p_connect_mqtt   =    "# CONNECT_MQTT";
+const char* p_mqtt_connected =    "# MQTT_CONNECTED";
+const char* p_mqtt_failed_retry = "# MQTT_FAILED_RETRY ";
+const char* p_mqtt_subscribed =   "# MQTT_SUBSCRIBED ";
+
+
+// MQTT CHANNEL PROTOCOL
+//
+// All messages received from the MQTT channel may be
+// broadcast as-is.  They will look something like this:
+// 
+//     #1 81.50°F pH 7.01 #2 82.03°F pH 6.89
+// 
+
+
+WiFiClient wifi_client;
+PubSubClient mqtt_client(wifi_client);
+
+
+#define SCROLL_TEXT_SIZE 256
+char scroll_text[SCROLL_TEXT_SIZE] = { "   OK   \0" };
+
+
+void mq_subscribe_callback(char* topic, byte* payload, unsigned int payload_length) {
+  memcpy(scroll_text, payload, payload_length); // memcpy is your friend here
 }
 
 
-// LED Control routines sourced from https://tronixstuff.com/2013/10/11/tutorial-arduino-max7219-led-display-driver-ic/
+void init_wifi() {
+  // Connect to WiFi network
+  
+  WiFi.begin(ssid, password);
+   
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(25);
+  }
 
-#include <LedControl.h>
+  Serial.print(p_wifi_connected);
+  Serial.print(" ");
+  Serial.print(ssid);
+  Serial.println(WiFi.localIP());
 
-const int num_devices = 4;      // number of MAX7219s used
-const long scroll_delay = 75;   // adjust scrolling speed
+  Serial.println(p_init_complete);
+}
+ 
+void init_mqtt() {
+  // We'll need to randomly generate a client ID later.
+  randomSeed(micros());
 
-unsigned long buffer_long [14] = {0}; 
-
-LedControl lc=LedControl(10,13,11,4);
-
-// pin 10 is connected to the MAX7219 pin 1
-// pin 13 is connected to the CLK pin 13
-// pin 11 is connected to LOAD pin 12
-// Using 4 LED segments
+  mqtt_client.setServer(mqtt_broker, 1883);
+  mqtt_client.setCallback(mq_subscribe_callback);
+}
 
 
-char scroll_text[serial_push_size] = { "   OK\0" };
+void connect_mqtt() {
+  // Signal across the line that we're trying to
+  // connect.
+  Serial.println(p_connect_mqtt);
+
+  // Loop until we're connected
+  while (!mqtt_client.connected()) {
+    // Create a random client ID
+    String clientId = "espLED_";
+    clientId += String(random(0xffff), HEX);
+    
+    // Attempt to connect
+    if (mqtt_client.connect(clientId.c_str())) {
+      Serial.println(p_mqtt_connected);
+      mqtt_client.subscribe(mqtt_topic);
+      Serial.print(p_mqtt_subscribed);
+      Serial.println(mqtt_topic);
+    } else {
+      Serial.print(p_mqtt_failed_retry);
+      Serial.println(mqtt_client.state());
+      
+      delay(5000);
+    }
+  }
+}
+
+
+// LED MATRIX CONFIGURATION
+const int num_led_devices = 4;      // number of MAX7219s used
+const long scroll_delay = 75;       // scrolling speed
+
+unsigned long led_buffer_long [14] = {0}; 
+
+// ESP8266 D7 (MOSI) is connected to the LED Data in
+// ESP8266 D5 (CLK)  is connected to the LED CLK 
+// ESP8266 D6        is connected to LED LOAD 
+// We're using 4 LED segments
+LedControl lc=LedControl(D7,D5,D6,4);
+
 
 void init_leds() {
-     for (int x=0; x<num_devices; x++){
+     for (int x=0; x<num_led_devices; x++){
         lc.shutdown(x,false);       //The MAX72XX is in power-saving mode on startup
         lc.setIntensity(x,8);       // Set the brightness to default value
         lc.clearDisplay(x);         // and clear the display
@@ -941,42 +994,42 @@ const char font5x7 [] PROGMEM = {      //Numeric Font Matrix (Arranged as 7x fon
 };
 
 // Load character into scroll buffer
-void load_buffer_long(int ascii){
+void load_led_buffer_long(int ascii){
     if (ascii >= 0x20 && ascii <=0x7f){
         for (int a=0; a<7; a++){                      // Loop 7 times for a 5x7 font
             unsigned long c = pgm_read_byte_near(font5x7 + ((ascii - 0x20) * 8) + a);     // Index into character table to get row data
-            unsigned long x = buffer_long [a*2];     // Load current scroll buffer
+            unsigned long x = led_buffer_long [a*2];     // Load current scroll buffer
             x = x | c;                              // OR the new character onto end of current
-            buffer_long [a*2] = x;                   // Store in buffer
+            led_buffer_long [a*2] = x;                   // Store in buffer
         }
         byte count = pgm_read_byte_near(font5x7 +((ascii - 0x20) * 8) + 7);     // Index into character table for kerning data
         for (byte x=0; x<count;x++){
-            rotate_buffer_long();
-            print_buffer_long();
+            rotate_led_buffer_long();
+            print_led_buffer_long();
             delay(scroll_delay);
         }
     }
 }
 // Rotate the buffer
-void rotate_buffer_long(){
+void rotate_led_buffer_long(){
     for (int a=0;a<7;a++){                      // Loop 7 times for a 5x7 font
-        unsigned long x = buffer_long [a*2];     // Get low buffer entry
+        unsigned long x = led_buffer_long [a*2];     // Get low buffer entry
         byte b = bitRead(x,31);                 // Copy high order bit that gets lost in rotation
         x = x<<1;                               // Rotate left one bit
-        buffer_long [a*2] = x;                   // Store new low buffer
-        x = buffer_long [a*2+1];                 // Get high buffer entry
+        led_buffer_long [a*2] = x;                   // Store new low buffer
+        x = led_buffer_long [a*2+1];                 // Get high buffer entry
         x = x<<1;                               // Rotate left one bit
         bitWrite(x,0,b);                        // Store saved bit
-        buffer_long [a*2+1] = x;                 // Store new high buffer
+        led_buffer_long [a*2+1] = x;                 // Store new high buffer
     }
 }  
 // Display Buffer on LED matrix
-void print_buffer_long(){
+void print_led_buffer_long(){
   for (int a=0;a<7;a++){                    // Loop 7 times for a 5x7 font
-    unsigned long x = buffer_long [a*2+1];  // Get high buffer entry
+    unsigned long x = led_buffer_long [a*2+1];  // Get high buffer entry
     byte y = x;                             // Mask off first character
     lc.setRow(3,a,y);                       // Send row to relevent MAX7219 chip
-    x = buffer_long [a*2];                  // Get low buffer entry
+    x = led_buffer_long [a*2];                  // Get low buffer entry
     y = (x>>24);                            // Mask off second character
     lc.setRow(2,a,y);                       // Send row to relevent MAX7219 chip
     y = (x>>16);                            // Mask off third character
@@ -988,30 +1041,38 @@ void print_buffer_long(){
 
 
 
+  
+void setup() {
+  Serial.begin(115200);
+  
+  init_wifi();
 
-
-void setup(){
-  Serial.begin(9600);
-  esp8266.begin(9600);
-
+  init_mqtt();
+ 
   init_leds();
 }
 
 
+
 static int last_scroll_ms = 0;
-const int scroll_freq_ms = 15000;
-void loop(){
-    recv();
-    
-    int now = millis();
-    if (now > last_scroll_ms + scroll_freq_ms) {
-      strlcpy(scroll_text, received_chars, serial_push_size);
-      Serial.print("Display: ");
-      Serial.println(scroll_text);
+const int scroll_freq_ms  = 12500;
+
+void loop() { 
+  if (!mqtt_client.connected()) {
+    connect_mqtt();
+  }
+
+  mqtt_client.loop();
   
-      for (int i = 0; i < serial_push_size; i++) {
-        load_buffer_long((int) scroll_text[i]);
-      }
-      last_scroll_ms = millis();
+  int now = millis();
+  if (now > last_scroll_ms + scroll_freq_ms) {
+    
+    Serial.print("Display: ");
+    Serial.println(scroll_text);
+
+    for (int i = 0; i < SCROLL_TEXT_SIZE; i++) {
+      load_led_buffer_long((int) scroll_text[i]);
     }
+    last_scroll_ms = millis();
+  }
 }
