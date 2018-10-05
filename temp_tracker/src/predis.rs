@@ -103,11 +103,6 @@ pub fn receive_updates(update_r: channel::Receiver<model::TempMessage>, redis_ct
                             ][..],
                         );
 
-                        let _update_sensor_hits: Result<String, _> = redis_ctx.conn.hset(
-                            temp_sensor_hash_key,
-                            "temp_update_count",
-                            maybe_temp_sensor_uc.map(|u| u + 1).unwrap_or(1),
-                        );
                         if let Err(e) = update {
                             println!("update fails for {}: {:?}", tank_key, e);
                         }
@@ -136,7 +131,26 @@ pub fn receive_updates(update_r: channel::Receiver<model::TempMessage>, redis_ct
                             });
                     };
 
-                    // record a hit on the temp updates
+                    // record a hit on the temp updates that the sensor has seen
+                    // and also record the most recent temp on the sensor itself
+                    let update_sensor: Result<String, _> = redis_ctx.conn.hset_multiple(
+                        temp_sensor_hash_key,
+                        &vec![
+                            (
+                                "temp_update_count",
+                                maybe_temp_sensor_uc.map(|u| u + 1).unwrap_or(1).to_string(),
+                            ),
+                            ("temp_f", temp.temp_f.to_string()),
+                            ("temp_c", temp.temp_c.to_string()),
+                            ("temp_update_time", epoch_secs().to_string()),
+                        ][..],
+                    );
+                    if let Err(e) = update_sensor {
+                        println!(
+                            "couldn't update sensor record {}: {:?}",
+                            temp_sensor_hash_key, e
+                        );
+                    }
                 });
                 println!("");
             }
