@@ -36,19 +36,3 @@ that the LED status utility can properly format messages.
 ```
 HSET <namespace>:temp_sensors/<hex_id> tank 0
 ```
-
-## Paho C Libraries for rust client
-
-You need to install the Paho C libraries in the standard
-location in order to use the rust client lib:
-
-```
-git clone https://github.com/eclipse/paho.mqtt.c.git
-cd org.eclipse.paho.mqtt.c.git
-make
-sudo make install
-```
-
-See https://www.eclipse.org/paho/clients/c/#.
-
-This must be included in the Dockerfile which uses our build.
