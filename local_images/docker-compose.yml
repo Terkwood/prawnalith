@@ -15,6 +15,8 @@ services:
     image: "arm32v7/redis" 
     ports:
       - "36379:6379"
+    volumes:
+      - "$PWD/redis_volume:/data"
   mosquitto:
     build: mosquitto/.
     ports:
