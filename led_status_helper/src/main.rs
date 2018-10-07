@@ -157,21 +157,22 @@ fn main() {
         MqttClient::start(opts, None).expect("MQTT client couldn't start")
     };
 
+    let mut last_publish = std::time::SystemTime::now();
     loop {
-        let status = generate_status(
-            &redis_conn,
-            &config.temp_unit.unwrap_or('F'),
-            &config.redis_namespace.clone().unwrap_or("".to_string()),
-        );
-        mq_cli
-            .publish(
-                &config.mqtt_topic,
-                QoS::Level0,
-                status.unwrap().clone().into_bytes(),
-            )
-            .unwrap();
-
-        // let the other thread do its thing before we exit
-        std::thread::sleep(std::time::Duration::from_secs(13));
+        if last_publish.elapsed().unwrap().as_secs() > 10 {
+            let status = generate_status(
+                &redis_conn,
+                &config.temp_unit.unwrap_or('F'),
+                &config.redis_namespace.clone().unwrap_or("".to_string()),
+            );
+            mq_cli
+                .publish(
+                    &config.mqtt_topic,
+                    QoS::Level0,
+                    status.unwrap().clone().into_bytes(),
+                )
+                .unwrap();
+            last_publish = std::time::SystemTime::now();
+        }
     }
 }
