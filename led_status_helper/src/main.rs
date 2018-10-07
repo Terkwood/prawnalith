@@ -141,13 +141,7 @@ fn main() {
     };
     let redis_conn = redis_client.get_connection().unwrap();
 
-    let status = generate_status(
-        &redis_conn,
-        &config.temp_unit.unwrap_or('F'),
-        &config.redis_namespace.unwrap_or("".to_string()),
-    );
-
-    let mut mq_request_handler = {
+    let mut mq_cli = {
         // Specify client connection options
         let opts: MqttOptions = MqttOptions::new()
             .set_keep_alive(5)
@@ -163,15 +157,21 @@ fn main() {
         MqttClient::start(opts, None).expect("MQTT client couldn't start")
     };
 
-    mq_request_handler
-        .publish(
-            &config.mqtt_topic,
-            QoS::Level0,
-            status.unwrap().clone().into_bytes(),
-        )
-        .unwrap();
+    loop {
+        let status = generate_status(
+            &redis_conn,
+            &config.temp_unit.unwrap_or('F'),
+            &config.redis_namespace.clone().unwrap_or("".to_string()),
+        );
+        mq_cli
+            .publish(
+                &config.mqtt_topic,
+                QoS::Level0,
+                status.unwrap().clone().into_bytes(),
+            )
+            .unwrap();
 
-    // let the other thread do its thing before we exit
-    std::thread::sleep(std::time::Duration::from_millis(1000));
-    let _ = mq_request_handler.disconnect();
+        // let the other thread do its thing before we exit
+        std::thread::sleep(std::time::Duration::from_secs(13));
+    }
 }
