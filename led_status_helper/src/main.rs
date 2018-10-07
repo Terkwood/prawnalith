@@ -157,9 +157,7 @@ fn main() {
         MqttClient::start(opts, None).expect("MQTT client couldn't start")
     };
 
-    let mut last_publish = std::time::SystemTime::now();
     loop {
-        if last_publish.elapsed().unwrap().as_secs() > 10 {
             let status = generate_status(
                 &redis_conn,
                 &config.temp_unit.unwrap_or('F'),
@@ -172,7 +170,6 @@ fn main() {
                     status.unwrap().clone().into_bytes(),
                 )
                 .unwrap();
-            last_publish = std::time::SystemTime::now();
-        }
+            std::thread::sleep(std::time::Duration::from_millis(13000));
     }
 }
