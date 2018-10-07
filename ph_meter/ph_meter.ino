@@ -1,4 +1,7 @@
 // SEN 0169 reader and LCD display
+// Adapted from https://www.dfrobot.com/wiki/index.php/Analog_pH_Meter_Pro_SKU:SEN0169
+// But we had to change the scaling significantly
+// and we added LCD.
 
 #include <LiquidCrystal.h>
 
