@@ -158,18 +158,18 @@ fn main() {
     };
 
     loop {
-            let status = generate_status(
-                &redis_conn,
-                &config.temp_unit.unwrap_or('F'),
-                &config.redis_namespace.clone().unwrap_or("".to_string()),
-            );
-            mq_cli
-                .publish(
-                    &config.mqtt_topic,
-                    QoS::Level0,
-                    status.unwrap().clone().into_bytes(),
-                )
-                .unwrap();
-            std::thread::sleep(std::time::Duration::from_millis(13000));
+        let status = generate_status(
+            &redis_conn,
+            &config.temp_unit.unwrap_or('F'),
+            &config.redis_namespace.clone().unwrap_or("".to_string()),
+        );
+        mq_cli
+            .publish(
+                &config.mqtt_topic,
+                QoS::Level0,
+                status.unwrap().clone().into_bytes(),
+            )
+            .unwrap();
+        std::thread::sleep(std::time::Duration::from_millis(13000));
     }
 }
