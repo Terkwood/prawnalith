@@ -22,6 +22,7 @@ struct Config {
     mqtt_port: Option<u16>,
     mqtt_topic: String,
     temp_unit: Option<char>,
+    wait_secs: Option<u64>,
 }
 
 fn generate_mq_client_id() -> String {
@@ -157,6 +158,8 @@ fn main() {
         MqttClient::start(opts, None).expect("MQTT client couldn't start")
     };
 
+    let wait_secs = config.wait_secs.unwrap_or(10);
+
     loop {
         let status = generate_status(
             &redis_conn,
@@ -170,6 +173,6 @@ fn main() {
                 status.unwrap().clone().into_bytes(),
             )
             .unwrap();
-        std::thread::sleep(std::time::Duration::from_millis(13000));
+        std::thread::sleep(std::time::Duration::from_secs(wait_secs));
     }
 }
