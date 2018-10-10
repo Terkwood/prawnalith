@@ -26,6 +26,6 @@ RUN set -eux; \
 rustc --version;
 
 RUN rustup default nightly
-RUN rustup update && cargo update
+RUN rustup update
 
 ENTRYPOINT tail -f /dev/null
