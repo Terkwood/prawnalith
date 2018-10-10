@@ -1,3 +1,3 @@
-# Prawnstars Raspberry Pi Dockerfile
+# Rust Raspberry Pi Dockerfile
 
-This is a Dockerfile which installs rust and [Rocket](https://rocket.rs/) on a Raspberry Pi.
+This is a Dockerfile which installs rust-lang on a Raspberry Pi.

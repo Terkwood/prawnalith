@@ -3,7 +3,7 @@ FROM prawnalith/local/base
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH=/usr/local/cargo/bin:$PATH \
-    RUST_VERSION=1.29.0
+    RUST_VERSION=1.29.1
 
 RUN set -eux; \
     dpkgArch="$(dpkg --print-architecture)"; \
@@ -25,15 +25,7 @@ RUN set -eux; \
     cargo --version; \
 rustc --version;
 
-RUN apt-get install -y git
-RUN git clone https://github.com/SergioBenitez/Rocket
-WORKDIR "/Rocket"
-RUN git checkout v0.3.16
-WORKDIR "/Rocket/examples/hello_world"
 RUN rustup default nightly
 RUN rustup update && cargo update
-RUN cargo build --release
 
-EXPOSE 8000
-ENTRYPOINT ROCKET_ADDRESS=0.0.0.0 ROCKET_PORT=80 /Rocket/target/release/hello_world
-
+ENTRYPOINT tail -f /dev/null
