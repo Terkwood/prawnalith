@@ -44,17 +44,7 @@ fn lookup_ph_calibration_by_ext_id(
     let id = external_id::resolve(&ext_id.ext_id, namespace)?;
 
     let calibration = predis::lookup_ph_calibration(id, lock.deref())?;
-    Ok(format!(
-        "low_ph_ref,low_mv,hi_ph_ref,hi_mv\n{:.*},{:.*},{:.*},{:.*}\n",
-        2,
-        calibration.low.ph_ref,
-        2,
-        calibration.low.mv,
-        2,
-        calibration.hi.ph_ref,
-        2,
-        calibration.hi.mv,
-    ))
+    Ok(calibration.as_csv())
 }
 
 /// Try
@@ -69,17 +59,7 @@ fn lookup_ph_calibration(
     let id = Uuid::parse_str(&uuid)?;
 
     let calibration = predis::lookup_ph_calibration(id, redis_ctx.lock().unwrap().deref())?;
-    Ok(format!(
-        "low_ph_ref,low_mv,hi_ph_ref,hi_mv\n{:.*},{:.*},{:.*},{:.*}\n",
-        2,
-        calibration.low.ph_ref,
-        2,
-        calibration.low.mv,
-        2,
-        calibration.hi.ph_ref,
-        2,
-        calibration.hi.mv,
-    ))
+    Ok(calibration.as_csv())
 }
 
 pub fn startup(redis_ctx: Arc<Mutex<RedisContext>>) {

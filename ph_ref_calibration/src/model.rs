@@ -19,6 +19,15 @@ pub struct PhCalibration {
     pub hi: PhRefValue,
 }
 
+impl PhCalibration {
+    pub fn as_csv(&self) -> String {
+        format!(
+            "low_ph_ref,low_mv,hi_ph_ref,hi_mv\n{:.*},{:.*},{:.*},{:.*}\n",
+            2, self.low.ph_ref, 2, self.low.mv, 2, self.hi.ph_ref, 2, self.hi.mv,
+        )
+    }
+}
+
 pub struct PhRefValue {
     pub ph_ref: f32, // pH reference level
     pub mv: f32,     // millivolt reading
