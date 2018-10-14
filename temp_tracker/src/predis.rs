@@ -18,7 +18,9 @@ pub fn receive_updates(update_r: channel::Receiver<model::TempMessage>, redis_ct
                 println!("\tReceived redis temp update: {:?}", temp);
                 let device_id: String = format!(
                     "{}",
-                    temp.id(&redis_ctx.get_external_device_namespace().unwrap())
+                    temp.id(&redis_ctx
+                        .get_external_device_namespace("temp".to_string())
+                        .unwrap())
                         .unwrap()
                 );
                 println!("\tDevice ID (internal): {}", device_id);
