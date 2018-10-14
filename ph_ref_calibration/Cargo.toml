@@ -5,3 +5,9 @@ authors = ["Terkwood <metaterkhorn@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+dotenv = "0.13.0"
+envy = "0.3.2"
+redis = "0.9.1"
+rocket = "0.3.17"
+rocket_codegen = "0.3.17"
+uuid = { version = "0.7", features = ["v4"] }
