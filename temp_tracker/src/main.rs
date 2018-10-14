@@ -5,11 +5,14 @@ extern crate serde_derive;
 extern crate dotenv;
 extern crate envy;
 extern crate redis;
+extern crate redis_context;
 extern crate rumqtt;
 extern crate uuid;
 
 use std::thread;
 use std::time::Duration;
+
+use redis_context::RedisContext;
 
 mod config;
 mod model;
@@ -33,7 +36,7 @@ fn main() {
         let redis_host = &config.redis_host.unwrap_or("127.0.0.1".to_string());
         let redis_port: u16 = config.redis_port.unwrap_or(6379);
         let redis_auth: Option<String> = config.redis_auth;
-        predis::RedisContext::new(
+        RedisContext::new(
             redis_host.to_string(),
             redis_port,
             redis_auth,
