@@ -3,15 +3,7 @@ use uuid::Uuid;
 
 use redis_context::RedisContext;
 
-pub struct PhCalibration {
-    pub low: PhRefValue,
-    pub hi: PhRefValue,
-}
-
-pub struct PhRefValue {
-    pub ph_ref: f32, // pH reference level
-    pub mv: f32,     // millivolt reading
-}
+use super::model::*;
 
 pub fn lookup_ph_calibration(
     id: Uuid,
