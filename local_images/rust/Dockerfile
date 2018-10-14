@@ -3,7 +3,7 @@ FROM prawnalith/local/base
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH=/usr/local/cargo/bin:$PATH \
-    RUST_VERSION=1.29.1
+    RUST_VERSION=1.29.2
 
 RUN set -eux; \
     dpkgArch="$(dpkg --print-architecture)"; \
