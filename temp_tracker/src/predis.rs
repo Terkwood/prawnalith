@@ -1,6 +1,9 @@
-use redis;
-
 use std::time::SystemTime;
+
+use redis;
+use redis::Commands;
+
+use redis_context::RedisContext;
 
 use super::model;
 use crossbeam_channel as channel;

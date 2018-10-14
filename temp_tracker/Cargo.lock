@@ -515,6 +515,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "redis_context"
+version = "0.1.0"
+dependencies = [
+ "redis 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "uuid 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "regex"
 version = "0.1.80"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -687,6 +695,7 @@ dependencies = [
  "dotenv 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "envy 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "redis 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "redis_context 0.1.0",
  "rumqtt 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",

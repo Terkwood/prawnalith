@@ -9,6 +9,7 @@ crossbeam-channel = "0.2"
 dotenv = "0.13"
 envy = "0.3"
 redis = "0.9"
+redis_context = { path = "../redis_context" }
 rumqtt = "0.10"
 serde = "1.0"
 serde_derive = "1.0"
