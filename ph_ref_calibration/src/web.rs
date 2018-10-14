@@ -12,12 +12,13 @@ use super::predis;
 #[derive(FromForm)]
 struct ExtId {
     ext_id: String,
+    device_type: String,
 }
 
 /// You need to Accept: text/plain in your get request
 /// e.g.
 /// ```
-/// curl http://localhost:8000/id\?ext_id\=AAAA0000 -H "Accept: text/plain"
+/// curl http://localhost:8000/id\?ext_id\=AAAA0000&device_type=temp -H "Accept: text/plain"
 /// ```
 #[get("/id?<ext_id>", format = "text/plain")]
 fn resolve_external_id(
@@ -25,7 +26,7 @@ fn resolve_external_id(
     redis_ctx: State<Arc<Mutex<RedisContext>>>,
 ) -> Result<String, WebError> {
     let lock = redis_ctx.lock().unwrap();
-    let namespace = lock.get_external_device_namespace()?;
+    let namespace = lock.get_external_device_namespace(ext_id.device_type)?;
     Ok(format!(
         "{}\n",
         external_id::resolve(&ext_id.ext_id, namespace)?.to_string()

@@ -43,3 +43,21 @@ impl RedisContext {
         }
     }
 }
+
+
+pub enum ExternalDevice {
+    Temp,
+    PH,
+    Unknown
+}
+
+
+impl From<String> for ExternalDevice {
+    fn from(device_type: String) -> Self {
+        match device_type.to_lowercase().trim() {
+            "temp" => ExternalDevice::Temp,
+            "ph" => ExternalDevice::PH,
+            _ => ExternalDevice::Unknown
+        }
+    }
+}
