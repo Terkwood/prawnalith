@@ -46,8 +46,15 @@ fn lookup_ph_calibration(
 
     let calibration = predis::lookup_ph_calibration(id, redis_ctx.lock().unwrap().deref())?;
     Ok(format!(
-        "ref_7_0,ref_4_01\n{:.*},{:.*}\n",
-        2, calibration.ref_7_0, 2, calibration.ref_4_01
+        "low_ph_ref,low_mv,hi_ph_ref,hi_mv\n{:.*},{:.*},{:.*},{:.*}\n",
+        2,
+        calibration.low.ph_ref,
+        2,
+        calibration.low.mv,
+        2,
+        calibration.hi.ph_ref,
+        2,
+        calibration.hi.mv,
     ))
 }
 

@@ -4,8 +4,13 @@ use uuid::Uuid;
 use redis_context::RedisContext;
 
 pub struct PhCalibration {
-    pub ref_7_0: f32,
-    pub ref_4_01: f32,
+    pub low: PhRefValue,
+    pub hi: PhRefValue,
+}
+
+pub struct PhRefValue {
+    pub ph_ref: f32, // pH reference level
+    pub mv: f32,     // millivolt reading
 }
 
 pub fn lookup_ph_calibration(
@@ -14,10 +19,16 @@ pub fn lookup_ph_calibration(
 ) -> Result<PhCalibration, redis::RedisError> {
     let r: Vec<Option<f32>> = redis_ctx.conn.hget(
         format!("{}/sensors/ph/{}", redis_ctx.namespace, id),
-        vec!["ref_7_0", "ref_4_01"],
+        vec!["low_ph_ref", "low_mv", "hi_ph_ref", "hi_mv"],
     )?;
     Ok(PhCalibration {
-        ref_7_0: r[0].unwrap_or(0.0),
-        ref_4_01: r[1].unwrap_or(0.0),
+        low: PhRefValue {
+            ph_ref: r[0].unwrap_or(0.0),
+            mv: r[1].unwrap_or(0.0),
+        },
+        hi: PhRefValue {
+            ph_ref: r[2].unwrap_or(0.0),
+            mv: r[3].unwrap_or(0.0),
+        },
     })
 }
