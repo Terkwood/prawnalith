@@ -1,6 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use rocket::State;
+use uuid::Uuid;
 
 use redis_context::RedisContext;
 
@@ -25,6 +26,13 @@ fn resolve_external_id(
     let lock = redis_ctx.lock().unwrap();
     let namespace = lock.get_external_device_namespace()?;
     Ok(external_id::resolve(&ext_id.ext_id, namespace)?.to_string())
+}
+
+fn lookup_ph_calibration(
+    id: Uuid,
+    redis_ctx: State<Arc<Mutex<RedisContext>>>,
+) -> Result<String, redis::RedisError> {
+    unimplemented!()
 }
 
 pub fn startup(redis_ctx: Arc<Mutex<RedisContext>>) {

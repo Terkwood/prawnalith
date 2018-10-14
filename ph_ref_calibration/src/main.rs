@@ -12,6 +12,7 @@ extern crate redis_context;
 
 mod config;
 mod external_id;
+mod predis;
 mod web;
 
 use std::sync::{Arc, Mutex};
