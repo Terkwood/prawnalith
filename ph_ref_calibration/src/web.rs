@@ -32,6 +32,10 @@ fn resolve_external_id(
     ))
 }
 
+/// Try
+/// ```
+/// curl http://localhost:8000/sensors/ph/ffffffff-ffff-aaaa-eeee-bbbbddddaaaa/calibration -H "Accept: text/csv"
+/// ```
 #[get("/sensors/ph/<uuid>/calibration", format = "text/csv")]
 fn lookup_ph_calibration(
     uuid: String,
@@ -41,8 +45,8 @@ fn lookup_ph_calibration(
 
     let calibration = predis::lookup_ph_calibration(id, redis_ctx.lock().unwrap().deref())?;
     Ok(format!(
-        "ref_7_0,ref_4_01\n{},{}\n",
-        calibration.ref_7_0, calibration.ref_4_01
+        "ref_7_0,ref_4_01\n{:.*},{:.*}\n",
+        2, calibration.ref_7_0, 2, calibration.ref_4_01
     ))
 }
 

@@ -24,9 +24,12 @@ impl RedisContext {
     }
 
     /// This is the "name" field that will be used to form a V5 UUID
-    pub fn get_external_device_namespace(&self) -> Result<Uuid, redis::RedisError> {
+    pub fn get_external_device_namespace(
+        &self,
+        device_type: String,
+    ) -> Result<Uuid, redis::RedisError> {
         let key = format!("{}/external_device_namespace", self.namespace);
-        let r: Option<String> = self.conn.get(&key)?;
+        let r: Option<String> = self.conn.hget(&key, device_type)?;
 
         match r {
             None => {
