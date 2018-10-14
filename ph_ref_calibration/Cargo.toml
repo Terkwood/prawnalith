@@ -14,4 +14,5 @@ rocket_codegen = "0.3.17"
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
-uuid = { version = "0.7", features = ["v4"] }
+uuid = { version = "0.7", features = ["v4", "v5"] }
+
