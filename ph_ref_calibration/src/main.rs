@@ -1,9 +1,17 @@
-#![feature(proc_macro_hygiene, decl_macro)]
+#![feature(decl_macro)]
+#![feature(custom_attribute)]
+#![feature(custom_derive)]
+#![feature(plugin)]
+#![plugin(rocket_codegen)]
 
-#[macro_use] extern crate rocket;
+extern crate rocket;
+#[macro_use]
+extern crate serde_derive;
 
 mod config;
-mod routes;
+mod web;
+
+use self::config::Config;
 
 fn main() {
     dotenv::dotenv().expect("Unable to load .env file");
@@ -13,5 +21,5 @@ fn main() {
         Err(e) => panic!("Unable to parse config ({})", e),
     };
 
-    rocket::ignite().mount("/", routes![routes::resolve_external_id]).launch();
+    web::startup();
 }
