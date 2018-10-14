@@ -1,48 +1,12 @@
-use redis;
-
 use std::time::SystemTime;
+
+use redis;
+use redis::Commands;
+
+use redis_context::RedisContext;
 
 use super::model;
 use crossbeam_channel as channel;
-use redis::Commands;
-use uuid::Uuid;
-
-pub struct RedisContext {
-    pub conn: redis::Connection,
-    pub namespace: String,
-}
-impl RedisContext {
-    pub fn new(host: String, port: u16, auth: Option<String>, namespace: String) -> RedisContext {
-        RedisContext {
-            conn: {
-                let rci = redis::ConnectionInfo {
-                    addr: Box::new(redis::ConnectionAddr::Tcp(host.to_string(), port)),
-                    db: 0,
-                    passwd: auth,
-                };
-                redis::Client::open(rci).unwrap().get_connection().unwrap()
-            },
-            namespace: namespace,
-        }
-    }
-
-    /// This is the "name" field that will be used to form a V5 UUID
-    pub fn get_external_device_namespace(&self) -> Result<Uuid, redis::RedisError> {
-        let key = format!("{}/external_device_namespace", self.namespace);
-        let r: Option<String> = self.conn.get(&key)?;
-
-        match r {
-            None => {
-                let it = Uuid::new_v4();
-                self.conn.set(key, it.to_string())?;
-                Ok(it)
-            }
-            Some(s) => {
-                Ok(Uuid::parse_str(&s[..]).unwrap()) // fine.  just panic then.
-            }
-        }
-    }
-}
 
 /// We declare this crossbeam_channel update receiver
 /// so that we avoid a hellish realm of static lifetimes,
@@ -54,7 +18,9 @@ pub fn receive_updates(update_r: channel::Receiver<model::TempMessage>, redis_ct
                 println!("\tReceived redis temp update: {:?}", temp);
                 let device_id: String = format!(
                     "{}",
-                    temp.id(&redis_ctx.get_external_device_namespace().unwrap())
+                    temp.id(&redis_ctx
+                        .get_external_device_namespace("temp".to_string())
+                        .unwrap())
                         .unwrap()
                 );
                 println!("\tDevice ID (internal): {}", device_id);
@@ -62,13 +28,13 @@ pub fn receive_updates(update_r: channel::Receiver<model::TempMessage>, redis_ct
 
                 // add to the member set if it doesn't already exist
                 let _ = redis::cmd("SADD")
-                    .arg(format!("{}/temp_sensors", rn))
+                    .arg(format!("{}/sensors/temp", rn))
                     .arg(&device_id)
                     .execute(&redis_ctx.conn);
 
                 // lookup associated tank
                 let temp_sensor_hash_key =
-                    &format!("{}/temp_sensors/{}", rn, device_id).to_string();
+                    &format!("{}/sensors/temp/{}", rn, device_id).to_string();
 
                 let assoc_tank_num: Result<Vec<Option<u64>>, _> = redis_ctx
                     .conn
