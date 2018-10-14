@@ -28,13 +28,13 @@ pub fn receive_updates(update_r: channel::Receiver<model::TempMessage>, redis_ct
 
                 // add to the member set if it doesn't already exist
                 let _ = redis::cmd("SADD")
-                    .arg(format!("{}/temp_sensors", rn))
+                    .arg(format!("{}/sensors/temp", rn))
                     .arg(&device_id)
                     .execute(&redis_ctx.conn);
 
                 // lookup associated tank
                 let temp_sensor_hash_key =
-                    &format!("{}/temp_sensors/{}", rn, device_id).to_string();
+                    &format!("{}/sensors/temp/{}", rn, device_id).to_string();
 
                 let assoc_tank_num: Result<Vec<Option<u64>>, _> = redis_ctx
                     .conn
