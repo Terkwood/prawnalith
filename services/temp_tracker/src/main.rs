@@ -16,7 +16,6 @@ use std::time::Duration;
 use redis_context::RedisContext;
 use tracker_support::TrackerConfig;
 
-mod config;
 mod model;
 mod prawnqtt;
 mod predis;
