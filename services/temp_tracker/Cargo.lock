@@ -800,9 +800,11 @@ name = "tracker_support"
 version = "0.1.0"
 dependencies = [
  "envy 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rumqtt 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.32 (registry+https://github.com/rust-lang/crates.io-index)",
+ "uuid 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

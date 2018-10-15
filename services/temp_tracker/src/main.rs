@@ -49,7 +49,13 @@ fn main() {
 
     thread::spawn(move || predis::receive_updates(update_r, &redis_ctx));
 
-    let _ = prawnqtt::start_mqtt(update_s, mq_host, *mq_port, &mq_topic, *mq_keep_alive);
+    let _ = tracker_support::start_mqtt(
+        prawnqtt::create_mqtt_callback(update_s),
+        mq_host,
+        *mq_port,
+        &mq_topic,
+        *mq_keep_alive,
+    );
 
     thread::sleep(Duration::from_secs(std::u64::MAX));
 }
