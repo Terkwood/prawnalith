@@ -1,18 +1,20 @@
 #![feature(slice_concat_ext)]
 extern crate crossbeam_channel;
-#[macro_use]
-extern crate serde_derive;
 extern crate dotenv;
 extern crate envy;
 extern crate redis;
 extern crate redis_context;
 extern crate rumqtt;
+#[macro_use]
+extern crate serde_derive;
+extern crate tracker_support;
 extern crate uuid;
 
 use std::thread;
 use std::time::Duration;
 
 use redis_context::RedisContext;
+use tracker_support::TrackerConfig;
 
 mod config;
 mod model;
@@ -22,7 +24,7 @@ mod predis;
 fn main() {
     dotenv::dotenv().expect("Unable to load .env file");
 
-    let config = config::Config::new();
+    let config = TrackerConfig::new();
 
     // DEFAULT CONFIGURATIONS LIVE HERE!
     let mq_host = &config.mqtt_host.unwrap_or("127.0.0.1".to_string());
