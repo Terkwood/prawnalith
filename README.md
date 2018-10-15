@@ -4,7 +4,7 @@ Various programs to manage sensor data from a freshwater prawn grow, and make it
 
 ![Networked LED Goodness](demo.gif)
 
-![Prawn Devouring Plankton](https://pbs.twimg.com/media/DpPZJWwUUAAZNEx.jpg:medium)
+![Prawn Devouring Plankton](https://pbs.twimg.com/media/DpPZJWwUUAAZNEx.jpg:small)
 
 ## Resources 
 
