@@ -3,6 +3,12 @@ use crossbeam_channel as channel;
 use rumqtt::{MqttCallback, MqttClient, MqttOptions, QoS};
 use uuid::Uuid;
 
+fn deser_message(msg: &rumqtt::Message) -> Option<model::TempMessage> {
+    serde_json::from_str(std::str::from_utf8(&*msg.payload).unwrap())
+        .map(|r| Some(r))
+        .unwrap_or(None)
+}
+
 pub fn start_mqtt(
     update_s: channel::Sender<model::TempMessage>,
     mq_host: &str,
@@ -12,14 +18,13 @@ pub fn start_mqtt(
 ) {
     let deserialize_and_forward = move |msg: rumqtt::Message| {
         println!("Message on {:?}", msg.topic);
-        let deser: Result<model::TempMessage, _> =
-            serde_json::from_str(std::str::from_utf8(&*msg.payload).unwrap());
+        let deser: Option<model::TempMessage> = deser_message(&msg);
         match deser {
-            Err(_) => println!(
+            None => println!(
                 "\t[!] couldn't deserialize payload [!]\n\t[!]\t{:?}\t[!]",
                 msg
             ),
-            Ok(temp) =>
+            Some(temp) =>
             // forward the message to someone who can handle it
             // without having to deal with sync restrictions
             // on our local redis connection, etc
