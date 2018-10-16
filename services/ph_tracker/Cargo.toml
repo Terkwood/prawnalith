@@ -14,4 +14,5 @@ rumqtt = "0.10"
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
+tracker_support = { path = "../tracker_support" }
 uuid = { version = "0.7", features = ["v4", "v5"] } # v4 is random, v5 is name-based
