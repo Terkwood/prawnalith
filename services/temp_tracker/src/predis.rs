@@ -1,4 +1,4 @@
-use std::time::SystemTime;
+use tracker_support::epoch_secs;
 
 use redis;
 use redis::Commands;
@@ -123,11 +123,4 @@ pub fn receive_updates(update_r: channel::Receiver<model::TempMessage>, redis_ct
             _ => {}
         }
     }
-}
-
-fn epoch_secs() -> u64 {
-    SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap()
-        .as_secs()
 }

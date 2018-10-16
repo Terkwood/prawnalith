@@ -6,6 +6,7 @@ edition = "2018"
 
 [dependencies]
 envy = "0.3"
+redis_context = { path = "../redis_context" }
 rumqtt = "0.10"
 serde = "1.0"
 serde_derive = "1.0"
