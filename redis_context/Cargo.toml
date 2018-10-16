@@ -1,9 +1,0 @@
-[package]
-name = "redis_context"
-version = "0.1.0"
-authors = ["Terkwood <metaterkhorn@gmail.com>"]
-edition = "2018"
-
-[dependencies]
-redis = "0.9"
-uuid = { version = "0.7", features = ["v4", "v5"] } # v4 is random, v5 is name-based
