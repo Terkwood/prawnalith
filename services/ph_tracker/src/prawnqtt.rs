@@ -2,16 +2,16 @@ use super::model;
 use crossbeam_channel as channel;
 use rumqtt::MqttCallback;
 
-fn deser_message(msg: &rumqtt::Message) -> Option<model::TempMessage> {
+fn deser_message(msg: &rumqtt::Message) -> Option<model::PhMessage> {
     serde_json::from_str(std::str::from_utf8(&*msg.payload).unwrap())
         .map(|r| Some(r))
         .unwrap_or(None)
 }
 
-pub fn create_mqtt_callback(update_s: channel::Sender<model::TempMessage>) -> MqttCallback {
+pub fn create_mqtt_callback(update_s: channel::Sender<model::PhMessage>) -> MqttCallback {
     let deserialize_and_forward = move |msg: rumqtt::Message| {
         println!("Message on {:?}", msg.topic);
-        let deser: Option<model::TempMessage> = deser_message(&msg);
+        let deser: Option<model::PhMessage> = deser_message(&msg);
         match deser {
             None => println!(
                 "\t[!] couldn't deserialize payload [!]\n\t[!]\t{:?}\t[!]",
