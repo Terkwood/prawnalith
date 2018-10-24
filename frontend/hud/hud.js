@@ -1,5 +1,5 @@
 /* tslint:disable */
-import('./hud_bg.wasm');
+import * as wasm from './hud_bg';
 
 /**
 * @returns {void}
