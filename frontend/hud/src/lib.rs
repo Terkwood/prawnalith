@@ -74,13 +74,22 @@ pub fn run() -> Promise {
             let val = document.create_element("p").unwrap();
             val.set_inner_html("🕸️ 🦀 🏆");
 
-            let status_r: Result<TankStatus, _> = json.into_serde();
+            let status_r: Result<Vec<TankStatus>, _> = json.into_serde();
 
             let fmt_status = match status_r {
-                Ok(status) => format!(
-                    "Tank {} ({}): {}F, pH {} ({} mv)",
-                    status.tank.id, status.tank.name, status.temp.f, status.ph.val, status.ph.mv
-                ),
+                Ok(statuses) => statuses
+                    .iter()
+                    .map(|status| {
+                        format!(
+                            "Tank {} ({}): {}F, pH {} ({} mv)<br>",
+                            status.tank.id,
+                            status.tank.name,
+                            status.temp.f,
+                            status.ph.val,
+                            status.ph.mv
+                        )
+                    })
+                    .collect(),
                 Err(e) => format!("Error: {}", e),
             };
 
