@@ -61,9 +61,9 @@ pub fn run() -> Promise {
             let resp: Response = resp_value.dyn_into().unwrap();
             resp.json()
         })
-        .and_then(|json_value: Promise| {
+        .and_then(|p: Promise| {
             // Convert this other `Promise` into a rust `Future`.
-            JsFuture::from(json_value)
+            JsFuture::from(p)
         })
         .and_then(|json| {
             let w2 = web_sys::window().unwrap();
@@ -74,8 +74,13 @@ pub fn run() -> Promise {
             let val = document.create_element("p").unwrap();
             val.set_inner_html("🕸️ 🦀 🏆");
 
+            let status: TankStatus = json.into_serde().unwrap();
+
             let fun_results = document.create_element("p").unwrap();
-            fun_results.set_inner_html(&format!("{:?}", json));
+            fun_results.set_inner_html(&format!(
+                "Tank {} ({}): {}F, pH {} ({} mv)",
+                status.tank.id, status.tank.name, status.temp.f, status.ph.val, status.ph.mv
+            ));
 
             // Right now the class inheritance hierarchy of the DOM isn't super
             // ergonomic, so we manually cast `val: Element` to `&Node` to call the
