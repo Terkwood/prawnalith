@@ -14,32 +14,24 @@ use wasm_bindgen_futures::future_to_promise;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{Request, RequestInit, RequestMode, Response};
 
-/// A struct to hold some data from the github Branch API.
-///
-/// Note how we don't have to define every member -- serde will ignore extra
-/// data when deserializing
+/// A struct to hold some data from the HTTP request
+/// for temp/ph info.
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Branch {
-    pub name: String,
-    pub commit: Commit,
+pub struct Status {
+    pub temp: Temperature,
+    pub ph: Ph,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Commit {
-    pub sha: String,
-    pub commit: CommitDetails,
+pub struct Temperature {
+    pub f: f32,
+    pub c: f32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct CommitDetails {
-    pub author: Signature,
-    pub committer: Signature,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Signature {
-    pub name: String,
-    pub email: String,
+pub struct Ph {
+    pub val: f32,
+    pub millivolts: f32,
 }
 
 #[wasm_bindgen]
