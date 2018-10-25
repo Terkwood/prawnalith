@@ -70,10 +70,6 @@ pub fn run() -> Promise {
             let document = w2.document().expect("expected document");
             let body = document.body().expect("document should have a body");
 
-            // Manufacture the element we're gonna append
-            let val = document.create_element("p").unwrap();
-            val.set_inner_html("🕸️ 🦀 🏆");
-
             let status_r: Result<Vec<TankStatus>, _> = json.into_serde();
 
             let fmt_status = match status_r {
@@ -93,19 +89,14 @@ pub fn run() -> Promise {
                 Err(e) => format!("Error: {}", e),
             };
 
-            let fun_results = document.create_element("p").unwrap();
-
-            fun_results.set_inner_html(&fmt_status);
+            let dom_elem = document.create_element("p").unwrap();
+            dom_elem.set_inner_html(&fmt_status);
 
             // Right now the class inheritance hierarchy of the DOM isn't super
             // ergonomic, so we manually cast `val: Element` to `&Node` to call the
             // `append_child` method.
             AsRef::<web_sys::Node>::as_ref(&body)
-                .append_child(val.as_ref())
-                .unwrap();
-
-            AsRef::<web_sys::Node>::as_ref(&body)
-                .append_child(fun_results.as_ref())
+                .append_child(dom_elem.as_ref())
                 .unwrap();
 
             // Send the `Branch` struct back to JS as an `Object`.
