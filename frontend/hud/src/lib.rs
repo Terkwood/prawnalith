@@ -25,7 +25,7 @@ pub struct TankStatus {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Tank {
-    pub id: u16,
+    pub id: i32,
     pub name: String,
 }
 
@@ -74,13 +74,19 @@ pub fn run() -> Promise {
             let val = document.create_element("p").unwrap();
             val.set_inner_html("🕸️ 🦀 🏆");
 
-            let status: TankStatus = json.into_serde().unwrap();
-
-            let fun_results = document.create_element("p").unwrap();
-            fun_results.set_inner_html(&format!(
+            let status_r: Result<TankStatus, _> = json.into_serde();
+            /*let fmt_status = &format!(
                 "Tank {} ({}): {}F, pH {} ({} mv)",
                 status.tank.id, status.tank.name, status.temp.f, status.ph.val, status.ph.mv
-            ));
+            );*/
+            let err_str = match status_r {
+                Ok(_) => "no error".to_string(),
+                Err(e) => format!("err {}", e),
+            };
+
+            let fun_results = document.create_element("p").unwrap();
+
+            fun_results.set_inner_html(&err_str);
 
             // Right now the class inheritance hierarchy of the DOM isn't super
             // ergonomic, so we manually cast `val: Element` to `&Node` to call the
