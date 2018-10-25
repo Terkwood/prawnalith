@@ -17,13 +17,20 @@ use web_sys::{Request, RequestInit, RequestMode, Response};
 /// A struct to hold some data from the HTTP request
 /// for temp/ph info.
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Status {
-    pub temp: Temperature,
+pub struct TankStatus {
+    pub tank: Tank,
+    pub temp: Temp,
     pub ph: Ph,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Temperature {
+pub struct Tank {
+    pub id: u16,
+    pub name: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Temp {
     pub f: f32,
     pub c: f32,
 }
@@ -31,7 +38,7 @@ pub struct Temperature {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Ph {
     pub val: f32,
-    pub millivolts: f32,
+    pub mv: f32,
 }
 
 #[wasm_bindgen]
@@ -40,16 +47,9 @@ pub fn run() -> Promise {
     opts.method("GET");
     opts.mode(RequestMode::Cors);
 
-    let request = Request::new_with_str_and_init(
-        "https://api.github.com/repos/Terkwood/wasm-bindgen/branches/master",
-        &opts,
-    )
-    .unwrap();
+    let request = Request::new_with_str_and_init("http://localhost:3000", &opts).unwrap();
 
-    request
-        .headers()
-        .set("Accept", "application/vnd.github.v3+json")
-        .unwrap();
+    request.headers().set("Accept", "application/json").unwrap();
 
     let window = web_sys::window().unwrap();
     let request_promise = window.fetch_with_request(&request);
