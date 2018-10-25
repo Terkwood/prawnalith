@@ -80,13 +80,20 @@ pub fn run() -> Promise {
 
             // Manufacture the element we're gonna append
             let val = document.create_element("p").unwrap();
-            val.set_inner_html("this am a rust!");
+            val.set_inner_html("🕸️ 🦀 🏆");
+
+            let fun_results = document.create_element("p").unwrap();
+            fun_results.set_inner_html(&format!("{:?}", json));
 
             // Right now the class inheritance hierarchy of the DOM isn't super
             // ergonomic, so we manually cast `val: Element` to `&Node` to call the
             // `append_child` method.
             AsRef::<web_sys::Node>::as_ref(&body)
                 .append_child(val.as_ref())
+                .unwrap();
+        
+            AsRef::<web_sys::Node>::as_ref(&body)
+                .append_child(fun_results.as_ref())
                 .unwrap();
 
             // Send the `Branch` struct back to JS as an `Object`.
