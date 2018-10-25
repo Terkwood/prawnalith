@@ -49,7 +49,7 @@ pub fn run() -> Promise {
     opts.mode(RequestMode::Cors);
 
     let request = Request::new_with_str_and_init(
-        "https://api.github.com/repos/rustwasm/wasm-bindgen/branches/master",
+        "https://api.github.com/repos/Terkwood/prawnalith/branches/master",
         &opts,
     ).unwrap();
 
