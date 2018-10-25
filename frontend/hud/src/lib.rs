@@ -49,7 +49,7 @@ pub fn run() -> Promise {
     opts.mode(RequestMode::Cors);
 
     let request = Request::new_with_str_and_init(
-        "https://api.github.com/repos/Terkwood/prawnalith/branches/master",
+        "https://api.github.com/repos/Terkwood/wasm-bindgen/branches/master",
         &opts,
     )
     .unwrap();
@@ -60,9 +60,6 @@ pub fn run() -> Promise {
         .unwrap();
 
     let window = web_sys::window().unwrap();
-    let document = window.document().expect("should have a document on window");
-    let body = document.body().expect("document should have a body");
-
     let request_promise = window.fetch_with_request(&request);
 
     let future = JsFuture::from(request_promise)
@@ -77,6 +74,21 @@ pub fn run() -> Promise {
             JsFuture::from(json_value)
         })
         .and_then(|json| {
+            let w2 = web_sys::window().unwrap();
+            let document = w2.document().expect("expected document");
+            let body = document.body().expect("document should have a body");
+
+            // Manufacture the element we're gonna append
+            let val = document.create_element("p").unwrap();
+            val.set_inner_html("this am a rust!");
+
+            // Right now the class inheritance hierarchy of the DOM isn't super
+            // ergonomic, so we manually cast `val: Element` to `&Node` to call the
+            // `append_child` method.
+            AsRef::<web_sys::Node>::as_ref(&body)
+                .append_child(val.as_ref())
+                .unwrap();
+
             // Send the `Branch` struct back to JS as an `Object`.
             future::ok(json)
         });
