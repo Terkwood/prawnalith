@@ -91,7 +91,7 @@ pub fn run() -> Promise {
             AsRef::<web_sys::Node>::as_ref(&body)
                 .append_child(val.as_ref())
                 .unwrap();
-        
+
             AsRef::<web_sys::Node>::as_ref(&body)
                 .append_child(fun_results.as_ref())
                 .unwrap();
