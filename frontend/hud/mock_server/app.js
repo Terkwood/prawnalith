@@ -12,7 +12,7 @@ app.get('/', function (req, res) {
             {
                   "tank": { "id": 1, "name": "The Mothership" },
                   "temp": { "f": 82.18, "c": 27.88 },
-                  "ph": { "val": 8.11, "millivolts": 500.15 }
+                  "ph": { "val": 8.11, "mv": 500.15 }
             });
 });
 

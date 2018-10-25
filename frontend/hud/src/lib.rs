@@ -75,18 +75,18 @@ pub fn run() -> Promise {
             val.set_inner_html("🕸️ 🦀 🏆");
 
             let status_r: Result<TankStatus, _> = json.into_serde();
-            /*let fmt_status = &format!(
-                "Tank {} ({}): {}F, pH {} ({} mv)",
-                status.tank.id, status.tank.name, status.temp.f, status.ph.val, status.ph.mv
-            );*/
-            let err_str = match status_r {
-                Ok(_) => "no error".to_string(),
-                Err(e) => format!("err {}", e),
+
+            let fmt_status = match status_r {
+                Ok(status) => format!(
+                    "Tank {} ({}): {}F, pH {} ({} mv)",
+                    status.tank.id, status.tank.name, status.temp.f, status.ph.val, status.ph.mv
+                ),
+                Err(e) => format!("Error: {}", e),
             };
 
             let fun_results = document.create_element("p").unwrap();
 
-            fun_results.set_inner_html(&err_str);
+            fun_results.set_inner_html(&fmt_status);
 
             // Right now the class inheritance hierarchy of the DOM isn't super
             // ergonomic, so we manually cast `val: Element` to `&Node` to call the
