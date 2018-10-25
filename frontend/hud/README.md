@@ -4,7 +4,7 @@ It's a small view of statuses for all the tanks.
 
 ## Mock server
 
-There's a mock server available in the (mock_server)[mock_server] directory.
+There's a mock server available in the [mock_server](mock_server) directory.
 
 ```
 node app.js
