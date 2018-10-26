@@ -4,16 +4,21 @@
 
 // They have been adapted to suit our Prawn-Growing-Delicious needs.
 
+// NB.  We have altered the `#define MQTT_KEEPALIVE 15` in PubSubClient.h
+//      to be set as `#define MQTT_KEEPALIVE 60`.  This is done in an effort
+//      to allow the time-intensive scrolling process not take so long that
+//      it exceeds the default keepalive in PubSubClient.h.
+
 #include <WiFiClient.h>
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 #include <LedControl.h>
 
 
-const char* ssid = "YOUR_SSID";             
-const char* password = "YOUR_PASS";         
+const char* ssid = "YOUR_SSID";
+const char* password = "YOUR_PASS";
 
-const char* mqtt_broker = "YOUR_BROKER";    
+const char* mqtt_broker = "YOUR_BROKER";
 const char* mqtt_topic = "YOUR_TOPIC";
 
 
@@ -36,7 +41,6 @@ const char* p_mqtt_subscribed =   "# MQTT_SUBSCRIBED ";
 // 
 //     #1 81.50°F pH 7.01 #2 82.03°F pH 6.89
 // 
-
 
 WiFiClient wifi_client;
 PubSubClient mqtt_client(wifi_client);
@@ -1062,7 +1066,7 @@ void loop() {
     connect_mqtt();
   }
 
-  mqtt_client.loop();
+  mqtt_client.loop();  // the loop function is how the keepalive gets serviced.  see https://github.com/knolleary/pubsubclient/issues/239#issuecomment-275509607
   
   int now = millis();
   if (now > last_scroll_ms + scroll_freq_ms) {
