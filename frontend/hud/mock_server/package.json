@@ -1,0 +1,14 @@
+{
+  "name": "mock_server",
+  "version": "1.0.0",
+  "description": "mocks a response for the tank statuses",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT/apache2 dual",
+  "dependencies": {
+    "express": "^4.16.4"
+  }
+}
