@@ -1,3 +1,9 @@
+// LET THE ATTRIBUTION BE KNOWN
+// this effort was heavily inspired by the following
+// wasm-bindgen examples:
+// https://github.com/rustwasm/wasm-bindgen/tree/master/examples/fetch
+// https://github.com/rustwasm/wasm-bindgen/tree/master/examples/dom
+
 extern crate futures;
 extern crate js_sys;
 extern crate wasm_bindgen;
@@ -92,14 +98,14 @@ pub fn run() -> Promise {
             let dom_elem = document.create_element("p").unwrap();
             dom_elem.set_inner_html(&fmt_status);
 
-            // Right now the class inheritance hierarchy of the DOM isn't super
-            // ergonomic, so we manually cast `val: Element` to `&Node` to call the
+            // Manual cast of `val: Element` to `&Node`, to call the
             // `append_child` method.
             AsRef::<web_sys::Node>::as_ref(&body)
                 .append_child(dom_elem.as_ref())
                 .unwrap();
 
-            // Send the `Branch` struct back to JS as an `Object`.
+            // This doesn't actually get used, but we need
+            // to send something.
             future::ok(json)
         });
 
