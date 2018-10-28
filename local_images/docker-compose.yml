@@ -18,7 +18,8 @@ services:
     volumes:
       - "$PWD/redis_volume:/data"
   mosquitto:
-    build: mosquitto/.
+    build: mosquitto_alt/.
+#    image: "xpecex/mqtt-armhf"
     ports:
      - "1883:1883"
      - "8883:8883"
