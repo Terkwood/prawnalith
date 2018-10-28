@@ -7,10 +7,6 @@ services:
     volumes:
       - "$PWD/grafana_volume/etc/grafana:/etc/grafana"
       - "$PWD/grafana_volume/var/lib/grafana:/var/lib/grafana"
-#  rocket:
-#    build: rocket/.
-#    ports:
-#      - "0.0.0.0:80:80"
   redis:
     image: "arm32v7/redis" 
     ports:
@@ -18,8 +14,7 @@ services:
     volumes:
       - "$PWD/redis_volume:/data"
   mosquitto:
-    build: mosquitto_alt/.
-#    image: "xpecex/mqtt-armhf"
+    build: mosquitto/.
     ports:
      - "1883:1883"
      - "8883:8883"
