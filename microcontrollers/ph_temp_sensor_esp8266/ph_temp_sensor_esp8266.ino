@@ -5,6 +5,11 @@
 #include <DallasTemperature.h>
 #include <WiFiClient.h>
 #include <ESP8266WiFi.h>
+
+// NB.  We have altered the `#define MQTT_KEEPALIVE 15` in PubSubClient.h
+//      to be set as `#define MQTT_KEEPALIVE 60`.  This is done in an effort
+//      to allow the time-intensive scrolling process not take so long that
+//      it exceeds the default keepalive in PubSubClient.h.
 #include <PubSubClient.h>
 
 // WIFI SETUP
@@ -21,8 +26,8 @@ const int calibration_port = 8000;
 
 const char* calibration_path = "/sensors/ph/calibration";
 
-WiFiClient mqtt_wifi_client;
-PubSubClient mqtt_client(mqtt_wifi_client);
+WiFiClient wifi_client;
+PubSubClient mqtt_client(wifi_client);
 #define MQTT_MESSAGE_SIZE 128
 char mqtt_message[MQTT_MESSAGE_SIZE];
 
@@ -180,8 +185,6 @@ void LoadReferenceCsv(char* token_string) {
  * for subsequent use when measuring voltage levels with the sensor!
  */
 void InitPhRefGlobals(String ext_device_id) {
-  WiFiClient wifi_client;
-
   Serial.printf("\nConnecting to pH calibration host %s:%d ... ", calibration_host, calibration_port);
   if (wifi_client.connect(calibration_host, calibration_port))
   {
@@ -405,5 +408,4 @@ void loop(void)
 
     Serial.println(mqtt_message);
   }
-
 }
