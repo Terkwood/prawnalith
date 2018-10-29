@@ -5,7 +5,6 @@ extern crate envy;
 extern crate paho_mqtt;
 extern crate redis;
 extern crate redis_context;
-extern crate rumqtt;
 #[macro_use]
 extern crate serde_derive;
 extern crate tracker_support;
@@ -32,7 +31,8 @@ fn main() {
 
     let _ = prawnqtt::do_something_with_paho();
 
-    let _ = tracker_support::start_mqtt(prawnqtt::create_mqtt_callback(update_s), &config);
+    // TODO RIP ☠️
+    //let _ = tracker_support::start_mqtt(prawnqtt::create_mqtt_callback(update_s), &config);
 
     thread::sleep(Duration::from_secs(std::u64::MAX));
 }

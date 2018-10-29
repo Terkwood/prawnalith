@@ -1,7 +1,7 @@
 use super::model;
 use crossbeam_channel as channel;
 use paho_mqtt;
-use rumqtt::MqttCallback;
+
 
 fn deser_message(msg: &rumqtt::Message) -> Option<model::TempMessage> {
     serde_json::from_str(std::str::from_utf8(&*msg.payload).unwrap())
@@ -9,6 +9,8 @@ fn deser_message(msg: &rumqtt::Message) -> Option<model::TempMessage> {
         .unwrap_or(None)
 }
 
+// TODO RIP ☠️
+/*
 pub fn create_mqtt_callback(update_s: channel::Sender<model::TempMessage>) -> MqttCallback {
     let deserialize_and_forward = move |msg: rumqtt::Message| {
         println!("Message on {:?}", msg.topic);
@@ -30,6 +32,7 @@ pub fn create_mqtt_callback(update_s: channel::Sender<model::TempMessage>) -> Mq
 
     MqttCallback::new().on_message(deserialize_and_forward)
 }
+*/
 
 pub fn do_something_with_paho() {
     paho_mqtt::Client::new()

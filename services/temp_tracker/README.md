@@ -71,6 +71,15 @@ make
 sudo make install
 ```
 
+You also need to make sure you have ARM libs for OpenSSL available on your vagrant box.  Take a look at https://assil.me/2017/09/30/cross-compile-openssl-arm-zynq.html.
+
+Then, e.g:
+
+```
+export ARMV7_UNKNOWN_LINUX_GNUEABIHF_OPENSSL_DIR=~/cross-openssl/openssl
+export ARMV7_UNKNOWN_LINUX_GNUEABIHF_OPENSSL_LIB_DIR=~/cross-openssl/openssl
+```
+
 You should then be able to run
 
 ```
