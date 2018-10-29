@@ -8,7 +8,6 @@ edition = "2018"
 dotenv = "0.13"
 envy = "0.3"
 paho-mqtt = { git = "https://github.com/eclipse/paho.mqtt.rust", branch = "new-build" }
-openssl = { version = "0.10", feature = ["vendored"] }
 redis = "0.9"
 redis_context = { path = "../redis_context" }
 serde = "1.0"
