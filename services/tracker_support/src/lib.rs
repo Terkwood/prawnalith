@@ -1,11 +1,10 @@
+extern crate paho_mqtt;
 extern crate redis_context;
-extern crate rumqtt;
 #[macro_use]
 extern crate serde_derive;
 extern crate uuid;
 
 use redis_context::RedisContext;
-use rumqtt::{MqttCallback, MqttClient, MqttOptions, QoS};
 use std::time::SystemTime;
 use uuid::Uuid;
 
@@ -39,7 +38,7 @@ impl TrackerConfig {
     }
 }
 
-pub fn start_mqtt(mq_message_callback: MqttCallback, config: &TrackerConfig) {
+pub fn start_mqtt(/*mq_message_callback: MqttCallback, */ config: &TrackerConfig) {
     // DEFAULT CONFIGURATIONS LIVE HERE!
     let host = &config.mqtt_host.clone().unwrap_or("127.0.0.1".to_string());
     let port = &config.mqtt_port.clone().unwrap_or(1883);
@@ -48,16 +47,17 @@ pub fn start_mqtt(mq_message_callback: MqttCallback, config: &TrackerConfig) {
     let keep_alive = &config.mqtt_keep_alive.unwrap_or(10);
     let topic = &config.mqtt_topic;
     // Specify client connection options
-    let opts: MqttOptions = MqttOptions::new()
+    /*let opts: MqttOptions = MqttOptions::new()
         .set_keep_alive(*keep_alive)
         .set_reconnect(3)
         .set_client_id(generate_mq_client_id())
         .set_broker(&format!("{}:{}", host, port)[..]);
-
+    
     MqttClient::start(opts, Some(mq_message_callback))
         .expect("MQTT client couldn't start")
         .subscribe(vec![(topic, QoS::Level0)])
-        .unwrap()
+        .unwrap()*/
+    unimplemented!()
 }
 
 fn generate_mq_client_id() -> String {
