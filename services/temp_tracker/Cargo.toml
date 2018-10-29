@@ -8,6 +8,7 @@ edition = "2018"
 crossbeam-channel = "0.2"
 dotenv = "0.13"
 envy = "0.3"
+paho-mqtt = { git = "https://github.com/eclipse/paho.mqtt.rust", branch = "new-build" }
 redis = "0.9"
 redis_context = { path = "../redis_context" }
 rumqtt = "0.10"

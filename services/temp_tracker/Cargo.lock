@@ -153,6 +153,15 @@ version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "env_logger"
+version = "0.3.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "log 0.3.9 (registry+https://github.com/rust-lang/crates.io-index)",
+ "regex 0.1.80 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "envy"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -408,6 +417,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "stable_deref_trait 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "paho-mqtt"
+version = "0.4.0"
+source = "git+https://github.com/eclipse/paho.mqtt.rust?branch=new-build#7f6ef262f68069458ba06c7e247882d9ad24ca60"
+dependencies = [
+ "env_logger 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libc 0.2.43 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.3.9 (registry+https://github.com/rust-lang/crates.io-index)",
+ "paho-mqtt-sys 0.2.0 (git+https://github.com/eclipse/paho.mqtt.rust?branch=new-build)",
+]
+
+[[package]]
+name = "paho-mqtt-sys"
+version = "0.2.0"
+source = "git+https://github.com/eclipse/paho.mqtt.rust?branch=new-build#7f6ef262f68069458ba06c7e247882d9ad24ca60"
 
 [[package]]
 name = "parking_lot"
@@ -694,6 +719,7 @@ dependencies = [
  "crossbeam-channel 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "dotenv 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "envy 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "paho-mqtt 0.4.0 (git+https://github.com/eclipse/paho.mqtt.rust?branch=new-build)",
  "redis 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "redis_context 0.1.0",
  "rumqtt 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -942,6 +968,7 @@ dependencies = [
 "checksum crossbeam-utils 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "677d453a17e8bd2b913fa38e8b9cf04bcdbb5be790aa294f2389661d72036015"
 "checksum dotenv 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)" = "c0d0a1279c96732bc6800ce6337b6a614697b0e74ae058dc03c62ebeb78b4d86"
 "checksum either 1.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "3be565ca5c557d7f59e7cfcf1844f9e3033650c929c6566f511e8005f205c1d0"
+"checksum env_logger 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)" = "15abd780e45b3ea4f76b4e9a26ff4843258dd8a3eed2775a0e7368c2e7936c2f"
 "checksum envy 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)" = "19a7e612a2549b1db0f7fd674b35f33b97fd83d1129914d5d8dd9795cdac7955"
 "checksum failure 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "7efb22686e4a466b1ec1a15c2898f91fa9cb340452496dca654032de20ff95b9"
 "checksum failure_derive 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "946d0e98a50d9831f5d589038d2ca7f8f455b1c21028c0db0e84116a12696426"
@@ -973,6 +1000,8 @@ dependencies = [
 "checksum openssl 0.9.24 (registry+https://github.com/rust-lang/crates.io-index)" = "a3605c298474a3aa69de92d21139fb5e2a81688d308262359d85cdd0d12a7985"
 "checksum openssl-sys 0.9.36 (registry+https://github.com/rust-lang/crates.io-index)" = "409d77eeb492a1aebd6eb322b2ee72ff7c7496b4434d98b3bf8be038755de65e"
 "checksum owning_ref 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "cdf84f41639e037b484f93433aa3897863b561ed65c6e59c7073d7c561710f37"
+"checksum paho-mqtt 0.4.0 (git+https://github.com/eclipse/paho.mqtt.rust?branch=new-build)" = "<none>"
+"checksum paho-mqtt-sys 0.2.0 (git+https://github.com/eclipse/paho.mqtt.rust?branch=new-build)" = "<none>"
 "checksum parking_lot 0.6.4 (registry+https://github.com/rust-lang/crates.io-index)" = "f0802bff09003b291ba756dc7e79313e51cc31667e94afbe847def490424cde5"
 "checksum parking_lot_core 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "ad7f7e6ebdc79edff6fdcb87a55b620174f7a989e3eb31b65231f4af57f00b8c"
 "checksum percent-encoding 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "31010dd2e1ac33d5b46a5b413495239882813e0369f8ed8a5e266f173602f831"
