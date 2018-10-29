@@ -1,5 +1,6 @@
 use super::model;
 use crossbeam_channel as channel;
+use paho_mqtt;
 use rumqtt::MqttCallback;
 
 fn deser_message(msg: &rumqtt::Message) -> Option<model::TempMessage> {
