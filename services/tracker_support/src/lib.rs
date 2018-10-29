@@ -57,7 +57,8 @@ pub fn start_mqtt(/*mq_message_callback: MqttCallback, */ config: &TrackerConfig
         .expect("MQTT client couldn't start")
         .subscribe(vec![(topic, QoS::Level0)])
         .unwrap()*/
-    let client = paho_mqtt::Client::new("mqtt://localhost");
+    let client = paho_mqtt::Client::new("mqtt://localhost").unwrap();
+    let subscribed = client.subscribe(topic, 1).unwrap();
 }
 
 fn generate_mq_client_id() -> String {
