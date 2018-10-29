@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 envy = "0.3"
-paho-mqtt = { git = "https://github.com/eclipse/paho.mqtt.rust", branch = "new-build" }
+paho-mqtt = { path = "../paho.mqtt.rust" }
 redis_context = { path = "../redis_context" }
 serde = "1.0"
 serde_derive = "1.0"
