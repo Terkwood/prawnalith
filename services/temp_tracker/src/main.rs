@@ -29,6 +29,8 @@ fn main() {
 
     thread::spawn(move || predis::receive_updates(update_r, &config_clone.to_redis_context()));
 
+    let _ = prawnqtt::do_something_with_paho();
+
     let _ = tracker_support::start_mqtt(prawnqtt::create_mqtt_callback(update_s), &config);
 
     thread::sleep(Duration::from_secs(std::u64::MAX));

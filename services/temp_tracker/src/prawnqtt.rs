@@ -29,3 +29,7 @@ pub fn create_mqtt_callback(update_s: channel::Sender<model::TempMessage>) -> Mq
 
     MqttCallback::new().on_message(deserialize_and_forward)
 }
+
+pub fn do_something_with_paho() {
+    unimplemented!()
+}
