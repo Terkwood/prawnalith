@@ -5,7 +5,6 @@ authors = ["Terkwood <metaterkhorn@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-crossbeam-channel = "0.2"
 dotenv = "0.13"
 envy = "0.3"
 paho-mqtt = { git = "https://github.com/eclipse/paho.mqtt.rust", branch = "new-build" }

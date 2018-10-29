@@ -1,5 +1,4 @@
 #![feature(slice_concat_ext)]
-extern crate crossbeam_channel;
 extern crate dotenv;
 extern crate envy;
 extern crate paho_mqtt;
@@ -25,14 +24,9 @@ fn main() {
     let config = TrackerConfig::new();
     let config_clone = config.clone();
 
-    let (update_s, update_r) = crossbeam_channel::bounded(5);
+    let rx = tracker_support::start_mqtt(&config);
 
-    thread::spawn(move || predis::receive_updates(update_r, &config_clone.to_redis_context()));
-
-    let _ = prawnqtt::do_something_with_paho();
-
-    // TODO RIP ☠️
-    //let _ = tracker_support::start_mqtt(prawnqtt::create_mqtt_callback(update_s), &config);
+    predis::receive_updates(rx, &config_clone.to_redis_context());
 
     thread::sleep(Duration::from_secs(std::u64::MAX));
 }
