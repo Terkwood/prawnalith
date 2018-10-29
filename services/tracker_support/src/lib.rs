@@ -4,6 +4,7 @@ extern crate redis_context;
 extern crate serde_derive;
 extern crate uuid;
 
+use paho_mqtt::message::Message;
 use redis_context::RedisContext;
 use std::time::SystemTime;
 use uuid::Uuid;
@@ -38,7 +39,9 @@ impl TrackerConfig {
     }
 }
 
-pub fn start_mqtt(/*mq_message_callback: MqttCallback, */ config: &TrackerConfig) {
+pub fn start_mqtt(
+    /*mq_message_callback: MqttCallback, */ config: &TrackerConfig
+) -> std::sync::mpsc::Receiver<Option<Message>> {
     // DEFAULT CONFIGURATIONS LIVE HERE!
     let host = &config.mqtt_host.clone().unwrap_or("127.0.0.1".to_string());
     let port = &config.mqtt_port.clone().unwrap_or(1883);
@@ -57,8 +60,10 @@ pub fn start_mqtt(/*mq_message_callback: MqttCallback, */ config: &TrackerConfig
         .expect("MQTT client couldn't start")
         .subscribe(vec![(topic, QoS::Level0)])
         .unwrap()*/
-    let client = paho_mqtt::Client::new("mqtt://localhost").unwrap();
-    let subscribed = client.subscribe(topic, 1).unwrap();
+    let mut client = paho_mqtt::Client::new("mqtt://localhost").unwrap();
+    client.subscribe(topic, 0).unwrap();
+
+    client.start_consuming()
 }
 
 fn generate_mq_client_id() -> String {
