@@ -2,6 +2,7 @@
 extern crate crossbeam_channel;
 extern crate dotenv;
 extern crate envy;
+extern crate paho_mqtt;
 extern crate redis;
 extern crate redis_context;
 extern crate rumqtt;
