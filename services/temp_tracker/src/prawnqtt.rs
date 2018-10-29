@@ -32,5 +32,5 @@ pub fn create_mqtt_callback(update_s: channel::Sender<model::TempMessage>) -> Mq
 }
 
 pub fn do_something_with_paho() {
-    unimplemented!()
+    paho_mqtt::Client::new()
 }

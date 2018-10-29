@@ -34,3 +34,51 @@ that the LED status utility can properly format messages.
 ```
 HSET <namespace>/sensors/temp/<uuid_v5_id> tank 0
 ```
+
+## Building paho-mqtt-rs
+
+You need the static binary for `libpaho-mqtt3as` v1.2.1 available
+on the build machine when building `paho-mqtt-rs`.
+
+We used `vagrant` and installed the following libs:
+
+```
+sudo apt-get update
+sudo apt-get install -y  build-essential                 \
+                    libssl-dev                      \
+                    gcc                             \
+                    make                            \
+                    cmake                           \
+                    cmake-gui                       \
+                    cmake-curses-gui                \
+                    automake                        \
+                    autoconf                        \
+                    libtool                         \
+                    doxygen                         \
+                    graphviz                        \
+                    git                             \
+                    gcc-arm-linux-gnueabihf         \
+                    g++-arm-linux-gnueabihf
+
+export PROJECT_DIR=/tmp/build_deps
+mkdir -p $PROJECT_DIR
+cd $PROJECT_DIR
+git clone https://github.com/eclipse/paho.mqtt.c
+cd paho.mqtt.c
+git checkout v1.2.1                       # This is important, friends! 🙃
+cmake -DPAHO_WITH_SSL=TRUE -DPAHO_BUILD_DOCUMENTATION=FALSE -DPAHO_BUILD_STATIC=TRUE -DPAHO_BUILD_SAMPLES=TRUE ${CROSS_COMPILE_ARG}
+make
+sudo make install
+```
+
+You should then be able to run
+
+```
+cargo build --target=armv7-unknown-linux-gnueabihf
+```
+
+And generate a working binary for ARMv7.
+
+You can see some hints about this in https://github.com/eclipse/paho.mqtt.cpp/issues/136#issuecomment-355280926.
+
+Thank you, Paho team & contributors! 🙏🏼
