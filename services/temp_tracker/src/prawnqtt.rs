@@ -35,5 +35,5 @@ pub fn create_mqtt_callback(update_s: channel::Sender<model::TempMessage>) -> Mq
 */
 
 pub fn do_something_with_paho() {
-    let client = paho_mqtt::Client::new("mqtt://localhost");
+    unimplemented!()
 }
