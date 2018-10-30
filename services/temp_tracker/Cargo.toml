@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 dotenv = "0.13"
 envy = "0.3"
-paho-mqtt = { git = "https://github.com/Terkwood/paho.mqtt.rust.git", branch = "spooky-build" }
+paho-mqtt = { git = "https://github.com/Terkwood/paho.mqtt.rust.git", rev = "1b72f84" }
 redis = "0.9"
 redis_context = { path = "../redis_context" }
 serde = "1.0"
