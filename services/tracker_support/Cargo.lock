@@ -545,7 +545,7 @@ dependencies = [
 
 [[package]]
 name = "tracker_support"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "envy 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "paho-mqtt 0.4.0 (git+https://github.com/Terkwood/paho.mqtt.rust.git?rev=1b72f84)",
