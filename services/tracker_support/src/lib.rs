@@ -49,17 +49,7 @@ pub fn start_mqtt(
     // see http://www.steves-internet-guide.com/mqtt-keep-alive-by-example/
     let keep_alive = &config.mqtt_keep_alive.unwrap_or(10);
     let topic = &config.mqtt_topic;
-    // Specify client connection options
-    /*let opts: MqttOptions = MqttOptions::new()
-        .set_keep_alive(*keep_alive)
-        .set_reconnect(3)
-        .set_client_id(generate_mq_client_id())
-        .set_broker(&format!("{}:{}", host, port)[..]);
     
-    MqttClient::start(opts, Some(mq_message_callback))
-        .expect("MQTT client couldn't start")
-        .subscribe(vec![(topic, QoS::Level0)])
-        .unwrap()*/
     let mut client = paho_mqtt::Client::new("mqtt://localhost").unwrap();
     client.subscribe(topic, 0).unwrap();
 
