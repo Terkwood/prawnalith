@@ -7,7 +7,7 @@ use super::prawnqtt;
 use redis_context::RedisContext;
 
 pub fn receive_updates(
-    update_r: std::sync::mpsc::Receiver<Option<paho_mqtt::Message>>,
+    update_r: std::sync::mpsc::Receiver<Option<paho_mqtt::message::Message>>,
     redis_ctx: &RedisContext,
 ) {
     loop {

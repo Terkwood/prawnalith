@@ -9,9 +9,6 @@ extern crate serde_derive;
 extern crate tracker_support;
 extern crate uuid;
 
-use std::thread;
-use std::time::Duration;
-
 use tracker_support::TrackerConfig;
 
 mod model;

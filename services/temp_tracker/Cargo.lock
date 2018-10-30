@@ -322,17 +322,6 @@ dependencies = [
 [[package]]
 name = "paho-mqtt"
 version = "0.4.0"
-source = "git+https://github.com/Terkwood/paho.mqtt.rust.git?branch=spooky-build#7f6ef262f68069458ba06c7e247882d9ad24ca60"
-dependencies = [
- "env_logger 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "libc 0.2.43 (registry+https://github.com/rust-lang/crates.io-index)",
- "log 0.3.9 (registry+https://github.com/rust-lang/crates.io-index)",
- "paho-mqtt-sys 0.2.0 (git+https://github.com/Terkwood/paho.mqtt.rust.git?branch=spooky-build)",
-]
-
-[[package]]
-name = "paho-mqtt"
-version = "0.4.0"
 source = "git+https://github.com/Terkwood/paho.mqtt.rust.git?rev=1b72f84#1b72f84d5a0cd52ea664f33631e17bfdcb994fcb"
 dependencies = [
  "env_logger 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -340,11 +329,6 @@ dependencies = [
  "log 0.3.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "paho-mqtt-sys 0.2.0 (git+https://github.com/Terkwood/paho.mqtt.rust.git?rev=1b72f84)",
 ]
-
-[[package]]
-name = "paho-mqtt-sys"
-version = "0.2.0"
-source = "git+https://github.com/Terkwood/paho.mqtt.rust.git?branch=spooky-build#7f6ef262f68069458ba06c7e247882d9ad24ca60"
 
 [[package]]
 name = "paho-mqtt-sys"
@@ -688,7 +672,7 @@ name = "tracker_support"
 version = "0.1.0"
 dependencies = [
  "envy 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "paho-mqtt 0.4.0 (git+https://github.com/Terkwood/paho.mqtt.rust.git?branch=spooky-build)",
+ "paho-mqtt 0.4.0 (git+https://github.com/Terkwood/paho.mqtt.rust.git?rev=1b72f84)",
  "redis_context 0.1.0",
  "serde 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -845,9 +829,7 @@ dependencies = [
 "checksum net2 0.2.33 (registry+https://github.com/rust-lang/crates.io-index)" = "42550d9fb7b6684a6d404d9fa7250c2eb2646df731d1c06afc06dcee9e1bcf88"
 "checksum num_cpus 1.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "c51a3322e4bca9d212ad9a158a02abc6934d005490c054a2778df73a70aa0a30"
 "checksum owning_ref 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "cdf84f41639e037b484f93433aa3897863b561ed65c6e59c7073d7c561710f37"
-"checksum paho-mqtt 0.4.0 (git+https://github.com/Terkwood/paho.mqtt.rust.git?branch=spooky-build)" = "<none>"
 "checksum paho-mqtt 0.4.0 (git+https://github.com/Terkwood/paho.mqtt.rust.git?rev=1b72f84)" = "<none>"
-"checksum paho-mqtt-sys 0.2.0 (git+https://github.com/Terkwood/paho.mqtt.rust.git?branch=spooky-build)" = "<none>"
 "checksum paho-mqtt-sys 0.2.0 (git+https://github.com/Terkwood/paho.mqtt.rust.git?rev=1b72f84)" = "<none>"
 "checksum parking_lot 0.6.4 (registry+https://github.com/rust-lang/crates.io-index)" = "f0802bff09003b291ba756dc7e79313e51cc31667e94afbe847def490424cde5"
 "checksum parking_lot_core 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "ad7f7e6ebdc79edff6fdcb87a55b620174f7a989e3eb31b65231f4af57f00b8c"

@@ -39,9 +39,7 @@ impl TrackerConfig {
     }
 }
 
-pub fn start_mqtt(
-    /*mq_message_callback: MqttCallback, */ config: &TrackerConfig
-) -> std::sync::mpsc::Receiver<Option<Message>> {
+pub fn start_mqtt(config: &TrackerConfig) -> std::sync::mpsc::Receiver<Option<Message>> {
     // DEFAULT CONFIGURATIONS LIVE HERE!
     let host = &config.mqtt_host.clone().unwrap_or("127.0.0.1".to_string());
     let port = &config.mqtt_port.clone().unwrap_or(1883);
