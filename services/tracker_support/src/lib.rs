@@ -54,7 +54,7 @@ pub fn start_mqtt(config: &TrackerConfig) -> std::sync::mpsc::Receiver<Option<Me
     client.start_consuming()
 }
 
-fn _generate_mq_client_id() -> String {
+fn generate_mq_client_id() -> String {
     format!("sensor_tracker/{}", Uuid::new_v4())
 }
 
