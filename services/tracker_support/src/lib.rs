@@ -45,16 +45,16 @@ pub fn start_mqtt(config: &TrackerConfig) -> std::sync::mpsc::Receiver<Option<Me
     let port = &config.mqtt_port.clone().unwrap_or(1883);
     // mqtt spec states that this is measured in secs
     // see http://www.steves-internet-guide.com/mqtt-keep-alive-by-example/
-    let keep_alive = &config.mqtt_keep_alive.unwrap_or(10);
+    let _keep_alive = &config.mqtt_keep_alive.unwrap_or(10);
     let topic = &config.mqtt_topic;
-    
-    let mut client = paho_mqtt::Client::new("mqtt://localhost").unwrap();
+
+    let mut client = paho_mqtt::Client::new(&format!("mqtt://{}:{}", host, port)[..]).unwrap();
     client.subscribe(topic, 0).unwrap();
 
     client.start_consuming()
 }
 
-fn generate_mq_client_id() -> String {
+fn _generate_mq_client_id() -> String {
     format!("sensor_tracker/{}", Uuid::new_v4())
 }
 
