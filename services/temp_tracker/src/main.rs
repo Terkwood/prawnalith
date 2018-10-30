@@ -27,6 +27,4 @@ fn main() {
     let rx = tracker_support::start_mqtt(&config);
 
     predis::receive_updates(rx, &config_clone.to_redis_context());
-
-    thread::sleep(Duration::from_secs(std::u64::MAX));
 }
