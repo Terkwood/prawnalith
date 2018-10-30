@@ -49,7 +49,7 @@ pub fn start_mqtt(config: &TrackerConfig) -> std::sync::mpsc::Receiver<Option<Me
     let topic = &config.mqtt_topic;
 
     let mut client = paho_mqtt::Client::new(&format!("tcp://{}:{}", host, port)[..]).unwrap();
-    client.subscribe(topic, 0).unwrap();
+    client.subscribe(topic, 1).unwrap();
 
     client.start_consuming()
 }
