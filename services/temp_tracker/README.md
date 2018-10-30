@@ -37,57 +37,91 @@ HSET <namespace>/sensors/temp/<uuid_v5_id> tank 0
 
 ## Building paho-mqtt-rs
 
-You need the static binary for `libpaho-mqtt3as` v1.2.1 available
-on the build machine when building `paho-mqtt-rs`.
+### VERY VERY IMPORTANT
 
-We used `vagrant` and installed the following libs:
+- NUMBER ONE
+- MOST IMPORTANT
+- **DETAIL** **EVER**
+
+Look at https://github.com/eclipse/paho.mqtt.rust/compare/new-build#diff-98fc2489a3a7b302dbce61ba412f464eR61
+
+You should hack your own paho-mqtt-sys/build.rs to look like:
 
 ```
-sudo apt-get update
-sudo apt-get install -y  build-essential                 \
-                    libssl-dev                      \
-                    gcc                             \
-                    make                            \
-                    cmake                           \
-                    cmake-gui                       \
-                    cmake-curses-gui                \
-                    automake                        \
-                    autoconf                        \
-                    libtool                         \
-                    doxygen                         \
-                    graphviz                        \
-                    git                             \
-                    gcc-arm-linux-gnueabihf         \
-                    g++-arm-linux-gnueabihf
+fn link_lib() -> &'static str {
+    "paho-mqtt3a-static"
+}
+```
 
-export PROJECT_DIR=/tmp/build_deps
-mkdir -p $PROJECT_DIR
-cd $PROJECT_DIR
+_This will prevent SSL from being used._   It's a horrible idea.  It works.
+
+Carry on.  At this point, from the `paho.mqtt.rust` repo, you can consume in one tty:
+
+```
+cargo run --example sync_consume
+```
+
+And publish in another:
+
+```
+cargo run --example sync_publish
+```
+
+### Madness that can't be accounted for
+
+You should probably build this on the pi itself,
+and you'll need to install OpenSSL 1.0.1 on the
+system in order to achieve universal harmony etc ☯️.
+
+https://assil.me/2017/09/30/cross-compile-openssl-arm-zynq.html
+
+Oh and hey.  You need to build **paho C client** using
+the openssl search param.  https://github.com/eclipse/paho.mqtt.c
+
+See see https://github.com/eclipse/paho.mqtt.cpp/issues/136#issuecomment-355280926
+
+```
 git clone https://github.com/eclipse/paho.mqtt.c
 cd paho.mqtt.c
-git checkout v1.2.1                       # This is important, friends! 🙃
-cmake -DPAHO_WITH_SSL=TRUE -DPAHO_BUILD_DOCUMENTATION=FALSE -DPAHO_BUILD_STATIC=TRUE -DPAHO_BUILD_SAMPLES=TRUE ${CROSS_COMPILE_ARG}
+cmake -DOPENSSL_SEARCH_PATH=/home/pi/openssl_1_0_1   # this directory holds output from follow above guide
 make
 sudo make install
+
+# Don't forget C++ portion of paho client!
+cd ..
+git clone https://github.com/eclipse/paho.mqtt.cpp
+cd paho.mqtt.cpp
+cmake -DPAHO_WITH_SSL=TRUE -DPAHO_BUILD_DOCUMENTATION=FALSE -DPAHO_BUILD_STATIC=TRUE -DPAHO_BUILD_SHARED=FALSE \
+        -DPAHO_MQTT_C_PATH=../paho.mqtt.c/ -DPAHO_MQTT_C_LIB=../paho.mqtt.c/src/libpaho.mqtt3as-static.a ${CROSS_COMPILE_ARG}
+make
+sudo make install
+
+# refreshing the libs
+sudo ldconfig
 ```
 
-You also need to make sure you have ARM libs for OpenSSL available on your vagrant box.  Take a look at https://assil.me/2017/09/30/cross-compile-openssl-arm-zynq.html.
-
-Then, e.g:
-
+OH AND ALSO!
 ```
-export ARMV7_UNKNOWN_LINUX_GNUEABIHF_OPENSSL_DIR=~/cross-openssl/openssl
-export ARMV7_UNKNOWN_LINUX_GNUEABIHF_OPENSSL_LIB_DIR=~/cross-openssl/openssl
+export LDFLAGS="-L/home/pi/openssl_1_0_1/lib/"
+export LD_LIBRARY_PATH="/home/pi/openssl_1_0_1/lib/"
+export CPPFLAGS="-I/home/pi/openssl_1_0_1/include"
 ```
 
-You should then be able to run
+MAYBE NONE OF THAT WORKED AND YOU TRIED INSTALL THIS:
+https://packages.debian.org/search?keywords=libssl1.0-dev
 
 ```
-cargo build --target=armv7-unknown-linux-gnueabihf
+# OH AND IF YOU BUILD PAHO C CLIENT
+# WHICH YOU MUST
+# DO THIS:
+export CFLAGS="-DPAHO_BUILD_STATIC=TRUE"
 ```
 
-And generate a working binary for ARMv7.
+_*AND MAKE SURE YOU HAVE YOUR CARGO CONFIG FILE NICE & TIDY*_
 
-You can see some hints about this in https://github.com/eclipse/paho.mqtt.cpp/issues/136#issuecomment-355280926.
-
-Thank you, Paho team & contributors! 🙏🏼
+```
+cat >>~/.cargo/config <EOF
+[target.armv7-unknown-linux-gnueabihf.openssl]
+libdir = "/home/pi/openssl_1_0_1/lib"
+include = "/home/pi/openssl_1_0_1/bin"
+```
