@@ -21,8 +21,8 @@ fn main() {
     let config = TrackerConfig::new();
     let config_clone = config.clone();
 
-    let rx = tracker_support::start_mqtt(&config);
+    let (rx, mqtt_cli) = tracker_support::start_mqtt(&config);
 
-    predis::receive_updates(rx, &config_clone.to_redis_context());
+    predis::receive_updates(rx, &config_clone.to_redis_context(), mqtt_cli);
     println!("unreachable");
 }

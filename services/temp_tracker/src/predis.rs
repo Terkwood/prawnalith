@@ -9,6 +9,7 @@ use redis_context::RedisContext;
 pub fn receive_updates(
     update_r: std::sync::mpsc::Receiver<Option<paho_mqtt::message::Message>>,
     redis_ctx: &RedisContext,
+    mqtt_cli: paho_mqtt::Client,
 ) {
     loop {
         match update_r.try_recv() {
@@ -121,7 +122,9 @@ pub fn receive_updates(
                     println!("");
                 }
             }
-            _ => {}
+            _ => {
+                let _ = tracker_support::try_mqtt_reconnect(&mqtt_cli);
+            }
         }
     }
 }

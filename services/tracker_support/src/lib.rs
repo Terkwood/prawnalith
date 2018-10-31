@@ -40,7 +40,7 @@ impl TrackerConfig {
     }
 }
 
-pub fn start_mqtt(config: &TrackerConfig) -> std::sync::mpsc::Receiver<Option<Message>> {
+pub fn start_mqtt(config: &TrackerConfig) -> (std::sync::mpsc::Receiver<Option<Message>>, paho_mqtt::Client) {
     // DEFAULT CONFIGURATIONS LIVE HERE!
     let host = &config.mqtt_host.clone().unwrap_or("127.0.0.1".to_string());
     let port = &config.mqtt_port.clone().unwrap_or(1883);
@@ -91,25 +91,20 @@ pub fn start_mqtt(config: &TrackerConfig) -> std::sync::mpsc::Receiver<Option<Me
         std::process::exit(1);
     };
 
-    // Not really sure why this is needed 😛
-    // But without it, paho_mqtt doesn't work
-    if !cli.is_connected() {
-        try_reconnect(&cli) 
-    };
-
-    rx
+    (rx, cli)
 }
 
-fn try_reconnect(cli: &paho_mqtt::Client) {
+pub fn try_mqtt_reconnect(cli: &paho_mqtt::Client) -> bool {
     println!("Connection lost. Waiting to retry connection");
     for _ in 0..12 {
         std::thread::sleep(std::time::Duration::from_millis(5000));
         if cli.reconnect().is_ok() {
             println!("Successfully reconnected");
+            return true;
         }
     }
     println!("Unable to reconnect after several attempts.");
-    std::process::exit(1)
+    false
 }
 
 fn generate_mq_client_id() -> String {
