@@ -123,6 +123,14 @@ pub fn receive_updates(
                 }
             }
             _ => {
+                // Our MQTT abstraction has leaked into
+                // our redis code.  This is unfortunate.
+                // But without handling the reconnect case,
+                // somehow the MQTT connection initially fails.
+                // Too, we don't really trust the client to stay
+                // connected indefinitely, so we'd like to continue
+                // watching for this condition as long as
+                // the program runs.
                 if !mqtt_cli.is_connected() {
                     let _ = tracker_support::try_mqtt_reconnect(&mqtt_cli);
                 }
