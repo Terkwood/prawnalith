@@ -10,17 +10,19 @@ pub fn receive_updates(
     update_r: std::sync::mpsc::Receiver<Option<paho_mqtt::message::Message>>,
     redis_ctx: &RedisContext,
     mqtt_cli: paho_mqtt::Client,
+    measure_name: String,
 ) {
     loop {
         match update_r.try_recv() {
             Ok(Some(paho)) => {
-                if let Some(temp) = prawnqtt::deser_message(paho) {
-                    println!("\tReceived redis temp update: {:?}", temp);
+                if let Some(measure) = prawnqtt::deser_message(paho) {
+                    println!("\tReceived redis {} update: {:?}", measure_name, measure);
                     let device_id: String = format!(
                         "{}",
-                        temp.id(&redis_ctx
-                            .get_external_device_namespace("temp".to_string())
-                            .unwrap())
+                        measure
+                            .id(&redis_ctx
+                                .get_external_device_namespace(measure_name.to_string())
+                                .unwrap())
                             .unwrap()
                     );
                     println!("\tDevice ID (internal): {}", device_id);
@@ -28,39 +30,47 @@ pub fn receive_updates(
 
                     // add to the member set if it doesn't already exist
                     let _ = redis::cmd("SADD")
-                        .arg(format!("{}/sensors/temp", rn))
+                        .arg(format!("{}/sensors/{}", rn, measure_name))
                         .arg(&device_id)
                         .execute(&redis_ctx.conn);
 
                     // lookup associated tank
-                    let temp_sensor_hash_key =
-                        &format!("{}/sensors/temp/{}", rn, device_id).to_string();
+                    let sensor_hash_key =
+                        &format!("{}/sensors/{}/{}", rn, measure_name, device_id).to_string();
 
-                    let assoc_tank_num: Result<Vec<Option<u64>>, _> = redis_ctx
-                        .conn
-                        .hget(temp_sensor_hash_key, vec!["tank", "temp_update_count"]);
+                    let assoc_tank_num: Result<Vec<Option<u64>>, _> = redis_ctx.conn.hget(
+                        sensor_hash_key,
+                        vec!["tank", &format!("{}_update_count", measure_name)],
+                    );
 
                     let _ = assoc_tank_num.iter().for_each(|v| {
                         let maybe_tank_num = v.get(0).unwrap_or(&None);
-                        let maybe_temp_sensor_uc: &Option<_> = v.get(1).unwrap_or(&None);
+                        let maybe_sensor_upd_count: &Option<_> = v.get(1).unwrap_or(&None);
                         if let Some(tank_num) = maybe_tank_num {
                             // We found the tank associated with this
                             // sensor ID, so we should update that tank's
-                            // current temp reading.
+                            // current reading.
                             let tank_key = format!("{}/tanks/{}", rn, tank_num);
 
-                            let tank_temp_count: Result<Option<u32>, _> =
-                                redis_ctx.conn.hget(&tank_key, "temp_update_count");
+                            let tank_measure_count: Result<
+                                Option<u32>,
+                                _,
+                            > = redis_ctx
+                                .conn
+                                .hget(&tank_key, &format!("{}_update_count", measure_name));
 
                             let update: Result<String, _> = redis_ctx.conn.hset_multiple(
                                 &tank_key,
                                 &vec![
-                                    ("temp_f", temp.temp_f.to_string()),
-                                    ("temp_c", temp.temp_c.to_string()),
-                                    ("temp_update_time", epoch_secs().to_string()),
+                                    ("temp_f", measure.temp_f.to_string()),
+                                    ("temp_c", measure.temp_c.to_string()),
                                     (
-                                        "temp_update_count",
-                                        tank_temp_count
+                                        &format!("{}_update_time", measure_name),
+                                        epoch_secs().to_string(),
+                                    ),
+                                    (
+                                        &format!("{}_update_count", measure_name),
+                                        tank_measure_count
                                             .unwrap_or(None)
                                             .map(|u| u + 1)
                                             .unwrap_or(1)
@@ -79,44 +89,50 @@ pub fn receive_updates(
                             // to come in and link this device to a specific tank
                             // using redis-cli!
 
-                            redis_ctx.conn.exists(temp_sensor_hash_key).iter().for_each(
-                                |e: &bool| {
+                            redis_ctx
+                                .conn
+                                .exists(sensor_hash_key)
+                                .iter()
+                                .for_each(|e: &bool| {
                                     if !e {
-                                        // new temp sensor, make note of when it is created
+                                        // new sensor, make note of when it is created
                                         let _: Result<
                                             Vec<bool>,
                                             _,
                                         > = redis_ctx.conn.hset_multiple(
-                                            temp_sensor_hash_key,
+                                            sensor_hash_key,
                                             &vec![
                                                 ("create_time", format!("{}", epoch_secs())),
-                                                ("ext_device_id", temp.device_id.to_string()),
+                                                ("ext_device_id", measure.device_id.to_string()),
                                             ][..],
                                         );
                                     }
-                                },
-                            );
+                                });
                         };
 
-                        // record a hit on the temp updates that the sensor has seen
-                        // and also record the most recent temp on the sensor itself
+                        // record a hit on the updates that the sensor has seen
+                        // and also record the most recent measurement on the record
+                        // for this individual sensor
                         let update_sensor: Result<String, _> = redis_ctx.conn.hset_multiple(
-                            temp_sensor_hash_key,
+                            sensor_hash_key,
                             &vec![
                                 (
-                                    "temp_update_count",
-                                    maybe_temp_sensor_uc.map(|u| u + 1).unwrap_or(1).to_string(),
+                                    &format!("{}_update_count", measure_name)[..],
+                                    maybe_sensor_upd_count
+                                        .map(|u| u + 1)
+                                        .unwrap_or(1)
+                                        .to_string(),
                                 ),
-                                ("temp_f", temp.temp_f.to_string()),
-                                ("temp_c", temp.temp_c.to_string()),
-                                ("temp_update_time", epoch_secs().to_string()),
+                                ("temp_f", measure.temp_f.to_string()),
+                                ("temp_c", measure.temp_c.to_string()),
+                                (
+                                    &format!("{}_update_time", measure_name),
+                                    epoch_secs().to_string(),
+                                ),
                             ][..],
                         );
                         if let Err(e) = update_sensor {
-                            println!(
-                                "couldn't update sensor record {}: {:?}",
-                                temp_sensor_hash_key, e
-                            );
+                            println!("couldn't update sensor record {}: {:?}", sensor_hash_key, e);
                         }
                     });
                     println!("");

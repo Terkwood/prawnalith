@@ -18,4 +18,8 @@ impl TempMessage {
             self.device_id.as_bytes(),
         ))
     }
+
+    pub fn measure_name() -> String {
+        "temp".to_string()
+    }
 }
