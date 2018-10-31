@@ -121,6 +121,7 @@ pub fn receive_updates(
                     println!("");
                 }
             }
+            _ => {}
         }
     }
 }
