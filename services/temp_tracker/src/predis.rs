@@ -121,7 +121,6 @@ pub fn receive_updates(
                     println!("");
                 }
             }
-            other => println!("No recv match: {:?}", other),
         }
     }
 }
