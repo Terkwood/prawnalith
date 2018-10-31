@@ -1,6 +1,7 @@
 use redis;
 use redis::Commands;
 
+use super::model;
 use super::prawnqtt;
 use redis_context::RedisContext;
 use std::time::SystemTime;
@@ -8,38 +9,40 @@ use std::time::SystemTime;
 pub fn receive_updates(
     update_r: std::sync::mpsc::Receiver<Option<paho_mqtt::message::Message>>,
     redis_ctx: &RedisContext,
-    mqtt_cli: paho_mqtt::Client,
-    measure_name: String,
+    mqtt_cli: paho_mqtt::Client
 ) {
     loop {
         match update_r.try_recv() {
             Ok(Some(paho)) => {
-                if let Some(measure) = prawnqtt::deser_message(paho) {
-                    println!("\tReceived redis {} update: {:?}", measure_name, measure);
-                    let device_id: String = format!(
-                        "{}",
-                        measure
-                            .id(&redis_ctx
-                                .get_external_device_namespace(measure_name.to_string())
-                                .unwrap())
-                            .unwrap()
-                    );
+                if let Some(sensor_message) = prawnqtt::deser_message(paho) {
+                    
+                    let device_id = sensor_message.device_id;
+                    sensor_message.measurements().iter().for_each(|measure| {
+                    println!("\tReceived redis {} update: {:?}", measure.name(), measure);
+                    let ext_device_namespace = &redis_ctx
+                                .get_external_device_namespace(measure.name())
+                                .unwrap();
+                    let device_ids = model::DeviceId { external_id: sensor_message.device_id };
+                    let device_id = device_ids
+                            .id(ext_device_namespace)
+                            .unwrap();
+
                     println!("\tDevice ID (internal): {}", device_id);
                     let rn = &redis_ctx.namespace;
 
                     // add to the member set if it doesn't already exist
                     let _ = redis::cmd("SADD")
-                        .arg(format!("{}/sensors/{}", rn, measure_name))
-                        .arg(&device_id)
+                        .arg(format!("{}/sensors/{}", rn, measure.name()))
+                        .arg(&format!("{}", device_id))
                         .execute(&redis_ctx.conn);
 
                     // lookup associated tank
                     let sensor_hash_key =
-                        &format!("{}/sensors/{}/{}", rn, measure_name, device_id).to_string();
+                        &format!("{}/sensors/{}/{}", rn, measure.name(), device_id).to_string();
 
                     let assoc_tank_num: Result<Vec<Option<u64>>, _> = redis_ctx.conn.hget(
                         sensor_hash_key,
-                        vec!["tank", &format!("{}_update_count", measure_name)],
+                        vec!["tank", &format!("{}_update_count", measure.name())],
                     );
 
                     let _ = assoc_tank_num.iter().for_each(|v| {
@@ -56,7 +59,7 @@ pub fn receive_updates(
                                 _,
                             > = redis_ctx
                                 .conn
-                                .hget(&tank_key, &format!("{}_update_count", measure_name));
+                                .hget(&tank_key, &format!("{}_update_count", measure.name()));
 
                             let update: Result<String, _> = redis_ctx.conn.hset_multiple(
                                 &tank_key,
@@ -64,11 +67,11 @@ pub fn receive_updates(
                                     ("temp_f", measure.temp_f.to_string()),
                                     ("temp_c", measure.temp_c.to_string()),
                                     (
-                                        &format!("{}_update_time", measure_name),
+                                        &format!("{}_update_time", measure.name()),
                                         epoch_secs().to_string(),
                                     ),
                                     (
-                                        &format!("{}_update_count", measure_name),
+                                        &format!("{}_update_count", measure.name()),
                                         tank_measure_count
                                             .unwrap_or(None)
                                             .map(|u| u + 1)
@@ -102,7 +105,7 @@ pub fn receive_updates(
                                             sensor_hash_key,
                                             &vec![
                                                 ("create_time", format!("{}", epoch_secs())),
-                                                ("ext_device_id", measure.device_id.to_string()),
+                                                ("ext_device_id", device_ids.external_id),
                                             ][..],
                                         );
                                     }
@@ -116,7 +119,7 @@ pub fn receive_updates(
                             sensor_hash_key,
                             &vec![
                                 (
-                                    &format!("{}_update_count", measure_name)[..],
+                                    &format!("{}_update_count", measure.name())[..],
                                     maybe_sensor_upd_count
                                         .map(|u| u + 1)
                                         .unwrap_or(1)
@@ -125,7 +128,7 @@ pub fn receive_updates(
                                 ("temp_f", measure.temp_f.to_string()),
                                 ("temp_c", measure.temp_c.to_string()),
                                 (
-                                    &format!("{}_update_time", measure_name),
+                                    &format!("{}_update_time", measure.name()),
                                     epoch_secs().to_string(),
                                 ),
                             ][..],
@@ -134,7 +137,11 @@ pub fn receive_updates(
                             println!("couldn't update sensor record {}: {:?}", sensor_hash_key, e);
                         }
                     });
+
                     println!("");
+                    });
+
+                    
                 }
             }
             _ => {

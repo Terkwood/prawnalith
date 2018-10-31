@@ -24,8 +24,7 @@ fn main() {
     predis::receive_updates(
         rx,
         &config_clone.to_redis_context(),
-        mqtt_cli,
-        model::TempMessage::measure_name(),
+        mqtt_cli
     );
     println!("unreachable");
 }
