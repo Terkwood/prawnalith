@@ -50,17 +50,20 @@ pub fn start_mqtt(config: &TrackerConfig) -> std::sync::mpsc::Receiver<Option<Me
     let topic = &config.mqtt_topic;
     let qos = &config.mqtt_qos.unwrap_or(1);
 
+    let server_uri = format!("tcp://{}:{}", host, port);
+    let server_uri_print = server_uri.clone();
+
     // Create the client. Use an ID for a persisten session.
     // A real system should try harder to use a unique ID.
     let create_opts = paho_mqtt::CreateOptionsBuilder::new()
-        .server_uri(format!("tcp://{}:{}", host, port))
+        .server_uri(server_uri)
         .client_id(generate_mq_client_id())
         .finalize();
 
     let mut cli = paho_mqtt::Client::new(create_opts).expect("Error creating the MQTT client");
 
     // Define the set of options for the connection
-    let lwt = paho_mqtt::MessageBuilder::new()
+    let will = paho_mqtt::MessageBuilder::new()
         .topic(topic.to_string())
         .payload("Sync consumer lost connection")
         .finalize();
@@ -68,11 +71,11 @@ pub fn start_mqtt(config: &TrackerConfig) -> std::sync::mpsc::Receiver<Option<Me
     let conn_opts = paho_mqtt::ConnectOptionsBuilder::new()
         .keep_alive_interval(std::time::Duration::from_secs(*keep_alive as u64))
         .clean_session(false)
-        .will_message(lwt)
+        .will_message(will)
         .finalize();
 
     // Make the connection to the broker
-    println!("Connecting to the MQTT broker...");
+    println!("Connecting to the MQTT broker at {}", server_uri_print);
     if let Err(e) = cli.connect(conn_opts) {
         println!("Error connecting to the broker: {:?}", e);
         std::process::exit(1);
@@ -88,7 +91,25 @@ pub fn start_mqtt(config: &TrackerConfig) -> std::sync::mpsc::Receiver<Option<Me
         std::process::exit(1);
     };
 
+    // Not really sure why this is needed 😛
+    // But without it, paho_mqtt doesn't work
+    if !cli.is_connected() {
+        try_reconnect(&cli) 
+    };
+
     rx
+}
+
+fn try_reconnect(cli: &paho_mqtt::Client) {
+    println!("Connection lost. Waiting to retry connection");
+    for _ in 0..12 {
+        std::thread::sleep(std::time::Duration::from_millis(5000));
+        if cli.reconnect().is_ok() {
+            println!("Successfully reconnected");
+        }
+    }
+    println!("Unable to reconnect after several attempts.");
+    std::process::exit(1)
 }
 
 fn generate_mq_client_id() -> String {
