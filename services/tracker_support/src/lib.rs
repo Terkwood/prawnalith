@@ -19,6 +19,7 @@ pub struct TrackerConfig {
     pub mqtt_port: Option<u16>,
     pub mqtt_topic: String,
     pub mqtt_keep_alive: Option<u16>,
+    pub mqtt_qos: Option<u16>,
 }
 
 impl TrackerConfig {
@@ -47,6 +48,7 @@ pub fn start_mqtt(config: &TrackerConfig) -> std::sync::mpsc::Receiver<Option<Me
     // see http://www.steves-internet-guide.com/mqtt-keep-alive-by-example/
     let keep_alive = &config.mqtt_keep_alive.unwrap_or(10);
     let topic = &config.mqtt_topic;
+    let qos = &config.mqtt_qos.unwrap_or(1);
 
     // Create the client. Use an ID for a persisten session.
     // A real system should try harder to use a unique ID.
@@ -78,7 +80,15 @@ pub fn start_mqtt(config: &TrackerConfig) -> std::sync::mpsc::Receiver<Option<Me
 
     // Initialize the consumer & subscribe to topics
     println!("Subscribing to topic {}", topic);
-    cli.start_consuming()
+    let rx = cli.start_consuming();
+
+    if let Err(e) = cli.subscribe_many(&[topic], &[*qos as i32]) {
+        println!("Error subscribing to topics: {:?}", e);
+        cli.disconnect(None).unwrap();
+        std::process::exit(1);
+    };
+
+    rx
 }
 
 fn generate_mq_client_id() -> String {
