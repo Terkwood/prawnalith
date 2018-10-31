@@ -123,7 +123,9 @@ pub fn receive_updates(
                 }
             }
             _ => {
-                let _ = tracker_support::try_mqtt_reconnect(&mqtt_cli);
+                if !mqtt_cli.is_connected() {
+                    let _ = tracker_support::try_mqtt_reconnect(&mqtt_cli);
+                }
             }
         }
     }
