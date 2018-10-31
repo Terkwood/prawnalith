@@ -500,6 +500,21 @@ version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "sensor_tracker"
+version = "0.1.1"
+dependencies = [
+ "dotenv 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "envy 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "paho-mqtt 0.4.0 (git+https://github.com/Terkwood/paho.mqtt.rust.git?rev=1b72f84)",
+ "redis 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "redis_context 0.1.0",
+ "serde 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_derive 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_json 1.0.32 (registry+https://github.com/rust-lang/crates.io-index)",
+ "uuid 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "serde"
 version = "1.0.80"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -566,22 +581,6 @@ dependencies = [
  "quote 0.6.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "syn 0.15.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "unicode-xid 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "temp_tracker"
-version = "0.1.1"
-dependencies = [
- "dotenv 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "envy 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "paho-mqtt 0.4.0 (git+https://github.com/Terkwood/paho.mqtt.rust.git?rev=1b72f84)",
- "redis 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "redis_context 0.1.0",
- "serde 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_derive 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_json 1.0.32 (registry+https://github.com/rust-lang/crates.io-index)",
- "tracker_support 0.1.1",
- "uuid 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -665,19 +664,6 @@ dependencies = [
  "mio 0.6.16 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio-io 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio-reactor 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "tracker_support"
-version = "0.1.1"
-dependencies = [
- "envy 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "paho-mqtt 0.4.0 (git+https://github.com/Terkwood/paho.mqtt.rust.git?rev=1b72f84)",
- "redis_context 0.1.0",
- "serde 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_derive 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_json 1.0.32 (registry+https://github.com/rust-lang/crates.io-index)",
- "uuid 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

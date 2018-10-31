@@ -1,10 +1,9 @@
-use tracker_support::epoch_secs;
-
 use redis;
 use redis::Commands;
 
 use super::prawnqtt;
 use redis_context::RedisContext;
+use std::time::SystemTime;
 
 pub fn receive_updates(
     update_r: std::sync::mpsc::Receiver<Option<paho_mqtt::message::Message>>,
@@ -148,9 +147,30 @@ pub fn receive_updates(
                 // watching for this condition as long as
                 // the program runs.
                 if !mqtt_cli.is_connected() {
-                    let _ = tracker_support::try_mqtt_reconnect(&mqtt_cli);
+                    let _ = try_mqtt_reconnect(&mqtt_cli);
                 }
             }
         }
     }
+}
+
+fn epoch_secs() -> u64 {
+    SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap()
+        .as_secs()
+}
+
+fn try_mqtt_reconnect(cli: &paho_mqtt::Client) -> bool {
+    println!("MQTT connection lost...");
+    for i in 0..12 {
+        println!("Retrying MQTT connection ({})", i);
+        std::thread::sleep(std::time::Duration::from_millis(5000));
+        if cli.reconnect().is_ok() {
+            println!("MQTT successfully reconnected");
+            return true;
+        }
+    }
+    println!("Unable to reconnect MQTT after several attempts.");
+    false
 }

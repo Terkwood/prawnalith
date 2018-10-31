@@ -6,11 +6,9 @@ extern crate redis;
 extern crate redis_context;
 #[macro_use]
 extern crate serde_derive;
-extern crate tracker_support;
 extern crate uuid;
 
-use tracker_support::TrackerConfig;
-
+mod config;
 mod model;
 mod prawnqtt;
 mod predis;
@@ -18,10 +16,10 @@ mod predis;
 fn main() {
     dotenv::dotenv().expect("Unable to load .env file");
 
-    let config = TrackerConfig::new();
+    let config = config::TrackerConfig::new();
     let config_clone = config.clone();
 
-    let (rx, mqtt_cli) = tracker_support::start_mqtt(&config);
+    let (rx, mqtt_cli) = prawnqtt::start_mqtt(&config);
 
     predis::receive_updates(
         rx,

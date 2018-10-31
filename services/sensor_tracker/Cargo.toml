@@ -1,5 +1,5 @@
 [package]
-name = "temp_tracker"
+name = "sensor_tracker"
 version = "0.1.1"
 authors = ["Terkwood <metaterkhorn@gmail.com>"]
 edition = "2018"
@@ -13,5 +13,4 @@ redis_context = { path = "../redis_context" }
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
-tracker_support = { path = "../tracker_support" }
 uuid = { version = "0.7", features = ["v4", "v5"] }
