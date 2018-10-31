@@ -45,13 +45,40 @@ pub fn start_mqtt(config: &TrackerConfig) -> std::sync::mpsc::Receiver<Option<Me
     let port = &config.mqtt_port.clone().unwrap_or(1883);
     // mqtt spec states that this is measured in secs
     // see http://www.steves-internet-guide.com/mqtt-keep-alive-by-example/
-    let _keep_alive = &config.mqtt_keep_alive.unwrap_or(10);
+    let keep_alive = &config.mqtt_keep_alive.unwrap_or(10);
     let topic = &config.mqtt_topic;
 
-    let mut client = paho_mqtt::Client::new(&format!("tcp://{}:{}", host, port)[..]).unwrap();
-    client.subscribe(topic, 1).unwrap();
+    // Create the client. Use an ID for a persisten session.
+    // A real system should try harder to use a unique ID.
+    let create_opts = paho_mqtt::CreateOptionsBuilder::new()
+        .server_uri(format!("tcp://{}:{}", host, port))
+        .client_id(generate_mq_client_id())
+        .finalize();
 
-    client.start_consuming()
+    let mut cli = paho_mqtt::Client::new(create_opts).expect("Error creating the MQTT client");
+
+    // Define the set of options for the connection
+    let lwt = paho_mqtt::MessageBuilder::new()
+        .topic(topic.to_string())
+        .payload("Sync consumer lost connection")
+        .finalize();
+
+    let conn_opts = paho_mqtt::ConnectOptionsBuilder::new()
+        .keep_alive_interval(std::time::Duration::from_secs(*keep_alive as u64))
+        .clean_session(false)
+        .will_message(lwt)
+        .finalize();
+
+    // Make the connection to the broker
+    println!("Connecting to the MQTT broker...");
+    if let Err(e) = cli.connect(conn_opts) {
+        println!("Error connecting to the broker: {:?}", e);
+        std::process::exit(1);
+    };
+
+    // Initialize the consumer & subscribe to topics
+    println!("Subscribing to topic {}", topic);
+    cli.start_consuming()
 }
 
 fn generate_mq_client_id() -> String {
