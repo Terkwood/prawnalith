@@ -580,7 +580,7 @@ dependencies = [
  "serde 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.32 (registry+https://github.com/rust-lang/crates.io-index)",
- "tracker_support 0.1.0",
+ "tracker_support 0.1.1",
  "uuid 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -669,7 +669,7 @@ dependencies = [
 
 [[package]]
 name = "tracker_support"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "envy 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "paho-mqtt 0.4.0 (git+https://github.com/Terkwood/paho.mqtt.rust.git?rev=1b72f84)",
