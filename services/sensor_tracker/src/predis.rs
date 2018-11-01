@@ -66,24 +66,20 @@ pub fn receive_updates(
                                     let mut data: Vec<(
                                         &str,
                                         String,
-                                    )> = vec![];
-                                    /*
-                                    ("temp_f", measure.temp_f.to_string()),
-                                        ("temp_c", measure.temp_c.to_string())
-                                    */
-                                    data.push(unimplemented!());
+                                    )> = measure.to_redis();
+
+                                    let uc_name = &format!("{}_update_count", measure.name());
                                     data.push((
-                                        &format!("{}_update_count", measure.name()),
+                                        uc_name,
                                         tank_measure_count
                                             .unwrap_or(None)
                                             .map(|u| u + 1)
                                             .unwrap_or(1)
                                             .to_string(),
                                     ));
-                                    data.push((
-                                        &format!("{}_update_time", measure.name()),
-                                        epoch_secs().to_string(),
-                                    ));
+
+                                    let ut_name = &format!("{}_update_time", measure.name());
+                                    data.push((ut_name, epoch_secs().to_string()));
                                     redis_ctx.conn.hset_multiple(&tank_key, &data[..])
                                 };
 
@@ -128,15 +124,9 @@ pub fn receive_updates(
                                         .unwrap_or(1)
                                         .to_string(),
                                 )];
-                                data.push(unimplemented!());
-                                /*
-                                 ("temp_f", measure.temp_f.to_string()),
-                                ("temp_c", measure.temp_c.to_string()),
-                                */
-                                data.push((
-                                    &format!("{}_update_time", measure.name()),
-                                    epoch_secs().to_string(),
-                                ));
+                                data.extend(measure.to_redis());
+                                let ut = &format!("{}_update_time", measure.name());
+                                data.push((ut, epoch_secs().to_string()));
 
                                 redis_ctx.conn.hset_multiple(sensor_hash_key, &data[..])
                             };

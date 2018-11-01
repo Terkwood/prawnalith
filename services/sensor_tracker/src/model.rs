@@ -57,4 +57,11 @@ impl Measurement {
             Measurement::PH { ph, mv } => "ph".to_string(),
         }
     }
+
+    pub fn to_redis(&self) -> Vec<(&str, String)> {
+        match self {
+            Measurement::Temp { temp_f, temp_c } => vec![unimplemented!()],
+            Measurement::PH { ph, mv } => vec![unimplemented!()],
+        }
+    }
 }
