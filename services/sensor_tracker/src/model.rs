@@ -17,24 +17,26 @@ impl SensorMessage {
     pub fn measurements(&self) -> Vec<Measurement> {
         let mut v: Vec<Measurement> = vec![];
         if let (Some(temp_f), Some(temp_c)) = (self.temp_f, self.temp_c) {
-              v.push(Measurement::Temp { temp_f, temp_c })
+            v.push(Measurement::Temp { temp_f, temp_c })
         }
 
-        if let     (Some(ph), Some(mv)) = (self.ph, self.mv) {
-             v.push(Measurement::PH { ph, mv })
-            
+        if let (Some(ph), Some(mv)) = (self.ph, self.mv) {
+            v.push(Measurement::PH { ph, mv })
         }
 
         v
     }
 }
 
-pub struct DeviceId {
-    pub external_id: String
+pub struct ExternalDeviceId {
+    pub external_id: String,
 }
 
-impl DeviceId {
-    pub fn id(&self, external_device_namespace: &Uuid) -> Result<Uuid, uuid::parser::ParseError> {
+impl ExternalDeviceId {
+    pub fn to_internal_id(
+        &self,
+        external_device_namespace: &Uuid,
+    ) -> Result<Uuid, uuid::parser::ParseError> {
         Ok(Uuid::new_v5(
             &external_device_namespace,
             self.external_id.as_bytes(),
@@ -45,14 +47,14 @@ impl DeviceId {
 #[derive(Debug)]
 pub enum Measurement {
     Temp { temp_f: f64, temp_c: f64 },
-    PH { ph: f64, mv: f64 }
+    PH { ph: f64, mv: f64 },
 }
 
 impl Measurement {
     pub fn name(&self) -> String {
         match self {
             Measurement::Temp { temp_f, temp_c } => "temp".to_string(),
-            Measurement::PH { ph, mv } => "ph".to_string()
+            Measurement::PH { ph, mv } => "ph".to_string(),
         }
     }
 }

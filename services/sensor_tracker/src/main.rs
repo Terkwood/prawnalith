@@ -21,10 +21,6 @@ fn main() {
 
     let (rx, mqtt_cli) = prawnqtt::start_mqtt(&config);
 
-    predis::receive_updates(
-        rx,
-        &config_clone.to_redis_context(),
-        mqtt_cli
-    );
+    predis::receive_updates(rx, &config_clone.to_redis_context(), mqtt_cli);
     println!("unreachable");
 }
