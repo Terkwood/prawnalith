@@ -1,30 +1,28 @@
-# Temp tracker utility
+# Sensor tracker
 
-Listens for temperature-related sensor reports.  Creates an entry in the
-Redis `<namespace>/sensors/temp` set if the reporting sensor doesn't exist.  Creates a stubbed hash which the user can fill out in order to associate tank, manufacturing data, etc.
+# Purpose
 
-## On temp sensor report
+This utility listens for temperature- and pH-related sensor reports.
 
-This is useful for sensors generating temperature data.
+It is primarily used to update the Redis data structures related to individual _tanks_.  Each tank is tracked such that it contains its most recent temperature and pH report.
+
+Additionally, it creates an entry in the Redis `<namespace>/sensors/<temp_or_ph>` set if the reporting sensor doesn't exist.  Creates a stubbed hash which the user can fill out in order to associate tank, manufacturing data, etc.
+
+## On sensor report
+
+This is useful for sensors generating temperature and/or pH data.
 
 Such data comes into an MQTT topic looking like this:
 
 ```
-{ "device_id": <hex>, "temp_f", "temp_c" }
+{ "device_id": <hex>, "temp_f": 81.71, "temp_c": 23.45, "ph": 7.77, "ph_mv": 453.05 }
 ```
 
-This utility first checks to see whether the temp sensor is 
-already known to us.
-
-```
-SISMEMBER <namespace>/sensors/temp
-```
-
-If it isn't, it will create the following type of stub record
+If the sensor isn't, it will create the following type of stub record
 for the temp sensor based on a UUID V5 ID conversion:
 
 ```
-HMSET <namespace>/sensors/temp/<uuid_v5_id> start_date <epoch>
+HMSET <namespace>/sensors/<temp_or_ph>/<uuid_v5_id> create_time <epoch>
 ```
 
 The operator is encouraged to later amend the hash to include
@@ -32,5 +30,87 @@ a helpful reference to the tank which the sensor serves, so
 that the LED status utility can properly format messages.
 
 ```
-HSET <namespace>/sensors/temp/<uuid_v5_id> tank 0
+HSET <namespace>/sensors/<temp_or_ph>/<device_internal_id> tank 0
+```
+
+### Sample redis records
+
+**temp sensor**
+
+`> hgetall namespace/sensors/temp/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa`
+
+```
+ 1) "create_time"
+ 2) "1540598539"
+ 3) "ext_device_id"
+ 4) "aaaaaaaa090000aa"
+ 5) "temp_update_count"
+ 6) "434817"
+ 7) "temp_f"
+ 8) "81.39"
+ 9) "temp_c"
+10) "27.44"
+11) "temp_update_time"
+12) "1541057567"
+13) "tank"
+14) "1"
+```
+
+**pH sensor**
+
+`> hgetall namespace/sensors/ph/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa`
+
+```
+ 1) "low_ph_ref"
+ 2) "4.00"
+ 3) "low_mv"
+ 4) "357.71"
+ 5) "hi_ph_ref"
+ 6) "7.03"
+ 7) "hi_mv"
+ 8) "441.01"
+ 9) "ph_update_count"
+10) "601570"
+11) "ph"
+12) "7.84"
+13) "ph_mv"
+14) "464.21"
+15) "ph_update_time"
+16) "1541082833"
+17) "tank"
+18) "1"
+19) "ext_device_id"
+20) "286cbc98090000bd"
+```
+
+**tank counter**
+
+`> get namespace/tanks`
+
+```
+"1"
+```
+
+**tank hash**
+
+`> hgetall namespace/tanks/1`
+
+```
+hgetall namespace/tanks/1
+ 1) "temp_f"
+ 2) "81.16"
+ 3) "temp_c"
+ 4) "27.31"
+ 5) "temp_update_time"
+ 6) "1541082869"
+ 7) "temp_update_count"
+ 8) "683225"
+ 9) "ph"
+10) "7.84"
+11) "ph_mv"
+12) "464.21"
+13) "ph_update_time"
+14) "1541082869"
+15) "ph_update_count"
+16) "601573"
 ```
