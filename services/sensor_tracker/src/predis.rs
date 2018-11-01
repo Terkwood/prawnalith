@@ -50,66 +50,9 @@ pub fn receive_updates(
                             let maybe_tank_num = v.get(0).unwrap_or(&None);
                             let maybe_sensor_upd_count: &Option<_> = v.get(1).unwrap_or(&None);
                             if let Some(tank_num) = maybe_tank_num {
-                                // We found the tank associated with this
-                                // sensor ID, so we should update that tank's
-                                // current reading.
-                                let tank_key = format!("{}/tanks/{}", rn, tank_num);
-
-                                let tank_measure_count: Result<
-                                    Option<u32>,
-                                    _,
-                                > = redis_ctx
-                                    .conn
-                                    .hget(&tank_key, &format!("{}_update_count", measure.name()));
-
-                                let update: Result<String, _> = {
-                                    let mut data: Vec<(
-                                        &str,
-                                        String,
-                                    )> = measure.to_redis();
-
-                                    let uc_name = &format!("{}_update_count", measure.name());
-                                    data.push((
-                                        uc_name,
-                                        tank_measure_count
-                                            .unwrap_or(None)
-                                            .map(|u| u + 1)
-                                            .unwrap_or(1)
-                                            .to_string(),
-                                    ));
-
-                                    let ut_name = &format!("{}_update_time", measure.name());
-                                    data.push((ut_name, epoch_secs().to_string()));
-                                    redis_ctx.conn.hset_multiple(&tank_key, &data[..])
-                                };
-
-                                if let Err(e) = update {
-                                    println!("update fails for {}: {:?}", tank_key, e);
-                                }
+                                update_tank_hash(redis_ctx, tank_num, &measure);
                             } else {
-                                // We know that there's no associated "tank"
-                                // field for this key.  Let's make sure the record
-                                // for this sensor exists -- we'll need a human
-                                // to come in and link this device to a specific tank
-                                // using redis-cli!
-
-                                redis_ctx.conn.exists(sensor_hash_key).iter().for_each(
-                                    |e: &bool| {
-                                        if !e {
-                                            // new sensor, make note of when it is created
-                                            let _: Result<
-                                            Vec<bool>,
-                                            _,
-                                        > = redis_ctx.conn.hset_multiple(
-                                            sensor_hash_key,
-                                            &vec![
-                                                ("create_time", format!("{}", epoch_secs())),
-                                                ("ext_device_id", ext_id_str.to_string()),
-                                            ][..],
-                                        );
-                                        }
-                                    },
-                                );
+                                ensure_sensor_hash_exists(redis_ctx, sensor_hash_key, ext_id_str);
                             };
 
                             // record a hit on the updates that the sensor has seen
@@ -178,4 +121,62 @@ fn try_mqtt_reconnect(cli: &paho_mqtt::Client) -> bool {
     }
     println!("Unable to reconnect MQTT after several attempts.");
     false
+}
+
+fn update_tank_hash(redis_ctx: &RedisContext, tank_num: &u64, measure: &model::Measurement) {
+    // We found the tank associated with this
+    // sensor ID, so we should update that tank's
+    // current reading.
+    let tank_key = format!("{}/tanks/{}", redis_ctx.namespace, tank_num);
+
+    let tank_measure_count: Result<Option<u32>, _> = redis_ctx
+        .conn
+        .hget(&tank_key, &format!("{}_update_count", measure.name()));
+
+    let update: Result<String, _> = {
+        let mut data: Vec<(&str, String)> = measure.to_redis();
+
+        let uc_name = &format!("{}_update_count", measure.name());
+        data.push((
+            uc_name,
+            tank_measure_count
+                .unwrap_or(None)
+                .map(|u| u + 1)
+                .unwrap_or(1)
+                .to_string(),
+        ));
+
+        let ut_name = &format!("{}_update_time", measure.name());
+        data.push((ut_name, epoch_secs().to_string()));
+        redis_ctx.conn.hset_multiple(&tank_key, &data[..])
+    };
+
+    if let Err(e) = update {
+        println!("update fails for {}: {:?}", tank_key, e);
+    }
+}
+
+fn ensure_sensor_hash_exists(redis_ctx: &RedisContext, sensor_hash_key: &str, ext_id_str: &str) {
+    // We know that there's no associated "tank"
+    // field for this key.  Let's make sure the record
+    // for this sensor exists -- we'll need a human
+    // to come in and link this device to a specific tank
+    // using redis-cli!
+
+    redis_ctx
+        .conn
+        .exists(sensor_hash_key)
+        .iter()
+        .for_each(|e: &bool| {
+            if !e {
+                // new sensor, make note of when it is created
+                let _: Result<Vec<bool>, _> = redis_ctx.conn.hset_multiple(
+                    sensor_hash_key,
+                    &vec![
+                        ("create_time", format!("{}", epoch_secs())),
+                        ("ext_device_id", ext_id_str.to_string()),
+                    ][..],
+                );
+            }
+        });
 }
