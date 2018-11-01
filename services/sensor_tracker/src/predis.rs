@@ -49,10 +49,9 @@ pub fn receive_updates(
                         );
 
                         let ext_id_str: &str = &ext_id.external_id;
-                        tank_and_update_count.iter().for_each(move |v| {
-                            let maybe_tank_num = v.get(0).unwrap_or(&None);
-                            let maybe_sensor_upd_count: &Option<_> = v.get(1).unwrap_or(&None);
-                            if let Some(tank_num) = maybe_tank_num {
+
+                        if let Ok(v) = tank_and_update_count {
+                            if let Some(tank_num) = v.get(0).unwrap_or(&None) {
                                 update_tank_hash(redis_ctx, tank_num, &measure);
                             } else {
                                 ensure_sensor_hash_exists(redis_ctx, sensor_hash_key, ext_id_str);
@@ -61,46 +60,28 @@ pub fn receive_updates(
                             // record a hit on the updates that the sensor has seen
                             // and also record the most recent measurement on the record
                             // for this individual sensor
-                            let update_sensor: Result<String, _> = {
-                                let upd_c = &format!("{}_update_count", measure.name());
-                                let mut data: Vec<(&str, String)> = vec![(
-                                    upd_c,
-                                    maybe_sensor_upd_count
-                                        .map(|u| u + 1)
-                                        .unwrap_or(1)
-                                        .to_string(),
-                                )];
-                                data.extend(measure.to_redis());
-                                let ut = &format!("{}_update_time", measure.name());
-                                data.push((ut, epoch_secs().to_string()));
-
-                                redis_ctx.conn.hset_multiple(sensor_hash_key, &data[..])
-                            };
-                            if let Err(e) = update_sensor {
+                            let sensor_updated = update_sensor_hash(
+                                redis_ctx,
+                                sensor_hash_key,
+                                measure,
+                                v.get(1).unwrap_or(&None),
+                            );
+                            if let Err(e) = sensor_updated {
                                 println!(
                                     "couldn't update sensor record {}: {:?}",
                                     sensor_hash_key, e
                                 );
                             }
-                        });
+                        };
 
                         println!("");
                     });
                 }
             }
-            _ => {
-                // Our MQTT abstraction has leaked into
-                // our redis code.  This is unfortunate.
-                // But without handling the reconnect case,
-                // somehow the MQTT connection initially fails.
-                // Too, we don't really trust the client to stay
-                // connected indefinitely, so we'd like to continue
-                // watching for this condition as long as
-                // the program runs.
-                if !mqtt_cli.is_connected() {
-                    let _ = try_mqtt_reconnect(&mqtt_cli);
-                }
+            Err(_) if !mqtt_cli.is_connected() => {
+                let _ = try_mqtt_reconnect(&mqtt_cli);
             }
+            _ => (),
         }
     }
 }
@@ -182,4 +163,25 @@ fn ensure_sensor_hash_exists(redis_ctx: &RedisContext, sensor_hash_key: &str, ex
                 );
             }
         });
+}
+
+fn update_sensor_hash(
+    redis_ctx: &RedisContext,
+    sensor_hash_key: &str,
+    measure: &model::Measurement,
+    maybe_sensor_upd_count: &Option<u64>,
+) -> Result<(), redis::RedisError> {
+    let upd_c = &format!("{}_update_count", measure.name());
+    let mut data: Vec<(&str, String)> = vec![(
+        upd_c,
+        maybe_sensor_upd_count
+            .map(|u| u + 1)
+            .unwrap_or(1)
+            .to_string(),
+    )];
+    data.extend(measure.to_redis());
+    let ut = &format!("{}_update_time", measure.name());
+    data.push((ut, epoch_secs().to_string()));
+
+    redis_ctx.conn.hset_multiple(sensor_hash_key, &data[..])
 }
