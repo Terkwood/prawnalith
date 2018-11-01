@@ -2,109 +2,58 @@ use redis;
 use redis::Commands;
 
 use super::model;
-use super::prawnqtt;
 use redis_context::RedisContext;
 use std::time::SystemTime;
+use uuid::Uuid;
 
-pub fn receive_updates(
-    update_r: std::sync::mpsc::Receiver<Option<paho_mqtt::message::Message>>,
-    redis_ctx: &RedisContext,
-    mqtt_cli: paho_mqtt::Client,
-) {
-    loop {
-        match update_r.try_recv() {
-            Ok(Some(paho)) => {
-                if let Some(sensor_message) = prawnqtt::deser_message(paho) {
-                    let ext_id_str: &str = &sensor_message.device_id;
+/// Updates redis so that the individual measurement is applied to the correct tank.
+/// Also records the measurement to a record associated with the sensor itself.
+/// Keeps track of how many updates have been applied to each tank and sensor record.
+/// Will create a new sensor record for this device if one does not already exist.
+pub fn update(redis_ctx: &RedisContext, measure: &model::Measurement, ext_device_id: &str) {
+    println!("Received redis {} update: {:?}", measure.name(), measure);
+    let ext_device_namespace = &redis_ctx
+        .get_external_device_namespace(measure.name())
+        .unwrap();
+    let device_id = internal_device_id(ext_device_id, ext_device_namespace).unwrap();
 
-                    sensor_message.measurements().iter().for_each(|measure| {
-                        println!("Received redis {} update: {:?}", measure.name(), measure);
-                        let ext_device_namespace = &redis_ctx
-                            .get_external_device_namespace(measure.name())
-                            .unwrap();
-                        let ext_id = &mut model::ExternalDeviceId {
-                            external_id: ext_id_str.to_string(),
-                        };
-                        let device_id = ext_id.to_internal_id(ext_device_namespace).unwrap();
+    println!("\tDevice ID (internal): {}", device_id);
+    let rn = &redis_ctx.namespace;
 
-                        println!("\tDevice ID (internal): {}", device_id);
-                        let rn = &redis_ctx.namespace;
+    // add to the member set if it doesn't already exist
+    let _ = redis::cmd("SADD")
+        .arg(format!("{}/sensors/{}", rn, measure.name()))
+        .arg(&format!("{}", device_id))
+        .execute(&redis_ctx.conn);
 
-                        // add to the member set if it doesn't already exist
-                        let _ = redis::cmd("SADD")
-                            .arg(format!("{}/sensors/{}", rn, measure.name()))
-                            .arg(&format!("{}", device_id))
-                            .execute(&redis_ctx.conn);
+    // lookup associated tank
+    let sensor_hash_key = &format!("{}/sensors/{}/{}", rn, measure.name(), device_id).to_string();
 
-                        // lookup associated tank
-                        let sensor_hash_key =
-                            &format!("{}/sensors/{}/{}", rn, measure.name(), device_id).to_string();
+    let tank_and_update_count: Result<Vec<Option<u64>>, _> = redis_ctx.conn.hget(
+        sensor_hash_key,
+        vec!["tank", &format!("{}_update_count", measure.name())],
+    );
 
-                        let tank_and_update_count: Result<
-                            Vec<Option<u64>>,
-                            _,
-                        > = redis_ctx.conn.hget(
-                            sensor_hash_key,
-                            vec!["tank", &format!("{}_update_count", measure.name())],
-                        );
+    if let Ok(v) = tank_and_update_count {
+        if let Some(tank_num) = v.get(0).unwrap_or(&None) {
+            update_tank_hash(redis_ctx, tank_num, &measure);
+        } else {
+            ensure_sensor_hash_exists(redis_ctx, sensor_hash_key, ext_device_id);
+        };
 
-                        let ext_id_str: &str = &ext_id.external_id;
-
-                        if let Ok(v) = tank_and_update_count {
-                            if let Some(tank_num) = v.get(0).unwrap_or(&None) {
-                                update_tank_hash(redis_ctx, tank_num, &measure);
-                            } else {
-                                ensure_sensor_hash_exists(redis_ctx, sensor_hash_key, ext_id_str);
-                            };
-
-                            // record a hit on the updates that the sensor has seen
-                            // and also record the most recent measurement on the record
-                            // for this individual sensor
-                            let sensor_updated = update_sensor_hash(
-                                redis_ctx,
-                                sensor_hash_key,
-                                measure,
-                                v.get(1).unwrap_or(&None),
-                            );
-                            if let Err(e) = sensor_updated {
-                                println!(
-                                    "couldn't update sensor record {}: {:?}",
-                                    sensor_hash_key, e
-                                );
-                            }
-                        };
-
-                        println!("");
-                    });
-                }
-            }
-            Err(_) if !mqtt_cli.is_connected() => {
-                let _ = try_mqtt_reconnect(&mqtt_cli);
-            }
-            _ => (),
+        // record a hit on the updates that the sensor has seen
+        // and also record the most recent measurement on the record
+        // for this individual sensor
+        let sensor_updated = update_sensor_hash(
+            redis_ctx,
+            sensor_hash_key,
+            measure,
+            v.get(1).unwrap_or(&None),
+        );
+        if let Err(e) = sensor_updated {
+            println!("couldn't update sensor record {}: {:?}", sensor_hash_key, e);
         }
-    }
-}
-
-fn epoch_secs() -> u64 {
-    SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap()
-        .as_secs()
-}
-
-fn try_mqtt_reconnect(cli: &paho_mqtt::Client) -> bool {
-    println!("MQTT connection lost...");
-    for i in 0..12 {
-        println!("Retrying MQTT connection ({})", i);
-        std::thread::sleep(std::time::Duration::from_millis(5000));
-        if cli.reconnect().is_ok() {
-            println!("MQTT successfully reconnected");
-            return true;
-        }
-    }
-    println!("Unable to reconnect MQTT after several attempts.");
-    false
+    };
 }
 
 fn update_tank_hash(redis_ctx: &RedisContext, tank_num: &u64, measure: &model::Measurement) {
@@ -140,7 +89,11 @@ fn update_tank_hash(redis_ctx: &RedisContext, tank_num: &u64, measure: &model::M
     }
 }
 
-fn ensure_sensor_hash_exists(redis_ctx: &RedisContext, sensor_hash_key: &str, ext_id_str: &str) {
+fn ensure_sensor_hash_exists(
+    redis_ctx: &RedisContext,
+    sensor_hash_key: &str,
+    ext_device_id_str: &str,
+) {
     // We know that there's no associated "tank"
     // field for this key.  Let's make sure the record
     // for this sensor exists -- we'll need a human
@@ -158,7 +111,7 @@ fn ensure_sensor_hash_exists(redis_ctx: &RedisContext, sensor_hash_key: &str, ex
                     sensor_hash_key,
                     &vec![
                         ("create_time", format!("{}", epoch_secs())),
-                        ("ext_device_id", ext_id_str.to_string()),
+                        ("ext_device_id", ext_device_id_str.to_string()),
                     ][..],
                 );
             }
@@ -184,4 +137,21 @@ fn update_sensor_hash(
     data.push((ut, epoch_secs().to_string()));
 
     redis_ctx.conn.hset_multiple(sensor_hash_key, &data[..])
+}
+
+fn internal_device_id(
+    external_device_id: &str,
+    external_device_namespace: &Uuid,
+) -> Result<Uuid, uuid::parser::ParseError> {
+    Ok(Uuid::new_v5(
+        &external_device_namespace,
+        external_device_id.as_bytes(),
+    ))
+}
+
+fn epoch_secs() -> u64 {
+    SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap()
+        .as_secs()
 }

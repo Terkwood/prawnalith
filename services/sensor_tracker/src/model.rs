@@ -1,5 +1,3 @@
-use uuid::Uuid;
-
 /// This message is emitted to an MQTT channel by
 /// some device with access to a temp sensor (DS18B20, etc)
 #[derive(Serialize, Deserialize, Debug)]
@@ -25,22 +23,6 @@ impl SensorMessage {
         }
 
         v
-    }
-}
-
-pub struct ExternalDeviceId {
-    pub external_id: String,
-}
-
-impl ExternalDeviceId {
-    pub fn to_internal_id(
-        &self,
-        external_device_namespace: &Uuid,
-    ) -> Result<Uuid, uuid::parser::ParseError> {
-        Ok(Uuid::new_v5(
-            &external_device_namespace,
-            self.external_id.as_bytes(),
-        ))
     }
 }
 
