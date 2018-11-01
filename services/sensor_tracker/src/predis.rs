@@ -18,7 +18,7 @@ pub fn receive_updates(
                     let ext_id_str: &str = &sensor_message.device_id;
 
                     sensor_message.measurements().iter().for_each(|measure| {
-                        println!("\tReceived redis {} update: {:?}", measure.name(), measure);
+                        println!("Received redis {} update: {:?}", measure.name(), measure);
                         let ext_device_namespace = &redis_ctx
                             .get_external_device_namespace(measure.name())
                             .unwrap();
@@ -40,13 +40,16 @@ pub fn receive_updates(
                         let sensor_hash_key =
                             &format!("{}/sensors/{}/{}", rn, measure.name(), device_id).to_string();
 
-                        let assoc_tank_num: Result<Vec<Option<u64>>, _> = redis_ctx.conn.hget(
+                        let tank_and_update_count: Result<
+                            Vec<Option<u64>>,
+                            _,
+                        > = redis_ctx.conn.hget(
                             sensor_hash_key,
                             vec!["tank", &format!("{}_update_count", measure.name())],
                         );
 
                         let ext_id_str: &str = &ext_id.external_id;
-                        let _ = assoc_tank_num.iter().for_each(move |v| {
+                        tank_and_update_count.iter().for_each(move |v| {
                             let maybe_tank_num = v.get(0).unwrap_or(&None);
                             let maybe_sensor_upd_count: &Option<_> = v.get(1).unwrap_or(&None);
                             if let Some(tank_num) = maybe_tank_num {
