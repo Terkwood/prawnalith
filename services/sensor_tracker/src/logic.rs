@@ -25,6 +25,8 @@ pub fn receive_updates(
             }
             _ => (),
         }
+
+        std::thread::sleep(std::time::Duration::from_millis(100))
     }
 }
 
