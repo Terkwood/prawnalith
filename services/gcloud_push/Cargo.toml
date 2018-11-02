@@ -6,6 +6,7 @@ edition = "2018"
 
 [dependencies]
 dotenv = "0.13"
+google-pubsub1_beta2 = "1.0.8+20181001"
 envy = "0.3"
 redis = "0.9"
 redis_context = { path = "../redis_context" }
