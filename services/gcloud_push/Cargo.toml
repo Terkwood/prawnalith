@@ -5,3 +5,8 @@ authors = ["Terkwood <metaterkhorn@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+dotenv = "0.13"
+envy = "0.3"
+redis = "0.9"
+redis_context = { path = "../redis_context" }
+uuid = { version = "0.7", features = ["v4", "v5"] }
