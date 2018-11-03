@@ -4,7 +4,7 @@ use uuid::Uuid;
 /// exist in our database.  They each have a namespace
 /// parameter `ns`, which indicates a common "root"
 /// shared by all data for this particular prawn grow.
-enum DataKey {
+pub enum DataKey {
     Tank { ns: String, id: u16 },
     SensorTemp { ns: String, id: Uuid },
     SensorPH { ns: String, id: Uuid },
@@ -14,15 +14,16 @@ enum DataKey {
     AllSensorsPH { ns: String },
 }
 
+/// Yields the key which allows you to access a specific
+/// record in redis.
+///
+/// # Examples
+/// ```
+/// use gcloud_push::model::DataKey;
+/// let all_tanks = DataKey::AllTanks { ns: "prawnspace".to_string() };
+/// assert_eq!(all_tanks.data_key(), "prawnspace/tanks")
+/// ```
 impl DataKey {
-    /// Yields the key which allows you to access a specific
-    /// record in redis.
-    ///
-    /// # Examples
-    /// ```
-    /// let all_tanks = AllTanks { "prawnspace" }
-    /// assert_eq!(all_tanks.data_key(), "prawnspace/tanks")
-    /// ```
     pub fn data_key(&self) -> String {
         match self {
             DataKey::Tank { ns, id } => format!(
