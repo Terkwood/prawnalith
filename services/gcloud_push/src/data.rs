@@ -41,17 +41,17 @@ impl<'a, 'b> Key<'a, 'b> {
     pub fn key(&self) -> String {
         match self {
             Key::Tank { ns, id } => {
-                format!("{}/{}", Key::AllTanks { ns: *ns }.key(), id).to_lowercase()
+                format!("{}/{}", Key::AllTanks { ns: *ns }.key(), id).trim().to_lowercase()
             }
             Key::Sensor { ns, st, id } => {
-                format!("{}/{}", Key::AllSensors { ns: *ns, st: *st }.key(), id).to_lowercase()
+                format!("{}/{}", Key::AllSensors { ns: *ns, st: *st }.key(), id).trim().to_lowercase()
             }
             Key::AllTanks { ns: Namespace(n) } => format!("{}/tanks", n).to_lowercase(),
-            Key::AllSensorTypes { ns: Namespace(n) } => format!("{}/sensors", n).to_lowercase(),
+            Key::AllSensorTypes { ns: Namespace(n) } => format!("{}/sensors", n).trim().to_lowercase(),
             Key::AllSensors {
                 ns,
                 st: SensorType(st),
-            } => format!("{}/{}", Key::AllSensorTypes { ns: *ns }.key(), st).to_lowercase(),
+            } => format!("{}/{}", Key::AllSensorTypes { ns: *ns }.key(), st).trim().to_lowercase(),
         }
     }
 }
@@ -94,7 +94,7 @@ mod test {
         let temp_id = Uuid::new_v4();
         let temp_sensor = Key::Sensor {
             ns: prawnspace(),
-            st: SensorType("temp"),
+            st: SensorType("TEMP"),
             id: temp_id,
         };
         assert_eq!(
