@@ -152,7 +152,7 @@ enum RDelta<'a, 'b> {
 
 /// A field which is stored in Redis.
 #[derive(Serialize, Deserialize)]
-struct RField<'a> {
+pub struct RField<'a> {
     name: &'a str,
     val: &'a str,
 }
@@ -161,9 +161,14 @@ struct RField<'a> {
 mod rdelta_test {
     use super::*;
     use serde_json;
+    use uuid::Uuid;
 
     fn ns() -> Namespace<'static> {
         Namespace("prawnspace")
+    }
+
+    fn id() -> Uuid {
+        Uuid::parse_str("123e4567-e89b-12d3-a456-426655440000").unwrap()
     }
 
     #[test]
@@ -176,12 +181,18 @@ mod rdelta_test {
     fn add_set_member_ser() {
         let set_friend = &RDelta::AddSetMember {
             key: &Key::AllSensorTypes { ns: ns() }.to_string(),
-            val: "123e4567-e89b-12d3-a456-426655440000",
+            val: &id().to_string(),
         };
         assert_eq!(serde_json::to_string(set_friend).unwrap(),
         r#"{"add_set_member":{"key":"prawnspace/sensors","val":"123e4567-e89b-12d3-a456-426655440000"}}"#);
     }
 
-    //#[test]
-    //fn add_
+    #[test]
+    fn update_hash_ser() {
+        let fields: Vec<RField> = vec! [ RField { name: "temp_f", val: "82.31"} ] ;
+        let new_potatoes = &RDelta::UpdateHash {
+            key: &Key::Sensor { ns: ns(), st: SensorType("temp"), id: id() }.to_string(),
+            fields
+        };
+    }
 }
