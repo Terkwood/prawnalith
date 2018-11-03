@@ -1,5 +1,3 @@
-use super::data::Key;
-
 /// Represents a change to a value in Redis.
 /// Currently only supports the minimum combinations
 /// of key/value used by the prawnalith.
