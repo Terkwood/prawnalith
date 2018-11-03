@@ -26,8 +26,11 @@ pub enum Key {
     },
 }
 
+/// Namespace precedes the rest of a key, e.g.
+/// `prawnspace/tanks`
 pub struct Namespace(pub String);
 
+/// A type of sensor.  ph, temp, ...
 pub struct SensorType(String);
 impl SensorType {
     pub fn new(sensor_type: &str) -> SensorType {
