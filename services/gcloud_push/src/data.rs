@@ -27,26 +27,25 @@ pub enum Key {
 }
 
 #[derive(Copy, Clone)]
-pub struct Namespace(&'static str);
+pub struct Namespace(pub &'static str);
 
 #[derive(Copy, Clone)]
-pub struct SensorType(&'static str);
+pub struct SensorType(pub &'static str);
 
 /// Yields the key which allows you to access a specific
 /// record in redis.
 ///
 /// # Examples
 /// ```
-/// use gcloud_push::data::Key;
-/// let all_tanks = Key::AllTanks { ns: "prawnspace".to_string() };
-/// assert_eq!(all_tanks.key(), "prawnspace/tanks")
-/// ```
-///
-/// namespace
-/// ```
-/// use gcloud_push::data::{Key, Namespace};
-/// let nnn = Namespace { ns: "foo".to_string() };
-/// let k = Key::Test { ns: nnn };
+/// use gcloud_push::data::{Namespace, Key};
+/// use uuid::Uuid;
+/// 
+/// let ns = Namespace("prawnspace");
+/// let all_tanks = Key::AllTanks { ns: ns };
+/// assert_eq!(all_tanks.key(), "prawnspace/tanks");
+/// 
+/// let single_tank = Key::Tank { ns, id: 1 };
+/// assert_eq!(single_tank.key(), "prawnspace/tanks/1");
 /// ```
 impl Key {
     pub fn key(&self) -> String {
