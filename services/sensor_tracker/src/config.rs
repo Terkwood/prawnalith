@@ -6,6 +6,7 @@ pub struct TrackerConfig {
     pub redis_host: Option<String>,
     pub redis_port: Option<u16>,
     pub redis_namespace: Option<String>,
+    pub redis_delta_event_topic: Option<String>,
     pub mqtt_host: Option<String>,
     pub mqtt_port: Option<u16>,
     pub mqtt_topic: String,

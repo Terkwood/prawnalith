@@ -41,11 +41,13 @@ pub fn update<'a, 'b>(
     );
 
     if let Ok(v) = tank_and_update_count {
-        if let Some(tank_num) = v.get(0).unwrap_or(&None) {
-            update_tank_hash(redis_ctx, tank_num, &measure);
-        } else {
-            ensure_sensor_hash_exists(redis_ctx, sensor_hash_key, ext_device_id);
+        let rando_update = match v.get(0).unwrap_or(&None) {
+            Some(tank_num) => update_tank_hash(redis_ctx, tank_num, &measure),
+            None => ensure_sensor_hash_exists(redis_ctx, sensor_hash_key, ext_device_id),
         };
+        if let Some(ev) = rando_update {
+            delta_events.push(ev)
+        }
 
         // record a hit on the updates that the sensor has seen
         // and also record the most recent measurement on the record
@@ -56,8 +58,8 @@ pub fn update<'a, 'b>(
             measure,
             v.get(1).unwrap_or(&None),
         );
-        if let Err(e) = sensor_updated {
-            println!("couldn't update sensor record {}: {:?}", sensor_hash_key, e);
+        if let Some(ev) = sensor_updated {
+            delta_events.push(ev)
         }
     };
 
@@ -139,12 +141,13 @@ fn ensure_sensor_hash_exists(
     redis_ctx: &RedisContext,
     sensor_hash_key: &str,
     ext_device_id_str: &str,
-) {
+) -> Option<RDeltaEvent> {
     // We know that there's no associated "tank"
     // field for this key.  Let's make sure the record
     // for this sensor exists -- we'll need a human
     // to come in and link this device to a specific tank
     // using redis-cli!
+    let mut result: Option<RDeltaEvent> = None;
 
     redis_ctx
         .conn
@@ -152,16 +155,25 @@ fn ensure_sensor_hash_exists(
         .iter()
         .for_each(|e: &bool| {
             if !e {
+                let cf = "create_time".to_string();
+                let ed = "ext_device_id".to_string();
+                let field_vals = &vec![
+                    (&cf, format!("{}", epoch_secs())),
+                    (&ed, ext_device_id_str.to_string()),
+                ][..];
                 // new sensor, make note of when it is created
-                let _: Result<Vec<bool>, _> = redis_ctx.conn.hset_multiple(
-                    sensor_hash_key,
-                    &vec![
-                        ("create_time", format!("{}", epoch_secs())),
-                        ("ext_device_id", ext_device_id_str.to_string()),
-                    ][..],
-                );
+                let _: Result<Vec<bool>, _> =
+                    redis_ctx.conn.hset_multiple(sensor_hash_key, field_vals);
+
+                let fields = vec![cf, ed];
+                result = Some(RDeltaEvent::HashUpdated {
+                    key: sensor_hash_key.to_string(),
+                    fields,
+                })
             }
         });
+
+    result
 }
 
 fn update_sensor_hash(
@@ -169,7 +181,7 @@ fn update_sensor_hash(
     sensor_hash_key: &str,
     measure: &model::Measurement,
     maybe_sensor_upd_count: &Option<u64>,
-) -> Result<(), redis::RedisError> {
+) -> Option<RDeltaEvent> {
     let upd_c = &format!("{}_update_count", measure.name());
     let mut data: Vec<(&str, String)> = vec![(
         upd_c,
@@ -182,7 +194,19 @@ fn update_sensor_hash(
     let ut = &format!("{}_update_time", measure.name());
     data.push((ut, epoch_secs().to_string()));
 
-    redis_ctx.conn.hset_multiple(sensor_hash_key, &data[..])
+    let redis_result: Result<(), _> = redis_ctx.conn.hset_multiple(sensor_hash_key, &data[..]);
+    if let Err(e) = redis_result {
+        println!("couldn't update sensor record {}: {:?}", sensor_hash_key, e);
+        None
+    } else {
+        let mut fields: Vec<String> = vec![];
+        data.iter().for_each(|(f, _)| fields.push(f.to_string()));
+
+        Some(RDeltaEvent::HashUpdated {
+            key: sensor_hash_key.to_string(),
+            fields,
+        })
+    }
 }
 
 fn internal_device_id(
@@ -200,4 +224,8 @@ fn epoch_secs() -> u64 {
         .duration_since(SystemTime::UNIX_EPOCH)
         .unwrap()
         .as_secs()
+}
+
+pub fn publish_updates(redis_ctx: &RedisContext, topic: &str, updates: Vec<RDeltaEvent>) {
+    unimplemented!()
 }
