@@ -6,7 +6,7 @@
 
 extern crate redis_context;
 
-pub mod model;
+pub mod data;
 
 use redis_context::RedisContext;
 
