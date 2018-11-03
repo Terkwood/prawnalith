@@ -5,13 +5,6 @@
 //! data is expected to reside in a Redis instance.
 #![feature(custom_attribute)]
 extern crate redis_context;
-extern crate serde;
-extern crate serde_json;
-#[macro_use]
-extern crate serde_derive;
-
-pub mod key;
-pub mod rdelta;
 
 use redis_context::RedisContext;
 
@@ -27,7 +20,11 @@ use redis_context::RedisContext;
 /// - Query each individual sensor of each type
 ///
 /// Push as you satisfy each individual step.
-pub fn clone_the_world(redis_ctx: &RedisContext) {}
+pub fn clone_the_world(redis_ctx: &RedisContext) {
+    unimplemented!()
+}
 
 /// pushes some recent data via gcloud pubsub
-pub fn push_recent(redis_context: &RedisContext) {}
+pub fn push_recent(redis_context: &RedisContext) {
+    unimplemented!()
+}
