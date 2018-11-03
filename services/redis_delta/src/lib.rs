@@ -138,23 +138,24 @@ enum RDelta<'a, 'b> {
         #[serde(borrow)]
         key: &'a str,
         #[serde(borrow)]
-        rval: RVal<'b>,
+        val: &'b str,
     },
-    UpdateHashField {
+    UpdateHash {
         key: &'a str,
-        rval: RVal<'b>,
+        fields: Vec<RField<'b>>,
     },
-    UpdateKey {
+    UpdateString {
         key: &'a str,
-        rval: RVal<'b>,
+        val: &'b str,
     },
 }
 
-/// A value which is stored in Redis.
-/// It's always represented as a string so that
-/// we can easily cope with deserialization & serialization.
+/// A field which is stored in Redis.
 #[derive(Serialize, Deserialize)]
-struct RVal<'a>(pub &'a str);
+struct RField<'a> {
+    name: &'a str,
+    val: &'a str,
+}
 
 #[cfg(test)]
 mod rdelta_test {
@@ -167,7 +168,7 @@ mod rdelta_test {
 
     #[test]
     fn rval_ser() {
-        let counter = &RVal("1");
+        let counter = "1";
         assert_eq!(serde_json::to_string(counter).unwrap(), "\"1\"");
     }
 
@@ -175,10 +176,12 @@ mod rdelta_test {
     fn add_set_member_ser() {
         let set_friend = &RDelta::AddSetMember {
             key: &Key::AllSensorTypes { ns: ns() }.to_string(),
-            rval: RVal("123e4567-e89b-12d3-a456-426655440000"),
+            val: "123e4567-e89b-12d3-a456-426655440000",
         };
         assert_eq!(serde_json::to_string(set_friend).unwrap(),
-        r#"{"add_set_member":{"key":"prawnspace/sensors","rval":"123e4567-e89b-12d3-a456-426655440000"}}"#);
+        r#"{"add_set_member":{"key":"prawnspace/sensors","val":"123e4567-e89b-12d3-a456-426655440000"}}"#);
     }
 
+    //#[test]
+    //fn add_
 }
