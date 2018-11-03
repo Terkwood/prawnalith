@@ -134,11 +134,11 @@ mod key_test {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
 enum RDelta<'a, 'b> {
-    AddSetMember {
+    UpdateSet {
         #[serde(borrow)]
         key: &'a str,
         #[serde(borrow)]
-        val: &'b str,
+        vals: Vec<&'b str>,
     },
     UpdateHash {
         key: &'a str,
@@ -167,8 +167,12 @@ mod rdelta_test {
         Namespace("prawnspace")
     }
 
+    fn id_str() -> &'static str {
+        "123e4567-e89b-12d3-a456-426655440000"
+    }
+
     fn id() -> Uuid {
-        Uuid::parse_str("123e4567-e89b-12d3-a456-426655440000").unwrap()
+        Uuid::parse_str(id_str()).unwrap()
     }
 
     #[test]
@@ -178,21 +182,29 @@ mod rdelta_test {
     }
 
     #[test]
-    fn add_set_member_ser() {
-        let set_friend = &RDelta::AddSetMember {
+    fn update_set_ser() {
+        let set_friend = &RDelta::UpdateSet {
             key: &Key::AllSensorTypes { ns: ns() }.to_string(),
-            val: &id().to_string(),
+            vals: vec![id_str()],
         };
         assert_eq!(serde_json::to_string(set_friend).unwrap(),
-        r#"{"add_set_member":{"key":"prawnspace/sensors","val":"123e4567-e89b-12d3-a456-426655440000"}}"#);
+        r#"{"update_set":{"key":"prawnspace/sensors","vals":["123e4567-e89b-12d3-a456-426655440000"]}}"#);
     }
 
     #[test]
     fn update_hash_ser() {
-        let fields: Vec<RField> = vec! [ RField { name: "temp_f", val: "82.31"} ] ;
+        let fields: Vec<RField> = vec![RField {
+            name: "temp_f",
+            val: "82.31",
+        }];
         let new_potatoes = &RDelta::UpdateHash {
-            key: &Key::Sensor { ns: ns(), st: SensorType("temp"), id: id() }.to_string(),
-            fields
+            key: &Key::Sensor {
+                ns: ns(),
+                st: SensorType("temp"),
+                id: id(),
+            }
+            .to_string(),
+            fields,
         };
 
         assert_eq!(serde_json::to_string(new_potatoes).unwrap(),
@@ -203,21 +215,24 @@ mod rdelta_test {
     fn update_string_ser() {
         let uk = &Key::AllTanks { ns: ns() }.to_string();
         let uv = "2";
-        let update = &RDelta::UpdateString {
-            key: uk,
-            val: uv
-        };
+        let update = &RDelta::UpdateString { key: uk, val: uv };
 
         let expected = &r#"{"update_string":{"key":"prawnspace/tanks","val":"2"}}"#;
         assert_eq!(serde_json::to_string(update).unwrap(), expected.to_string());
-    
+
         let deser: RDelta = serde_json::from_str(expected).unwrap();
         match deser {
             RDelta::UpdateString { key, val } => {
                 assert_eq!(key, *uk);
                 assert_eq!(val, uv);
-            },
-            _ => assert!(false)
+            }
+            _ => assert!(false),
         }
     }
 }
+
+/// Represents a message that lets you know that a specific
+/// string, hash, or set has changed.  It does not include
+/// the data which has changed, though in the case of hashes,
+/// it *does* include a list of fields which were changed.
+pub enum RDeltaEvent {}
