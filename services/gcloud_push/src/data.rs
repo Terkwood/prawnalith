@@ -43,14 +43,14 @@ impl SensorType {
 /// use gcloud_push::data::{Namespace, Key, SensorType};
 /// use uuid::Uuid;
 ///
-/// let ns = Namespace("prawnspace");
+/// let ns = Namespace("prawnspace".to_string());
 /// let all_tanks = Key::AllTanks { ns: ns };
 /// assert_eq!(all_tanks.key(), "prawnspace/tanks");
 ///
-/// let single_tank = Key::Tank { ns, id: 1 };
+/// let single_tank = Key::Tank { ns: Namespace("prawnspace".to_string()), id: 1 };
 /// assert_eq!(single_tank.key(), "prawnspace/tanks/1");
 ///
-/// let temp_sensor = Key::Sensor { ns, st: SensorType("temp")}
+/// let temp_sensor = Key::Sensor { ns: Namespace("prawnspace".to_string()), st: SensorType::new("temp"), id: Uuid::new_v4()};
 /// ```
 impl Key {
     pub fn key(&self) -> String {
