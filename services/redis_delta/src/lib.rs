@@ -65,6 +65,55 @@ impl<'a, 'b> Key<'a, 'b> {
     }
 }
 
+/// Represents a change to a value in Redis.
+/// Currently only supports the minimum combinations
+/// of key/value used by the prawnalith.
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
+enum RDelta<'a, 'b> {
+    UpdateSet {
+        #[serde(borrow)]
+        key: &'a str,
+        #[serde(borrow)]
+        vals: Vec<&'b str>,
+    },
+    UpdateHash {
+        key: &'a str,
+        fields: Vec<RField<'b>>,
+    },
+    UpdateString {
+        key: &'a str,
+        val: &'b str,
+    },
+}
+
+/// A field which is stored in Redis.
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RField<'a> {
+    name: &'a str,
+    val: &'a str,
+}
+
+/// Represents a message that lets you know that a specific
+/// string, hash, or set has changed.  It does not include
+/// the data which has changed, though in the case of hashes,
+/// it *does* include a list of fields which were changed.
+#[derive(Serialize, Deserialize, Debug)]
+pub enum RDeltaEvent<'a, 'b> {
+    SetUpdated {
+        #[serde(borrow)]
+        key: &'a str,
+    },
+    HashUpdated {
+        key: &'a str,
+        #[serde(borrow)]
+        fields: Vec<&'b str>,
+    },
+    StringUpdated {
+        key: &'a str,
+    },
+}
+
 #[cfg(test)]
 mod key_test {
     use super::*;
@@ -126,35 +175,6 @@ mod key_test {
         );
     }
 
-}
-
-/// Represents a change to a value in Redis.
-/// Currently only supports the minimum combinations
-/// of key/value used by the prawnalith.
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "snake_case")]
-enum RDelta<'a, 'b> {
-    UpdateSet {
-        #[serde(borrow)]
-        key: &'a str,
-        #[serde(borrow)]
-        vals: Vec<&'b str>,
-    },
-    UpdateHash {
-        key: &'a str,
-        fields: Vec<RField<'b>>,
-    },
-    UpdateString {
-        key: &'a str,
-        val: &'b str,
-    },
-}
-
-/// A field which is stored in Redis.
-#[derive(Serialize, Deserialize, Debug)]
-pub struct RField<'a> {
-    name: &'a str,
-    val: &'a str,
 }
 
 #[cfg(test)]
@@ -230,9 +250,3 @@ mod rdelta_test {
         }
     }
 }
-
-/// Represents a message that lets you know that a specific
-/// string, hash, or set has changed.  It does not include
-/// the data which has changed, though in the case of hashes,
-/// it *does* include a list of fields which were changed.
-pub enum RDeltaEvent {}
