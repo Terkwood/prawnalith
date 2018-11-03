@@ -11,7 +11,11 @@ use uuid::Uuid;
 /// Also records the measurement to a record associated with the sensor itself.
 /// Keeps track of how many updates have been applied to each tank and sensor record.
 /// Will create a new sensor record for this device if one does not already exist.
-pub fn update(redis_ctx: &RedisContext, measure: &model::Measurement, ext_device_id: &str) {
+pub fn update<'a, 'b>(
+    redis_ctx: &RedisContext,
+    measure: &model::Measurement,
+    ext_device_id: &str,
+) -> Vec<redis_delta::RDeltaEvent<'a, 'b>> {
     println!("Received redis {} update: {:?}", measure.name(), measure);
     let ext_device_namespace = &redis_ctx
         .get_external_device_namespace(measure.name())
@@ -55,6 +59,8 @@ pub fn update(redis_ctx: &RedisContext, measure: &model::Measurement, ext_device
             println!("couldn't update sensor record {}: {:?}", sensor_hash_key, e);
         }
     };
+
+    vec![]
 }
 
 fn update_tank_hash(redis_ctx: &RedisContext, tank_num: &u64, measure: &model::Measurement) {

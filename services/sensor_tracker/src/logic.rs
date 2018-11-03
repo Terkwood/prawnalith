@@ -14,10 +14,9 @@ pub fn receive_updates(
                 if let Some(sensor_message) = prawnqtt::deser_message(paho) {
                     let ext_device_id: &str = &sensor_message.device_id;
 
-                    sensor_message
-                        .measurements()
-                        .iter()
-                        .for_each(|measure| predis::update(redis_ctx, &measure, ext_device_id));
+                    sensor_message.measurements().iter().for_each(|measure| {
+                        let delta_events = predis::update(redis_ctx, &measure, ext_device_id);
+                    });
                 }
             }
             Err(_) if !mqtt_cli.is_connected() => {
