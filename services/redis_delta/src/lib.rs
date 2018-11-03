@@ -131,7 +131,7 @@ mod key_test {
 /// Represents a change to a value in Redis.
 /// Currently only supports the minimum combinations
 /// of key/value used by the prawnalith.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
 enum RDelta<'a, 'b> {
     AddSetMember {
@@ -151,7 +151,7 @@ enum RDelta<'a, 'b> {
 }
 
 /// A field which is stored in Redis.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct RField<'a> {
     name: &'a str,
     val: &'a str,
@@ -197,5 +197,27 @@ mod rdelta_test {
 
         assert_eq!(serde_json::to_string(new_potatoes).unwrap(),
          r#"{"update_hash":{"key":"prawnspace/sensors/temp/123e4567-e89b-12d3-a456-426655440000","fields":[{"name":"temp_f","val":"82.31"}]}}"#);
+    }
+
+    #[test]
+    fn update_string_ser() {
+        let uk = &Key::AllTanks { ns: ns() }.to_string();
+        let uv = "2";
+        let update = &RDelta::UpdateString {
+            key: uk,
+            val: uv
+        };
+
+        let expected = &r#"{"update_string":{"key":"prawnspace/tanks","val":"2"}}"#;
+        assert_eq!(serde_json::to_string(update).unwrap(), expected.to_string());
+    
+        let deser: RDelta = serde_json::from_str(expected).unwrap();
+        match deser {
+            RDelta::UpdateString { key, val } => {
+                assert_eq!(key, *uk);
+                assert_eq!(val, uv);
+            },
+            _ => assert!(false)
+        }
     }
 }
