@@ -4,31 +4,32 @@ use uuid::Uuid;
 /// exist in our database.  They each have a namespace
 /// parameter `ns`, which indicates a common "root"
 /// shared by all data for this particular prawn grow.
-pub enum Key {
+pub enum Key<'a> {
     Tank {
-        ns: Namespace,
+        ns: Namespace<'a>,
         id: u16,
     },
     Sensor {
-        ns: Namespace,
+        ns: Namespace<'a>,
         st: SensorType,
         id: Uuid,
     },
     AllTanks {
-        ns: Namespace,
+        ns: Namespace<'a>,
     },
     AllSensorTypes {
-        ns: Namespace,
+        ns: Namespace<'a>,
     },
     AllSensors {
-        ns: Namespace,
+        ns: Namespace<'a>,
         st: SensorType,
     },
 }
 
 /// Namespace precedes the rest of a key, e.g.
 /// `prawnspace/tanks`
-pub struct Namespace(pub String);
+#[derive(Copy, Clone)]
+pub struct Namespace<'a>(pub &'a str);
 
 /// A type of sensor.  ph, temp, ...
 pub struct SensorType(String);
@@ -40,28 +41,18 @@ impl SensorType {
 
 /// Yields the key which allows you to access a specific
 /// record in redis.
-impl Key {
+impl<'a> Key<'a> {
     pub fn key(&self) -> String {
         match self {
-            Key::Tank {
-                ns: Namespace(n),
-                id,
-            } => format!(
-                "{}/{}",
-                Key::AllTanks {
-                    ns: Namespace(n.to_string())
-                }
-                .key(),
-                id
-            ),
+            Key::Tank { ns, id } => format!("{}/{}", Key::AllTanks { ns: *ns }.key(), id),
             Key::Sensor {
-                ns: Namespace(n),
+                ns,
                 st: SensorType(st),
                 id,
             } => format!(
                 "{}/{}",
                 Key::AllSensors {
-                    ns: Namespace(n.to_string()),
+                    ns: *ns,
                     st: SensorType(st.to_string())
                 }
                 .key(),
@@ -70,16 +61,9 @@ impl Key {
             Key::AllTanks { ns: Namespace(n) } => format!("{}/tanks", n),
             Key::AllSensorTypes { ns: Namespace(n) } => format!("{}/sensors", n),
             Key::AllSensors {
-                ns: Namespace(n),
+                ns,
                 st: SensorType(st),
-            } => format!(
-                "{}/{}",
-                Key::AllSensorTypes {
-                    ns: Namespace(n.to_string())
-                }
-                .key(),
-                st
-            ),
+            } => format!("{}/{}", Key::AllSensorTypes { ns: *ns }.key(), st),
         }
     }
 }
