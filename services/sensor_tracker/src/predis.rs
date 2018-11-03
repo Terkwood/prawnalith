@@ -84,7 +84,11 @@ fn update_sensor_set(
     }
 }
 
-fn update_tank_hash(redis_ctx: &RedisContext, tank_num: &u64, measure: &model::Measurement) {
+fn update_tank_hash(
+    redis_ctx: &RedisContext,
+    tank_num: &u64,
+    measure: &model::Measurement,
+) -> Option<RDeltaEvent> {
     // We found the tank associated with this
     // sensor ID, so we should update that tank's
     // current reading.
@@ -94,12 +98,13 @@ fn update_tank_hash(redis_ctx: &RedisContext, tank_num: &u64, measure: &model::M
         .conn
         .hget(&tank_key, &format!("{}_update_count", measure.name()));
 
-    let update: Result<String, _> = {
+    let uc_name = format!("{}_update_count", measure.name());
+    let ut_name = format!("{}_update_time", measure.name());
+    let update: (Result<String, _>, Vec<&str>) = {
         let mut data: Vec<(&str, String)> = measure.to_redis();
 
-        let uc_name = &format!("{}_update_count", measure.name());
         data.push((
-            uc_name,
+            &uc_name,
             tank_measure_count
                 .unwrap_or(None)
                 .map(|u| u + 1)
@@ -107,13 +112,26 @@ fn update_tank_hash(redis_ctx: &RedisContext, tank_num: &u64, measure: &model::M
                 .to_string(),
         ));
 
-        let ut_name = &format!("{}_update_time", measure.name());
-        data.push((ut_name, epoch_secs().to_string()));
-        redis_ctx.conn.hset_multiple(&tank_key, &data[..])
+        data.push((&ut_name, epoch_secs().to_string()));
+        (
+            redis_ctx.conn.hset_multiple(&tank_key, &data[..]),
+            data.iter().map(|(a, _)| *a).collect(),
+        )
     };
 
-    if let Err(e) = update {
-        println!("update fails for {}: {:?}", tank_key, e);
+    match update {
+        (Err(e), _) => {
+            println!("update fails for {}: {:?}", tank_key, e);
+            None
+        }
+        (Ok(_), fields) if fields.len() > 0 => {
+            let fs = fields.iter().map(|s| s.to_string()).collect();
+            Some(RDeltaEvent::HashUpdated {
+                key: tank_key.to_string(),
+                fields: fs,
+            })
+        }
+        _ => None,
     }
 }
 

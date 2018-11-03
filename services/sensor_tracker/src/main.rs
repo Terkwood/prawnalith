@@ -1,4 +1,5 @@
 #![feature(slice_concat_ext)]
+#![feature(bind_by_move_pattern_guards)]
 extern crate dotenv;
 extern crate envy;
 extern crate paho_mqtt;
