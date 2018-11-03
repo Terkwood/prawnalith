@@ -3,6 +3,7 @@ use redis::Commands;
 
 use super::model;
 use redis_context::RedisContext;
+use redis_delta::{Key, RDeltaEvent};
 use std::time::SystemTime;
 use uuid::Uuid;
 
@@ -21,10 +22,10 @@ pub fn update(redis_ctx: &RedisContext, measure: &model::Measurement, ext_device
     let rn = &redis_ctx.namespace;
 
     // add to the member set if it doesn't already exist
-    let _ = redis::cmd("SADD")
-        .arg(format!("{}/sensors/{}", rn, measure.name()))
-        .arg(&format!("{}", device_id))
-        .execute(&redis_ctx.conn);
+    let _: Result<u64, _> = redis_ctx.conn.sadd(
+        format!("{}/sensors/{}", rn, measure.name()),
+        &format!("{}", device_id),
+    );
 
     // lookup associated tank
     let sensor_hash_key = &format!("{}/sensors/{}/{}", rn, measure.name(), device_id).to_string();

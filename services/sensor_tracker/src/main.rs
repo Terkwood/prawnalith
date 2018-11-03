@@ -4,6 +4,7 @@ extern crate envy;
 extern crate paho_mqtt;
 extern crate redis;
 extern crate redis_context;
+extern crate redis_delta;
 #[macro_use]
 extern crate serde_derive;
 extern crate uuid;
