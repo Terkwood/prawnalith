@@ -175,9 +175,10 @@ mod rdelta_test {
     fn add_set_member_ser() {
         let set_friend = &RDelta::AddSetMember {
             key: &Key::AllSensorTypes { ns: ns() }.to_string(),
-            rval: RVal("foo"),
+            rval: RVal("123e4567-e89b-12d3-a456-426655440000"),
         };
-        println!("{}", serde_json::to_string(set_friend).unwrap());
+        assert_eq!(serde_json::to_string(set_friend).unwrap(),
+        r#"{"add_set_member":{"key":"prawnspace/sensors","rval":"123e4567-e89b-12d3-a456-426655440000"}}"#);
     }
 
 }
