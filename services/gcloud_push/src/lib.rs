@@ -4,15 +4,15 @@
 //! data to google cloud pub sub.  The temp & pH
 //! data is expected to reside in a Redis instance.
 
+extern crate redis_context;
+
 mod model;
 
-/// On startup, clone all the different paths
-/// relevant to our Redis database, and send them upstream
-/// to the cloud instance via pub sub.
-///
-/// After we've started up, listen for
-/// updates to various records and propagate them
-/// when changed.
-fn main() {
-    println!("Hello, world!");
-}
+use redis_context::RedisContext;
+
+/// send *all* relevant redis data upstream
+/// to the cloud instance via pub sub
+pub fn clone_the_world(redis_ctx: &RedisContext) {}
+
+/// pushes some redis data via gcloud
+pub fn push() {}
