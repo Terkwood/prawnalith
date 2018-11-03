@@ -10,7 +10,7 @@ extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
-pub mod data;
+pub mod key;
 pub mod rdelta;
 
 use redis_context::RedisContext;
