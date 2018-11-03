@@ -50,7 +50,9 @@ impl SensorType {
 /// let single_tank = Key::Tank { ns: Namespace("prawnspace".to_string()), id: 1 };
 /// assert_eq!(single_tank.key(), "prawnspace/tanks/1");
 ///
-/// let temp_sensor = Key::Sensor { ns: Namespace("prawnspace".to_string()), st: SensorType::new("temp"), id: Uuid::new_v4()};
+/// let id = Uuid::new_v4();
+/// let temp_sensor = Key::Sensor { ns: Namespace("prawnspace".to_string()), st: SensorType::new("temp"), id: id};
+/// assert_eq!(temp_sensor.key(), format!("prawnspace/sensors/temp/{}", id));
 /// ```
 impl Key {
     pub fn key(&self) -> String {
