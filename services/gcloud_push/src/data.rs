@@ -4,14 +4,14 @@ use uuid::Uuid;
 /// exist in our database.  They each have a namespace
 /// parameter `ns`, which indicates a common "root"
 /// shared by all data for this particular prawn grow.
-pub enum Key<'a> {
+pub enum Key<'a, 'b> {
     Tank {
         ns: Namespace<'a>,
         id: u16,
     },
     Sensor {
         ns: Namespace<'a>,
-        st: SensorType,
+        st: SensorType<'b>,
         id: Uuid,
     },
     AllTanks {
@@ -22,7 +22,7 @@ pub enum Key<'a> {
     },
     AllSensors {
         ns: Namespace<'a>,
-        st: SensorType,
+        st: SensorType<'b>,
     },
 }
 
@@ -32,38 +32,26 @@ pub enum Key<'a> {
 pub struct Namespace<'a>(pub &'a str);
 
 /// A type of sensor.  ph, temp, ...
-pub struct SensorType(String);
-impl SensorType {
-    pub fn new(sensor_type: &str) -> SensorType {
-        SensorType(sensor_type.to_lowercase().trim().to_string())
-    }
-}
+#[derive(Copy, Clone)]
+pub struct SensorType<'a>(pub &'a str);
 
 /// Yields the key which allows you to access a specific
 /// record in redis.
-impl<'a> Key<'a> {
+impl<'a, 'b> Key<'a, 'b> {
     pub fn key(&self) -> String {
         match self {
-            Key::Tank { ns, id } => format!("{}/{}", Key::AllTanks { ns: *ns }.key(), id),
-            Key::Sensor {
-                ns,
-                st: SensorType(st),
-                id,
-            } => format!(
-                "{}/{}",
-                Key::AllSensors {
-                    ns: *ns,
-                    st: SensorType(st.to_string())
-                }
-                .key(),
-                id
-            ),
-            Key::AllTanks { ns: Namespace(n) } => format!("{}/tanks", n),
-            Key::AllSensorTypes { ns: Namespace(n) } => format!("{}/sensors", n),
+            Key::Tank { ns, id } => {
+                format!("{}/{}", Key::AllTanks { ns: *ns }.key(), id).to_lowercase()
+            }
+            Key::Sensor { ns, st, id } => {
+                format!("{}/{}", Key::AllSensors { ns: *ns, st: *st }.key(), id).to_lowercase()
+            }
+            Key::AllTanks { ns: Namespace(n) } => format!("{}/tanks", n).to_lowercase(),
+            Key::AllSensorTypes { ns: Namespace(n) } => format!("{}/sensors", n).to_lowercase(),
             Key::AllSensors {
                 ns,
                 st: SensorType(st),
-            } => format!("{}/{}", Key::AllSensorTypes { ns: *ns }.key(), st),
+            } => format!("{}/{}", Key::AllSensorTypes { ns: *ns }.key(), st).to_lowercase(),
         }
     }
 }
@@ -73,8 +61,8 @@ mod test {
     use super::*;
     use uuid::Uuid;
 
-    fn prawnspace() -> Namespace {
-        Namespace("prawnspace".to_string())
+    fn prawnspace() -> Namespace<'static> {
+        Namespace("prawnspace")
     }
 
     #[test]
@@ -96,7 +84,7 @@ mod test {
     fn test_all_sensors() {
         let all_sensors = Key::AllSensors {
             ns: prawnspace(),
-            st: SensorType::new("ph"),
+            st: SensorType("ph"),
         };
         assert_eq!(all_sensors.key(), format!("prawnspace/sensors/ph"));
     }
@@ -106,7 +94,7 @@ mod test {
         let temp_id = Uuid::new_v4();
         let temp_sensor = Key::Sensor {
             ns: prawnspace(),
-            st: SensorType::new("TEMP "),
+            st: SensorType("temp"),
             id: temp_id,
         };
         assert_eq!(
@@ -119,8 +107,8 @@ mod test {
     fn test_ph_sensor() {
         let ph_id = Uuid::new_v4();
         let ph_sensor = Key::Sensor {
-            ns: Namespace("prawnspace".to_string()),
-            st: SensorType::new("ph"),
+            ns: Namespace("prawnspace"),
+            st: SensorType("ph"),
             id: ph_id,
         };
         assert_eq!(ph_sensor.key(), format!("prawnspace/sensors/ph/{}", ph_id));
