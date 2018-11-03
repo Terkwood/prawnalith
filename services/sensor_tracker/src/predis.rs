@@ -1,9 +1,8 @@
-use redis;
 use redis::Commands;
 
 use super::model;
 use redis_context::RedisContext;
-use redis_delta::{Key, RDeltaEvent};
+use redis_delta::RDeltaEvent;
 use serde_json;
 use std::time::SystemTime;
 use uuid::Uuid;
