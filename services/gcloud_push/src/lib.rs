@@ -5,11 +5,13 @@
 //! data is expected to reside in a Redis instance.
 #![feature(custom_attribute)]
 extern crate redis_context;
+extern crate serde;
+extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
 pub mod data;
-pub mod redis_delta;
+pub mod rdelta;
 
 use redis_context::RedisContext;
 
