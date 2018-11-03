@@ -37,30 +37,6 @@ impl SensorType {
 
 /// Yields the key which allows you to access a specific
 /// record in redis.
-///
-/// # Examples
-/// ```
-/// use gcloud_push::data::{Namespace, Key, SensorType};
-/// use uuid::Uuid;
-///
-/// let ns = Namespace("prawnspace".to_string());
-/// let all_tanks = Key::AllTanks { ns: ns };
-/// assert_eq!(all_tanks.key(), "prawnspace/tanks");
-///
-/// let single_tank = Key::Tank { ns: Namespace("prawnspace".to_string()), id: 1 };
-/// assert_eq!(single_tank.key(), "prawnspace/tanks/1");
-///
-/// let temp_id = Uuid::new_v4();
-/// let temp_sensor = Key::Sensor { ns: Namespace("prawnspace".to_string()), st: SensorType::new("temp"), id: temp_id};
-/// assert_eq!(temp_sensor.key(), format!("prawnspace/sensors/temp/{}", temp_id));
-/// 
-/// let ph_id = Uuid::new_v4();
-/// let ph_sensor = Key::Sensor { ns: Namespace("prawnspace".to_string()), st: SensorType::new("ph"), id: ph_id};
-/// assert_eq!(ph_sensor.key(), format!("prawnspace/sensors/ph/{}", ph_id));
-/// 
-/// let all_sensors = Key::AllSensors { ns: Namespace("prawnspace".to_string()), st: SensorType::new("ph") };
-/// assert_eq!(all_sensors.key(), format!("prawnspace/sensors/ph"));
-/// ```
 impl Key {
     pub fn key(&self) -> String {
         match self {
@@ -103,4 +79,64 @@ impl Key {
             ),
         }
     }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use uuid::Uuid;
+
+    fn prawnspace() -> Namespace {
+        Namespace("prawnspace".to_string())
+    }
+
+    #[test]
+    fn test_all_tanks() {
+        let all_tanks = Key::AllTanks { ns: prawnspace() };
+        assert_eq!(all_tanks.key(), "prawnspace/tanks");
+    }
+
+    #[test]
+    fn test_single_tank() {
+        let single_tank = Key::Tank {
+            ns: prawnspace(),
+            id: 1,
+        };
+        assert_eq!(single_tank.key(), "prawnspace/tanks/1");
+    }
+
+    #[test]
+    fn test_all_sensors() {
+        let all_sensors = Key::AllSensors {
+            ns: prawnspace(),
+            st: SensorType::new("ph"),
+        };
+        assert_eq!(all_sensors.key(), format!("prawnspace/sensors/ph"));
+    }
+
+    #[test]
+    fn test_temp_sensor() {
+        let temp_id = Uuid::new_v4();
+        let temp_sensor = Key::Sensor {
+            ns: prawnspace(),
+            st: SensorType::new("temp"),
+            id: temp_id,
+        };
+        assert_eq!(
+            temp_sensor.key(),
+            format!("prawnspace/sensors/temp/{}", temp_id)
+        );
+    }
+
+    #[test]
+    fn test_ph_sensor() {
+        let ph_id = Uuid::new_v4();
+        let ph_sensor = Key::Sensor {
+            ns: Namespace("prawnspace".to_string()),
+            st: SensorType::new("ph"),
+            id: ph_id,
+        };
+        assert_eq!(ph_sensor.key(), format!("prawnspace/sensors/ph/{}", ph_id));
+    }
+
 }
