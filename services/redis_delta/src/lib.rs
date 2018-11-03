@@ -99,6 +99,7 @@ pub struct RField<'a> {
 /// the data which has changed, though in the case of hashes,
 /// it *does* include a list of fields which were changed.
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
 pub enum RDeltaEvent {
     SetUpdated { key: String },
     HashUpdated { key: String, fields: Vec<String> },
