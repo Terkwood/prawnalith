@@ -12,6 +12,16 @@ use redis_context::RedisContext;
 
 /// send *all* relevant redis data upstream
 /// to the cloud instance via pub sub
+/// 
+/// # How to do this
+/// 
+/// - Figure out how many tanks there are
+/// - Query each tank individually
+/// - Figure out what types of sensors there are
+/// - For each type of sensor, query for all the sensor IDs
+/// - Query each individual sensor of each type
+/// 
+/// Push as you satisfy each individual step.
 pub fn clone_the_world(redis_ctx: &RedisContext) {}
 
 /// pushes some recent data via gcloud pubsub
