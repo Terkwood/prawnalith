@@ -194,5 +194,8 @@ mod rdelta_test {
             key: &Key::Sensor { ns: ns(), st: SensorType("temp"), id: id() }.to_string(),
             fields
         };
+
+        assert_eq!(serde_json::to_string(new_potatoes).unwrap(),
+         r#"{"update_hash":{"key":"prawnspace/sensors/temp/123e4567-e89b-12d3-a456-426655440000","fields":[{"name":"temp_f","val":"82.31"}]}}"#);
     }
 }
