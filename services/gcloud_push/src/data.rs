@@ -57,6 +57,9 @@ impl SensorType {
 /// let ph_id = Uuid::new_v4();
 /// let ph_sensor = Key::Sensor { ns: Namespace("prawnspace".to_string()), st: SensorType::new("ph"), id: ph_id};
 /// assert_eq!(ph_sensor.key(), format!("prawnspace/sensors/ph/{}", ph_id));
+/// 
+/// let all_sensors = Key::AllSensors { ns: Namespace("prawnspace".to_string()), st: SensorType::new("ph") };
+/// assert_eq!(all_sensors.key(), format!("prawnspace/sensors/ph"));
 /// ```
 impl Key {
     pub fn key(&self) -> String {
