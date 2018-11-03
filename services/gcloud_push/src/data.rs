@@ -119,7 +119,7 @@ mod test {
         let temp_id = Uuid::new_v4();
         let temp_sensor = Key::Sensor {
             ns: prawnspace(),
-            st: SensorType::new("TEMP"),
+            st: SensorType::new("TEMP "),
             id: temp_id,
         };
         assert_eq!(
