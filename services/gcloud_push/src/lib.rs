@@ -14,5 +14,5 @@ use redis_context::RedisContext;
 /// to the cloud instance via pub sub
 pub fn clone_the_world(redis_ctx: &RedisContext) {}
 
-/// pushes some redis data via gcloud
+/// pushes some recent data via gcloud publish
 pub fn push() {}
