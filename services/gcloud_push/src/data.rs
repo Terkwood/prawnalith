@@ -4,13 +4,16 @@ use uuid::Uuid;
 /// exist in our database.  They each have a namespace
 /// parameter `ns`, which indicates a common "root"
 /// shared by all data for this particular prawn grow.
+#[derive(Serialize, Deserialize)]
 pub enum Key<'a, 'b> {
     Tank {
+        #[serde(borrow)]
         ns: Namespace<'a>,
         id: u16,
     },
     Sensor {
         ns: Namespace<'a>,
+        #[serde(borrow)]
         st: SensorType<'b>,
         id: Uuid,
     },
@@ -28,28 +31,30 @@ pub enum Key<'a, 'b> {
 
 /// Namespace precedes the rest of a key, e.g.
 /// `prawnspace/tanks`
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Serialize, Deserialize)]
 pub struct Namespace<'a>(pub &'a str);
 
 /// A type of sensor.  ph, temp, ...
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Serialize, Deserialize)]
 pub struct SensorType<'a>(pub &'a str);
 
 /// Yields the key which allows you to access a specific
 /// record in redis.
 impl<'a, 'b> Key<'a, 'b> {
-    pub fn key(&self) -> String {
+    pub fn to_string(&self) -> String {
         match self {
-            Key::Tank { ns, id } => format!("{}/{}", Key::AllTanks { ns: *ns }.key(), id),
-            Key::Sensor { ns, st, id } => {
-                format!("{}/{}", Key::AllSensors { ns: *ns, st: *st }.key(), id)
-            }
+            Key::Tank { ns, id } => format!("{}/{}", Key::AllTanks { ns: *ns }.to_string(), id),
+            Key::Sensor { ns, st, id } => format!(
+                "{}/{}",
+                Key::AllSensors { ns: *ns, st: *st }.to_string(),
+                id
+            ),
             Key::AllTanks { ns: Namespace(n) } => format!("{}/tanks", n),
             Key::AllSensorTypes { ns: Namespace(n) } => format!("{}/sensors", n),
             Key::AllSensors {
                 ns,
                 st: SensorType(st),
-            } => format!("{}/{}", Key::AllSensorTypes { ns: *ns }.key(), st),
+            } => format!("{}/{}", Key::AllSensorTypes { ns: *ns }.to_string(), st),
         }
     }
 }
@@ -66,7 +71,7 @@ mod test {
     #[test]
     fn test_all_tanks() {
         let all_tanks = Key::AllTanks { ns: prawnspace() };
-        assert_eq!(all_tanks.key(), "prawnspace/tanks");
+        assert_eq!(all_tanks.to_string(), "prawnspace/tanks");
     }
 
     #[test]
@@ -75,7 +80,7 @@ mod test {
             ns: prawnspace(),
             id: 1,
         };
-        assert_eq!(single_tank.key(), "prawnspace/tanks/1");
+        assert_eq!(single_tank.to_string(), "prawnspace/tanks/1");
     }
 
     #[test]
@@ -84,7 +89,7 @@ mod test {
             ns: prawnspace(),
             st: SensorType("ph"),
         };
-        assert_eq!(all_sensors.key(), format!("prawnspace/sensors/ph"));
+        assert_eq!(all_sensors.to_string(), format!("prawnspace/sensors/ph"));
     }
 
     #[test]
@@ -96,7 +101,7 @@ mod test {
             id: temp_id,
         };
         assert_eq!(
-            temp_sensor.key(),
+            temp_sensor.to_string(),
             format!("prawnspace/sensors/temp/{}", temp_id)
         );
     }
@@ -109,7 +114,10 @@ mod test {
             st: SensorType("ph"),
             id: ph_id,
         };
-        assert_eq!(ph_sensor.key(), format!("prawnspace/sensors/ph/{}", ph_id));
+        assert_eq!(
+            ph_sensor.to_string(),
+            format!("prawnspace/sensors/ph/{}", ph_id)
+        );
     }
 
 }
