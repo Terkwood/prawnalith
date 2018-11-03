@@ -4,6 +4,7 @@ use redis::Commands;
 use super::model;
 use redis_context::RedisContext;
 use redis_delta::{Key, RDeltaEvent};
+use serde_json;
 use std::time::SystemTime;
 use uuid::Uuid;
 
@@ -227,5 +228,12 @@ fn epoch_secs() -> u64 {
 }
 
 pub fn publish_updates(redis_ctx: &RedisContext, topic: &str, updates: Vec<RDeltaEvent>) {
-    unimplemented!()
+    updates.iter().for_each(|delta_event| {
+        let published: Result<u64, _> = redis_ctx
+            .conn
+            .publish(topic, serde_json::to_string(delta_event).unwrap());
+        if let Err(e) = published {
+            println!("Error publishing to {}: {}", topic, e)
+        }
+    })
 }
