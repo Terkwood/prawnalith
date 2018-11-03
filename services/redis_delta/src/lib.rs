@@ -99,19 +99,10 @@ pub struct RField<'a> {
 /// the data which has changed, though in the case of hashes,
 /// it *does* include a list of fields which were changed.
 #[derive(Serialize, Deserialize, Debug)]
-pub enum RDeltaEvent<'a, 'b> {
-    SetUpdated {
-        #[serde(borrow)]
-        key: &'a str,
-    },
-    HashUpdated {
-        key: &'a str,
-        #[serde(borrow)]
-        fields: Vec<&'b str>,
-    },
-    StringUpdated {
-        key: &'a str,
-    },
+pub enum RDeltaEvent {
+    SetUpdated { key: String },
+    HashUpdated { key: String, fields: Vec<String> },
+    StringUpdated { key: String },
 }
 
 #[cfg(test)]

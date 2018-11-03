@@ -16,6 +16,8 @@ pub fn update<'a, 'b>(
     measure: &model::Measurement,
     ext_device_id: &str,
 ) -> Vec<redis_delta::RDeltaEvent<'a, 'b>> {
+    let mut delta_events: Vec<RDeltaEvent<'a, 'b>> = vec![];
+
     println!("Received redis {} update: {:?}", measure.name(), measure);
     let ext_device_namespace = &redis_ctx
         .get_external_device_namespace(measure.name())
@@ -25,11 +27,17 @@ pub fn update<'a, 'b>(
     println!("\tDevice ID (internal): {}", device_id);
     let rn = &redis_ctx.namespace;
 
+    let set_sensor_type_key = format!("{}/sensors/{}", rn, measure.name());
     // add to the member set if it doesn't already exist
-    let _: Result<u64, _> = redis_ctx.conn.sadd(
-        format!("{}/sensors/{}", rn, measure.name()),
+    let sensors_added: Result<u64, _> = redis_ctx.conn.sadd(
+        &set_sensor_type_key,
         &format!("{}", device_id),
     );
+    
+    if let Ok(n) = sensors_added {
+        let s = set_sensor_type_key.clone();
+        if n > 0 { delta_events.push(RDeltaEvent::SetUpdated {key: &s} ) }
+    }
 
     // lookup associated tank
     let sensor_hash_key = &format!("{}/sensors/{}/{}", rn, measure.name(), device_id).to_string();
@@ -60,7 +68,7 @@ pub fn update<'a, 'b>(
         }
     };
 
-    vec![]
+    delta_events
 }
 
 fn update_tank_hash(redis_ctx: &RedisContext, tank_num: &u64, measure: &model::Measurement) {
