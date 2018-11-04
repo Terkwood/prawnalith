@@ -7,6 +7,7 @@ pub fn receive_updates(
     update_r: Receiver<Option<paho_mqtt::message::Message>>,
     redis_ctx: &RedisContext,
     mqtt_cli: paho_mqtt::Client,
+    delta_event_topic: &str,
 ) {
     loop {
         match update_r.try_recv() {
@@ -14,10 +15,14 @@ pub fn receive_updates(
                 if let Some(sensor_message) = prawnqtt::deser_message(paho) {
                     let ext_device_id: &str = &sensor_message.device_id;
 
-                    sensor_message
-                        .measurements()
-                        .iter()
-                        .for_each(|measure| predis::update(redis_ctx, &measure, ext_device_id));
+                    sensor_message.measurements().iter().for_each(|measure| {
+                        let delta_events = predis::update(redis_ctx, &measure, ext_device_id);
+
+                        // emit all changed keys & hash field names to redis
+                        // on the appropriate redis pub/sub topic.
+                        // these will be processed later by the gcloud_push utility
+                        predis::publish_updates(redis_ctx, delta_event_topic, delta_events)
+                    });
                 }
             }
             Err(_) if !mqtt_cli.is_connected() => {
