@@ -1,5 +1,5 @@
 #!/bin/bash
 
 export $(grep -v '^#' .env | xargs)
-cd ../services/temp_tracker
-$TEMP_TRACKER_BIN
+cd led_status_helper
+$LED_BIN
