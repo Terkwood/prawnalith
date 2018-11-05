@@ -17,10 +17,9 @@ use redis_context::RedisContext;
 use redis_delta::RDelta;
 use yup_oauth2::GetToken;
 
-use hyper_native_tls::NativeTlsClient;
 use self::pubsub::{PublishRequest, PubsubMessage};
+use hyper_native_tls::NativeTlsClient;
 use std::default::Default;
-
 
 pub fn hello_world(redis_ctx: &RedisContext, pubsub_ctx: &PubSubContext) {
     let mut msg = PubsubMessage::default();
@@ -69,14 +68,8 @@ pub struct PubSubContext {
     pub client: PubSubClient,
 }
 
-pub type PubSubClient = pubsub::Pubsub<
-    hyper::Client,
-    yup_oauth2::Authenticator<
-        yup_oauth2::DefaultAuthenticatorDelegate,
-        yup_oauth2::MemoryStorage,
-        hyper::Client,
-    >,
->;
+pub type PubSubClient =
+    pubsub::Pubsub<hyper::Client, yup_oauth2::ServiceAccountAccess<hyper::Client>>;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct PubSubConfig {
@@ -115,15 +108,21 @@ impl PubSubConfig {
             .pubsub_secret_file
             .clone()
             .unwrap_or("secret.json".to_string());
-        let client_secret = yup_oauth2::service_account_key_from_file(&"pubsub-auth.json".to_string())
-        .unwrap();
-    let client = hyper::Client::with_connector(HttpsConnector::new(NativeTlsClient::new().unwrap()));
-    let mut access = yup_oauth2::ServiceAccountAccess::new(client_secret, client);
+        let client_secret =
+            yup_oauth2::service_account_key_from_file(&"pubsub-auth.json".to_string()).unwrap();
+        let client =
+            hyper::Client::with_connector(HttpsConnector::new(NativeTlsClient::new().unwrap()));
+        let mut access = yup_oauth2::ServiceAccountAccess::new(client_secret, client);
 
-    println!("{:?}",
-             access.token(&vec!["https://www.googleapis.com/auth/pubsub"]).unwrap());
+        println!(
+            "{:?}",
+            access
+                .token(&vec!["https://www.googleapis.com/auth/pubsub"])
+                .unwrap()
+        );
 
-    let client = hyper::Client::with_connector(HttpsConnector::new(NativeTlsClient::new().unwrap()));
+        let client =
+            hyper::Client::with_connector(HttpsConnector::new(NativeTlsClient::new().unwrap()));
         pubsub::Pubsub::new(client, access)
     }
 
