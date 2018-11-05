@@ -16,15 +16,11 @@ use hyper::net::HttpsConnector;
 use redis_context::RedisContext;
 use redis_delta::RDelta;
 use yup_oauth2::GetToken;
-use self::pubsub::Pubsub;
-use self::pubsub::{Error, Result};
+
 use hyper_native_tls::NativeTlsClient;
 use self::pubsub::{PublishRequest, PubsubMessage};
 use std::default::Default;
-use std::io::Read;
-use yup_oauth2::{
-    Authenticator, ConsoleApplicationSecret, DefaultAuthenticatorDelegate, MemoryStorage,
-};
+
 
 pub fn hello_world(redis_ctx: &RedisContext, pubsub_ctx: &PubSubContext) {
     let mut msg = PubsubMessage::default();
@@ -59,11 +55,11 @@ pub fn clone_the_world(redis_ctx: &RedisContext, pubsub_ctx: &PubSubContext) {
 }
 
 /// pushes some recent data via gcloud pubsub
-pub fn push_recent(
+pub fn push_recent<E>(
     redis_context: &RedisContext,
     pubsub: &PubSubClient,
     rdeltas: Vec<RDelta>,
-) -> Result<()> {
+) -> Result<(), E> {
     unimplemented!()
 }
 
