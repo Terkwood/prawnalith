@@ -19,7 +19,10 @@ use self::pubsub::Pubsub;
 use self::pubsub::{Error, Result};
 use self::pubsub::{PublishRequest, PubsubMessage};
 use std::default::Default;
-use yup_oauth2::{ApplicationSecret, Authenticator, DefaultAuthenticatorDelegate, MemoryStorage};
+use std::io::Read;
+use yup_oauth2::{
+    Authenticator, ConsoleApplicationSecret, DefaultAuthenticatorDelegate, MemoryStorage,
+};
 
 pub fn hello_world(redis_ctx: &RedisContext, pubsub_ctx: &PubSubContext) {
     let mut msg = PubsubMessage::default();
@@ -81,6 +84,7 @@ pub type PubSubClient = pubsub::Pubsub<
 pub struct PubSubConfig {
     pub pubsub_project_id: Option<String>,
     pub pubsub_topic_name: Option<String>,
+    pub pubsub_secret_file: Option<String>,
     pub redis_auth: Option<String>,
     pub redis_host: Option<String>,
     pub redis_port: Option<u16>,
@@ -109,7 +113,20 @@ impl PubSubConfig {
     /// Create a client used to publish to google pub/sub.
     /// See instructions at https://docs.rs/google-pubsub1_beta2/1.0.8+20181001/google_pubsub1_beta2/
     pub fn to_pubsub_client(&self) -> PubSubClient {
-        let secret: ApplicationSecret = Default::default();
+        let secret_file = self
+            .pubsub_secret_file
+            .clone()
+            .unwrap_or("secret.json".to_string());
+        let mut secret_json = String::new();
+        std::fs::File::open(secret_file)
+            .unwrap()
+            .read_to_string(&mut secret_json)
+            .unwrap();
+        let secret = serde_json::from_str::<ConsoleApplicationSecret>(&secret_json)
+            .unwrap()
+            .installed
+            .unwrap();
+
         let auth = Authenticator::new(
             &secret,
             DefaultAuthenticatorDelegate,
@@ -137,9 +154,7 @@ impl PubSubConfig {
             .clone()
             .unwrap_or("topic".to_string());
         let fq_topic = format!("projects/{}/topics/{}", project_id, topic_name);
-        PubSubContext {
-            fq_topic,
-            client: self.to_pubsub_client(),
-        }
+        let client = self.to_pubsub_client();
+        PubSubContext { fq_topic, client }
     }
 }
