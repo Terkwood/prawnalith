@@ -1,3 +1,12 @@
+use redis_delta::RDelta;
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct RUpdate<'a, 'b> {
+    #[serde(borrow)]
+    rdelta: RDelta<'a, 'b>,
+    time: u64,
+}
+
 /// Note that fq_topic is a fully qualified topic, i.e. `projects/{project_id}/topics/{topic_name}`
 pub struct PubSubContext {
     pub fq_topic: String,
