@@ -4,9 +4,22 @@
 //! data to google cloud pub sub.  The temp & pH
 //! data is expected to reside in a Redis instance.
 #![feature(custom_attribute)]
+extern crate google_pubsub1_beta2 as pubsub;
+extern crate hyper;
+extern crate hyper_rustls;
 extern crate redis_context;
+#[macro_use]
+extern crate serde_derive;
+extern crate yup_oauth2;
 
 use redis_context::RedisContext;
+use redis_delta::RDelta;
+
+use self::pubsub::AcknowledgeRequest;
+use self::pubsub::Pubsub;
+use self::pubsub::{Error, Result};
+use std::default::Default;
+use yup_oauth2::{ApplicationSecret, Authenticator, DefaultAuthenticatorDelegate, MemoryStorage};
 
 /// send *all* relevant redis data upstream
 /// to the cloud instance via pub sub
@@ -25,6 +38,35 @@ pub fn clone_the_world(redis_ctx: &RedisContext) {
 }
 
 /// pushes some recent data via gcloud pubsub
-pub fn push_recent(redis_context: &RedisContext) {
+pub fn push_recent(redis_context: &RedisContext, rdeltas: Vec<RDelta>) -> Result<()> {
     unimplemented!()
+}
+
+pub fn publish_something() {}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct PubSubConfig {
+    pub pubsub_topic: Option<String>,
+    pub redis_auth: Option<String>,
+    pub redis_host: Option<String>,
+    pub redis_port: Option<u16>,
+    pub redis_namespace: Option<String>,
+}
+
+impl PubSubConfig {
+    pub fn new() -> PubSubConfig {
+        match envy::from_env::<PubSubConfig>() {
+            Ok(config) => config,
+            Err(e) => panic!("Unable to parse config ({})", e),
+        }
+    }
+
+    pub fn to_redis_context(&self) -> RedisContext {
+        RedisContext::new(
+            (self.redis_host.clone().unwrap_or("127.0.0.1".to_string())).to_string(),
+            self.redis_port.unwrap_or(6379),
+            self.redis_auth.clone(),
+            self.redis_namespace.clone().unwrap_or("".to_string()),
+        )
+    }
 }

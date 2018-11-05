@@ -70,7 +70,7 @@ impl<'a, 'b> Key<'a, 'b> {
 /// of key/value used by the prawnalith.
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
-enum RDelta<'a, 'b> {
+pub enum RDelta<'a, 'b> {
     UpdateSet {
         #[serde(borrow)]
         key: &'a str,

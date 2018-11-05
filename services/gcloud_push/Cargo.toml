@@ -17,6 +17,7 @@ redis = "0.9"
 redis_context = { path = "../redis_context" }
 redis_delta = { path = "../redis_delta" }
 serde = "^1.0"
+serde_derive = "^1.0"
 serde_json = "^1.0"
 uuid = { version = "0.7", features = ["v4", "v5", "serde"] }
 yup-oauth2 = "^1.0"
