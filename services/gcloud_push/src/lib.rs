@@ -42,8 +42,6 @@ pub fn push_recent(redis_context: &RedisContext, rdeltas: Vec<RDelta>) -> Result
     unimplemented!()
 }
 
-pub fn publish_something() {}
-
 #[derive(Deserialize, Serialize, Debug)]
 pub struct PubSubConfig {
     pub pubsub_topic: Option<String>,
@@ -61,12 +59,44 @@ impl PubSubConfig {
         }
     }
 
+    /// Create an object which holds both a connection to redis
+    /// and a string "namespace" used to prefix all keys.
     pub fn to_redis_context(&self) -> RedisContext {
         RedisContext::new(
             (self.redis_host.clone().unwrap_or("127.0.0.1".to_string())).to_string(),
             self.redis_port.unwrap_or(6379),
             self.redis_auth.clone(),
             self.redis_namespace.clone().unwrap_or("".to_string()),
+        )
+    }
+
+    /// Create a client used to publish to google pub/sub.
+    /// See instructions at https://docs.rs/google-pubsub1_beta2/1.0.8+20181001/google_pubsub1_beta2/
+    pub fn to_pubsub_client(
+        &self,
+    ) -> pubsub::Pubsub<
+        hyper::Client,
+        yup_oauth2::Authenticator<
+            yup_oauth2::DefaultAuthenticatorDelegate,
+            yup_oauth2::MemoryStorage,
+            hyper::Client,
+        >,
+    > {
+        let secret: ApplicationSecret = Default::default();
+        let auth = Authenticator::new(
+            &secret,
+            DefaultAuthenticatorDelegate,
+            hyper::Client::with_connector(hyper::net::HttpsConnector::new(
+                hyper_rustls::TlsClient::new(),
+            )),
+            <MemoryStorage as Default>::default(),
+            None,
+        );
+        Pubsub::new(
+            hyper::Client::with_connector(hyper::net::HttpsConnector::new(
+                hyper_rustls::TlsClient::new(),
+            )),
+            auth,
         )
     }
 }
