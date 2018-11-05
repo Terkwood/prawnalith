@@ -68,7 +68,7 @@ pub fn clone_the_world(_redis_ctx: &RedisContext, _pubsub_ctx: &PubSubContext) {
 pub fn push_recent<E>(
     _redis_context: &RedisContext,
     _pubsub: &PubSubClient,
-    _redis_events: Vec<RDeltaEvent>,
+    _redis_events: Vec<REvent>,
 ) -> Result<(), E> {
     unimplemented!()
 }
