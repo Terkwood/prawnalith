@@ -4,19 +4,21 @@
 //! data to google cloud pub sub.  The temp & pH
 //! data is expected to reside in a Redis instance.
 #![feature(custom_attribute)]
-extern crate google_pubsub1_beta2 as pubsub;
+extern crate google_pubsub1 as pubsub;
 extern crate hyper;
-extern crate hyper_rustls;
+extern crate hyper_native_tls;
 extern crate redis_context;
 #[macro_use]
 extern crate serde_derive;
 extern crate yup_oauth2;
 
+use hyper::net::HttpsConnector;
 use redis_context::RedisContext;
 use redis_delta::RDelta;
-
+use yup_oauth2::GetToken;
 use self::pubsub::Pubsub;
 use self::pubsub::{Error, Result};
+use hyper_native_tls::NativeTlsClient;
 use self::pubsub::{PublishRequest, PubsubMessage};
 use std::default::Default;
 use std::io::Read;
@@ -117,31 +119,16 @@ impl PubSubConfig {
             .pubsub_secret_file
             .clone()
             .unwrap_or("secret.json".to_string());
-        let mut secret_json = String::new();
-        std::fs::File::open(secret_file)
-            .unwrap()
-            .read_to_string(&mut secret_json)
-            .unwrap();
-        let secret = serde_json::from_str::<ConsoleApplicationSecret>(&secret_json)
-            .unwrap()
-            .installed
-            .unwrap();
+        let client_secret = yup_oauth2::service_account_key_from_file(&"pubsub-auth.json".to_string())
+        .unwrap();
+    let client = hyper::Client::with_connector(HttpsConnector::new(NativeTlsClient::new().unwrap()));
+    let mut access = yup_oauth2::ServiceAccountAccess::new(client_secret, client);
 
-        let auth = Authenticator::new(
-            &secret,
-            DefaultAuthenticatorDelegate,
-            hyper::Client::with_connector(hyper::net::HttpsConnector::new(
-                hyper_rustls::TlsClient::new(),
-            )),
-            <MemoryStorage as Default>::default(),
-            None,
-        );
-        Pubsub::new(
-            hyper::Client::with_connector(hyper::net::HttpsConnector::new(
-                hyper_rustls::TlsClient::new(),
-            )),
-            auth,
-        )
+    println!("{:?}",
+             access.token(&vec!["https://www.googleapis.com/auth/pubsub"]).unwrap());
+
+    let client = hyper::Client::with_connector(HttpsConnector::new(NativeTlsClient::new().unwrap()));
+        pubsub::Pubsub::new(client, access)
     }
 
     pub fn to_pubsub_context(&self) -> PubSubContext {

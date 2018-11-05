@@ -6,12 +6,13 @@ edition = "2018"
 
 [dependencies]
 dotenv = "0.13"
-google-pubsub1_beta2 = "*"
-# Google cloud projects intentionally use an old version of Hyper.
-# See https://github.com/Byron/google-apis-rs/issues/173 for more
-# information.
-hyper = "^0.10"
-hyper-rustls = "^0.6"
+google-pubsub1 = "^1.0"
+# Specific version of hyper and hyper-native-TLS required
+# in order to make "service account" authentication work,
+# and generally in order to make the rust APIs for GCP 
+# work.
+hyper = "0.10.2"
+hyper-native-tls = "0.3"
 envy = "0.3"
 redis = "0.9"
 redis_context = { path = "../redis_context" }
