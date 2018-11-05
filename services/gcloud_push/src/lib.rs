@@ -15,18 +15,24 @@ extern crate yup_oauth2;
 pub mod config;
 mod model;
 
+use base64;
+
 use redis_context::RedisContext;
 use redis_delta::RDelta;
 
 use self::model::{PubSubClient, PubSubContext};
-use self::pubsub::{PublishRequest, PubsubMessage};
+use self::pubsub::{PublishRequest};
 use std::default::Default;
 
 pub fn hello_world(_redis_ctx: &RedisContext, pubsub_ctx: &PubSubContext) {
-    let mut msg = PubsubMessage::default();
-    msg.data = Some("HELLO ANYBODY PLEAES!".to_string());
+    let message = google_pubsub1::PubsubMessage {
+        // Base64 encoded!
+        data: Some(base64::encode("HELLO ANYONE!".as_bytes())),
+        ..Default::default()
+    };
+
     let req = PublishRequest {
-        messages: Some(vec![msg]),
+        messages: Some(vec![message]),
     };
 
     println!("Publishing to {}", &pubsub_ctx.fq_topic);
