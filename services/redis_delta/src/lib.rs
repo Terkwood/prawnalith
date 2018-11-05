@@ -105,7 +105,7 @@ pub struct RField<'a> {
 /// it *does* include a list of fields which were changed.
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
-pub enum RDeltaEvent {
+pub enum REvent {
     SetUpdated { key: String },
     HashUpdated { key: String, fields: Vec<String> },
     StringUpdated { key: String },
@@ -203,9 +203,10 @@ mod rdelta_test {
         let set_friend = &RDelta::UpdateSet {
             key: &Key::AllSensorTypes { ns: ns() }.to_string(),
             vals: vec![id_str()],
+            time: 0,
         };
         assert_eq!(serde_json::to_string(set_friend).unwrap(),
-        r#"{"update_set":{"key":"prawnspace/sensors","vals":["123e4567-e89b-12d3-a456-426655440000"]}}"#);
+        r#"{"update_set":{"key":"prawnspace/sensors","vals":["123e4567-e89b-12d3-a456-426655440000"],"time":0}}"#);
     }
 
     #[test]
@@ -222,26 +223,28 @@ mod rdelta_test {
             }
             .to_string(),
             fields,
+            time: 0,
         };
 
         assert_eq!(serde_json::to_string(new_potatoes).unwrap(),
-         r#"{"update_hash":{"key":"prawnspace/sensors/temp/123e4567-e89b-12d3-a456-426655440000","fields":[{"name":"temp_f","val":"82.31"}]}}"#);
+         r#"{"update_hash":{"key":"prawnspace/sensors/temp/123e4567-e89b-12d3-a456-426655440000","fields":[{"name":"temp_f","val":"82.31"}],"time":0}}"#);
     }
 
     #[test]
     fn update_string_ser() {
         let uk = &Key::AllTanks { ns: ns() }.to_string();
         let uv = "2";
-        let update = &RDelta::UpdateString { key: uk, val: uv };
+        let update = &RDelta::UpdateString { key: uk, val: uv, time: 0 };
 
-        let expected = &r#"{"update_string":{"key":"prawnspace/tanks","val":"2"}}"#;
+        let expected = &r#"{"update_string":{"key":"prawnspace/tanks","val":"2","time":0}}"#;
         assert_eq!(serde_json::to_string(update).unwrap(), expected.to_string());
 
         let deser: RDelta = serde_json::from_str(expected).unwrap();
         match deser {
-            RDelta::UpdateString { key, val } => {
+            RDelta::UpdateString { key, val, time } => {
                 assert_eq!(key, *uk);
                 assert_eq!(val, uv);
+                assert_eq!(time, 0);
             }
             _ => assert!(false),
         }

@@ -18,7 +18,7 @@ mod model;
 use base64;
 
 use redis_context::RedisContext;
-use redis_delta::RDelta;
+use redis_delta::RDeltaEvent;
 
 use self::model::{PubSubClient, PubSubContext};
 use self::pubsub::PublishRequest;
@@ -65,7 +65,7 @@ pub fn clone_the_world(_redis_ctx: &RedisContext, _pubsub_ctx: &PubSubContext) {
 pub fn push_recent<E>(
     _redis_context: &RedisContext,
     _pubsub: &PubSubClient,
-    _rdeltas: Vec<RDelta>,
+    _rdeltas: Vec<RDeltaEvent>,
 ) -> Result<(), E> {
     unimplemented!()
 }
