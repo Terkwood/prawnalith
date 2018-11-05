@@ -33,14 +33,27 @@ use yup_oauth2::{ApplicationSecret, Authenticator, DefaultAuthenticatorDelegate,
 /// - Query each individual sensor of each type
 ///
 /// Push as you satisfy each individual step.
-pub fn clone_the_world(redis_ctx: &RedisContext) {
+pub fn clone_the_world(redis_ctx: &RedisContext, pubsub: &PubSubClient) {
     unimplemented!()
 }
 
 /// pushes some recent data via gcloud pubsub
-pub fn push_recent(redis_context: &RedisContext, rdeltas: Vec<RDelta>) -> Result<()> {
+pub fn push_recent(
+    redis_context: &RedisContext,
+    pubsub: &PubSubClient,
+    rdeltas: Vec<RDelta>,
+) -> Result<()> {
     unimplemented!()
 }
+
+pub type PubSubClient = pubsub::Pubsub<
+    hyper::Client,
+    yup_oauth2::Authenticator<
+        yup_oauth2::DefaultAuthenticatorDelegate,
+        yup_oauth2::MemoryStorage,
+        hyper::Client,
+    >,
+>;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct PubSubConfig {
@@ -72,16 +85,7 @@ impl PubSubConfig {
 
     /// Create a client used to publish to google pub/sub.
     /// See instructions at https://docs.rs/google-pubsub1_beta2/1.0.8+20181001/google_pubsub1_beta2/
-    pub fn to_pubsub_client(
-        &self,
-    ) -> pubsub::Pubsub<
-        hyper::Client,
-        yup_oauth2::Authenticator<
-            yup_oauth2::DefaultAuthenticatorDelegate,
-            yup_oauth2::MemoryStorage,
-            hyper::Client,
-        >,
-    > {
+    pub fn to_pubsub_client(&self) -> PubSubClient {
         let secret: ApplicationSecret = Default::default();
         let auth = Authenticator::new(
             &secret,
