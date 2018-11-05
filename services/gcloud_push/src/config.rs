@@ -1,11 +1,9 @@
 use hyper::net::HttpsConnector;
 use redis_context::RedisContext;
-use redis_delta::RDelta;
 use yup_oauth2::GetToken;
 
 use crate::model::{PubSubClient, PubSubContext};
 use hyper_native_tls::NativeTlsClient;
-use std::default::Default;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct PubSubConfig {
@@ -43,9 +41,9 @@ impl PubSubConfig {
         let secret_file = self
             .pubsub_secret_file
             .clone()
-            .unwrap_or("secret.json".to_string());
-        let client_secret =
-            yup_oauth2::service_account_key_from_file(&"pubsub-auth.json".to_string()).unwrap();
+            .unwrap_or("secret.json".to_string())
+            .to_string();
+        let client_secret = yup_oauth2::service_account_key_from_file(&secret_file).unwrap();
         let client =
             hyper::Client::with_connector(HttpsConnector::new(NativeTlsClient::new().unwrap()));
         let mut access = yup_oauth2::ServiceAccountAccess::new(client_secret, client);

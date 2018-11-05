@@ -15,17 +15,14 @@ extern crate yup_oauth2;
 pub mod config;
 mod model;
 
-use hyper::net::HttpsConnector;
 use redis_context::RedisContext;
 use redis_delta::RDelta;
-use yup_oauth2::GetToken;
 
-use self::config::PubSubConfig;
 use self::model::{PubSubClient, PubSubContext};
 use self::pubsub::{PublishRequest, PubsubMessage};
-use hyper_native_tls::NativeTlsClient;
 use std::default::Default;
-pub fn hello_world(redis_ctx: &RedisContext, pubsub_ctx: &PubSubContext) {
+
+pub fn hello_world(_redis_ctx: &RedisContext, pubsub_ctx: &PubSubContext) {
     let mut msg = PubsubMessage::default();
     msg.data = Some("HELLO ANYBODY PLEAES!".to_string());
     let req = PublishRequest {
@@ -53,15 +50,15 @@ pub fn hello_world(redis_ctx: &RedisContext, pubsub_ctx: &PubSubContext) {
 /// - Query each individual sensor of each type
 ///
 /// Push as you satisfy each individual step.
-pub fn clone_the_world(redis_ctx: &RedisContext, pubsub_ctx: &PubSubContext) {
+pub fn clone_the_world(_redis_ctx: &RedisContext, _pubsub_ctx: &PubSubContext) {
     unimplemented!()
 }
 
 /// pushes some recent data via gcloud pubsub
 pub fn push_recent<E>(
-    redis_context: &RedisContext,
-    pubsub: &PubSubClient,
-    rdeltas: Vec<RDelta>,
+    _redis_context: &RedisContext,
+    _pubsub: &PubSubClient,
+    _rdeltas: Vec<RDelta>,
 ) -> Result<(), E> {
     unimplemented!()
 }
