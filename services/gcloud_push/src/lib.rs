@@ -60,7 +60,8 @@ pub fn clone_the_world(_redis_ctx: &RedisContext, _pubsub_ctx: &PubSubContext) {
     unimplemented!()
 }
 
-/// pushes some recent data via gcloud pubsub
+/// Publish a vec of redis changes (hash updates, string updates, etc)
+/// to google pubsub system.
 pub fn push_recent<E>(
     _redis_context: &RedisContext,
     _pubsub: &PubSubClient,
