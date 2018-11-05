@@ -15,11 +15,21 @@ extern crate yup_oauth2;
 use redis_context::RedisContext;
 use redis_delta::RDelta;
 
-use self::pubsub::AcknowledgeRequest;
 use self::pubsub::Pubsub;
 use self::pubsub::{Error, Result};
+use self::pubsub::{PublishRequest, PubsubMessage};
 use std::default::Default;
 use yup_oauth2::{ApplicationSecret, Authenticator, DefaultAuthenticatorDelegate, MemoryStorage};
+
+pub fn hello_world(redis_ctx: &RedisContext, pubsub_ctx: &PubSubContext) {
+    let req = PublishRequest {
+        messages: Some(vec![PubsubMessage::default()]),
+    };
+    pubsub_ctx
+        .client
+        .projects()
+        .topics_publish(req, &pubsub_ctx.fq_topic);
+}
 
 /// send *all* relevant redis data upstream
 /// to the cloud instance via pub sub
@@ -33,7 +43,7 @@ use yup_oauth2::{ApplicationSecret, Authenticator, DefaultAuthenticatorDelegate,
 /// - Query each individual sensor of each type
 ///
 /// Push as you satisfy each individual step.
-pub fn clone_the_world(redis_ctx: &RedisContext, pubsub: &PubSubClient) {
+pub fn clone_the_world(redis_ctx: &RedisContext, pubsub_ctx: &PubSubContext) {
     unimplemented!()
 }
 
@@ -44,6 +54,12 @@ pub fn push_recent(
     rdeltas: Vec<RDelta>,
 ) -> Result<()> {
     unimplemented!()
+}
+
+/// Note that fq_topic is a fully qualified topic, i.e. `projects/{project_id}/topics/{topic_name}`
+pub struct PubSubContext {
+    pub fq_topic: String,
+    pub client: PubSubClient,
 }
 
 pub type PubSubClient = pubsub::Pubsub<
@@ -57,7 +73,8 @@ pub type PubSubClient = pubsub::Pubsub<
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct PubSubConfig {
-    pub pubsub_topic: Option<String>,
+    pub pubsub_project_id: Option<String>,
+    pub pubsub_topic_name: Option<String>,
     pub redis_auth: Option<String>,
     pub redis_host: Option<String>,
     pub redis_port: Option<u16>,
@@ -102,5 +119,23 @@ impl PubSubConfig {
             )),
             auth,
         )
+    }
+
+    pub fn to_pubsub_context(&self) -> PubSubContext {
+        let project_id = self
+            .pubsub_project_id
+            .clone()
+            .unwrap_or("project".to_string());
+        let fq_topic = format!(
+            "projects/{}/topics/{}",
+            project_id,
+            self.pubsub_topic_name
+                .clone()
+                .unwrap_or("topic".to_string())
+        );
+        PubSubContext {
+            fq_topic,
+            client: self.to_pubsub_client(),
+        }
     }
 }
