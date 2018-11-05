@@ -68,7 +68,7 @@ impl<'a, 'b> Key<'a, 'b> {
 /// Represents a change to a value in Redis.
 /// Currently only supports the minimum combinations
 /// of key/value used by the prawnalith.
-/// The `time` field represents epoch millis in UTC
+/// The `time` field represents epoch secs in UTC
 /// for when this record was retrieved.
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
@@ -91,6 +91,30 @@ pub enum RDelta<'a, 'b> {
         time: u64,
     },
 }
+
+
+// TODO               TODO               TODO               TODO               TODO               
+// TODO               TODO               TODO               TODO               TODO               
+// TODO               TODO               TODO               TODO               TODO               
+// TODO
+// TODO
+// TODO
+//              Implement FROM for RDELTAs for String, Hash, Set!!!            
+// TODO
+// TODO
+// TODO
+// TODO               TODO               TODO               TODO               TODO               
+// TODO               TODO               TODO               TODO               TODO               
+// TODO               TODO               TODO               TODO               TODO               
+
+
+
+
+
+
+
+
+
 
 /// A field which is stored in Redis.
 #[derive(Serialize, Deserialize, Debug)]

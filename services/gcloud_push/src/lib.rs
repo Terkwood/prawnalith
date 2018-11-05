@@ -16,13 +16,14 @@ pub mod config;
 mod model;
 
 use base64;
-
+use redis::Commands;
 use redis_context::RedisContext;
-use redis_delta::REvent;
+use redis_delta::{RDelta, REvent};
 
 use self::model::{PubSubClient, PubSubContext};
 use self::pubsub::PublishRequest;
 use std::default::Default;
+use std::time::SystemTime;
 
 pub fn hello_world(_redis_ctx: &RedisContext, pubsub_ctx: &PubSubContext) {
     let message = google_pubsub1::PubsubMessage {
@@ -62,13 +63,51 @@ pub fn clone_the_world(_redis_ctx: &RedisContext, _pubsub_ctx: &PubSubContext) {
 
 /// Publish a vec of redis changes (hash updates, string updates, etc)
 /// to google pubsub system.
-/// 
+///
 /// In order to get this done, we need to first retrieve a recent
-/// copy of each piece of data referred to in the RDelta
+/// copy of each piece of data referred to in the vec of events.
+/// - For string or set updates, this simply means retrieving the
+///   entire set, or the string itself.
+/// - For hash field updates, we only retrieve the fields
+///   which have been updated.
 pub fn push_recent<E>(
-    _redis_context: &RedisContext,
-    _pubsub: &PubSubClient,
-    _redis_events: Vec<REvent>,
+    redis_ctx: &RedisContext,
+    pubsub_ctx: &PubSubContext,
+    redis_events: Vec<REvent>,
 ) -> Result<(), E> {
+    redis_events.iter().for_each(move |revent| {
+        fetch(revent, redis_ctx);
+    });
+
+    Ok(())
+}
+
+fn fetch<'a, 'b>(
+    event: &REvent,
+    _redis_context: &RedisContext,
+) -> Result<Option<RDelta<'a, 'b>>, redis::RedisError> {
+    match event {
+        REvent::HashUpdated { key, fields } => unimplemented!(),
+        REvent::StringUpdated { key } => unimplemented!(),
+        REvent::SetUpdated { key } => unimplemented!(),
+    }
+}
+
+fn fetch_string<'a, 'b>(
+    key: &str,
+    ctx: &RedisContext,
+) -> Result<Option<RDelta<'a, 'b>>, redis::RedisError> {
+    let found: Result<Option<String>, _> = ctx.conn.get(key);
+    unimplemented!();
+}
+
+fn push<E>(data: &RDelta, _pubsub_ctx: &PubSubContext) -> Result<(), E> {
     unimplemented!()
+}
+
+fn epoch_secs() -> u64 {
+    SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap()
+        .as_secs()
 }
