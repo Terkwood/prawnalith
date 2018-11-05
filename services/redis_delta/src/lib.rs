@@ -5,7 +5,6 @@ extern crate serde_json;
 extern crate serde_derive;
 
 use uuid::Uuid;
-
 /// This enum represents various keys which should
 /// exist in our database.  They each have a namespace
 /// parameter `ns`, which indicates a common "root"
@@ -91,30 +90,6 @@ pub enum RDelta<'a, 'b> {
         time: u64,
     },
 }
-
-
-// TODO               TODO               TODO               TODO               TODO               
-// TODO               TODO               TODO               TODO               TODO               
-// TODO               TODO               TODO               TODO               TODO               
-// TODO
-// TODO
-// TODO
-//              Implement FROM for RDELTAs for String, Hash, Set!!!            
-// TODO
-// TODO
-// TODO
-// TODO               TODO               TODO               TODO               TODO               
-// TODO               TODO               TODO               TODO               TODO               
-// TODO               TODO               TODO               TODO               TODO               
-
-
-
-
-
-
-
-
-
 
 /// A field which is stored in Redis.
 #[derive(Serialize, Deserialize, Debug)]
@@ -258,7 +233,11 @@ mod rdelta_test {
     fn update_string_ser() {
         let uk = &Key::AllTanks { ns: ns() }.to_string();
         let uv = "2";
-        let update = &RDelta::UpdateString { key: uk, val: uv, time: 0 };
+        let update = &RDelta::UpdateString {
+            key: uk,
+            val: uv,
+            time: 0,
+        };
 
         let expected = &r#"{"update_string":{"key":"prawnspace/tanks","val":"2","time":0}}"#;
         assert_eq!(serde_json::to_string(update).unwrap(), expected.to_string());
