@@ -6,9 +6,17 @@ edition = "2018"
 
 [dependencies]
 dotenv = "0.13"
-google-pubsub1_beta2 = "1.0.8+20181001"
+google-pubsub1_beta2 = "*"
+# Google cloud projects intentionally use an old version of Hyper.
+# See https://github.com/Byron/google-apis-rs/issues/173 for more
+# information.
+hyper = "^0.10"
+hyper-rustls = "^0.6"
 envy = "0.3"
 redis = "0.9"
 redis_context = { path = "../redis_context" }
 redis_delta = { path = "../redis_delta" }
+serde = "^1.0"
+serde_json = "^1.0"
 uuid = { version = "0.7", features = ["v4", "v5", "serde"] }
+yup-oauth2 = "^1.0"
