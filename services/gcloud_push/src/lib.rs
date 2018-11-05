@@ -21,7 +21,7 @@ use redis_context::RedisContext;
 use redis_delta::RDelta;
 
 use self::model::{PubSubClient, PubSubContext};
-use self::pubsub::{PublishRequest};
+use self::pubsub::PublishRequest;
 use std::default::Default;
 
 pub fn hello_world(_redis_ctx: &RedisContext, pubsub_ctx: &PubSubContext) {
