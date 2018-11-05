@@ -22,13 +22,19 @@ use std::default::Default;
 use yup_oauth2::{ApplicationSecret, Authenticator, DefaultAuthenticatorDelegate, MemoryStorage};
 
 pub fn hello_world(redis_ctx: &RedisContext, pubsub_ctx: &PubSubContext) {
+    let mut msg = PubsubMessage::default();
+    msg.data = Some("HELLO ANYBODY PLEAES!".to_string());
     let req = PublishRequest {
-        messages: Some(vec![PubsubMessage::default()]),
+        messages: Some(vec![msg]),
     };
+
+    println!("Publishing to {}", &pubsub_ctx.fq_topic);
     pubsub_ctx
         .client
         .projects()
-        .topics_publish(req, &pubsub_ctx.fq_topic);
+        .topics_publish(req, &pubsub_ctx.fq_topic)
+        .doit()
+        .unwrap();
 }
 
 /// send *all* relevant redis data upstream
@@ -126,13 +132,11 @@ impl PubSubConfig {
             .pubsub_project_id
             .clone()
             .unwrap_or("project".to_string());
-        let fq_topic = format!(
-            "projects/{}/topics/{}",
-            project_id,
-            self.pubsub_topic_name
-                .clone()
-                .unwrap_or("topic".to_string())
-        );
+        let topic_name = self
+            .pubsub_topic_name
+            .clone()
+            .unwrap_or("topic".to_string());
+        let fq_topic = format!("projects/{}/topics/{}", project_id, topic_name);
         PubSubContext {
             fq_topic,
             client: self.to_pubsub_client(),
