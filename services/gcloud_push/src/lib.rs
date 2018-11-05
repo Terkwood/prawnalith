@@ -18,7 +18,7 @@ mod model;
 use base64;
 
 use redis_context::RedisContext;
-use redis_delta::RDeltaEvent;
+use redis_delta::REvent;
 
 use self::model::{PubSubClient, PubSubContext};
 use self::pubsub::PublishRequest;
@@ -62,10 +62,13 @@ pub fn clone_the_world(_redis_ctx: &RedisContext, _pubsub_ctx: &PubSubContext) {
 
 /// Publish a vec of redis changes (hash updates, string updates, etc)
 /// to google pubsub system.
+/// 
+/// In order to get this done, we need to first retrieve a recent
+/// copy of each piece of data referred to in the RDelta
 pub fn push_recent<E>(
     _redis_context: &RedisContext,
     _pubsub: &PubSubClient,
-    _rdeltas: Vec<RDeltaEvent>,
+    _redis_events: Vec<RDeltaEvent>,
 ) -> Result<(), E> {
     unimplemented!()
 }
