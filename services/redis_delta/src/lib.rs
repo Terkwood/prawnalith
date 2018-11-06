@@ -86,7 +86,7 @@ pub enum RDelta<'a, 'b> {
     },
     UpdateString {
         key: &'a str,
-        val: &'b str,
+        val: String,
         time: u64,
     },
 }
@@ -235,7 +235,7 @@ mod rdelta_test {
         let uv = "2";
         let update = &RDelta::UpdateString {
             key: uk,
-            val: uv,
+            val: uv.to_string(),
             time: 0,
         };
 
@@ -246,7 +246,7 @@ mod rdelta_test {
         match deser {
             RDelta::UpdateString { key, val, time } => {
                 assert_eq!(key, *uk);
-                assert_eq!(val, uv);
+                assert_eq!(val, uv.to_string());
                 assert_eq!(time, 0);
             }
             _ => assert!(false),

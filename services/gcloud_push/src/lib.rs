@@ -94,11 +94,15 @@ fn fetch<'a, 'b>(
 }
 
 fn fetch_string<'a, 'b>(
-    key: &str,
+    key: &'a str,
     ctx: &RedisContext,
 ) -> Result<Option<RDelta<'a, 'b>>, redis::RedisError> {
-    let found: Result<Option<String>, _> = ctx.conn.get(key);
-    unimplemented!();
+    let found: Option<String> = ctx.conn.get(key)?;
+    Ok(found.map(|f| RDelta::UpdateString {
+        key,
+        val: f,
+        time: epoch_secs(),
+    }))
 }
 
 fn push<E>(data: &RDelta, _pubsub_ctx: &PubSubContext) -> Result<(), E> {
