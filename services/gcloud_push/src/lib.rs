@@ -149,9 +149,24 @@ fn fetch_hash_delta<'a>(
     })
 }
 
-struct PushErr;
-fn push(data: &RDelta, _pubsub_ctx: &PubSubContext) -> Result<(), PushErr> {
-    unimplemented!()
+fn push(data: &RDelta, pubsub_ctx: &PubSubContext) -> Result<(), pubsub::Error> {
+    let message = google_pubsub1::PubsubMessage {
+        // Base64 encoded!
+        data: Some(base64::encode("HELLO ANYONE!".as_bytes())),
+        ..Default::default()
+    };
+
+    let req = PublishRequest {
+        messages: Some(vec![message]),
+    };
+
+    println!("Publishing to {}", &pubsub_ctx.fq_topic);
+    pubsub_ctx
+        .client
+        .projects()
+        .topics_publish(req, &pubsub_ctx.fq_topic)
+        .doit()
+        .map(|_r| ())
 }
 
 fn epoch_secs() -> u64 {
