@@ -1,4 +1,4 @@
-# gcloud_push
+# prawnalithic 🦐 redis aggregator
 
 This small service which listens for relevant updates to the redis datastore, aggregates them, and periodically pushes them to google's cloud via its basic pub/sub system.  
 

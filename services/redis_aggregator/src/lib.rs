@@ -1,8 +1,10 @@
-//! # gcloud_push
+//! # Redis Aggregator
 //!
-//! This is a service which pushes temperature and pH
-//! data to google cloud pub sub.  The temp & pH
-//! data is expected to reside in a Redis instance.
+//! This is a service which monitors changes in
+//! prawn-related data stored in our Redis database.
+//! It keeps track of changed keys, and periodically
+//! queries Redis for the values related to those keys,
+//! then pushing the values via Google pub sub.
 #![feature(custom_attribute)]
 extern crate google_pubsub1 as pubsub;
 extern crate hyper;
@@ -45,8 +47,10 @@ pub fn hello_world(_redis_ctx: &RedisContext, pubsub_ctx: &PubSubContext) {
         .unwrap();
 }
 
-/// send *all* relevant redis data upstream
-/// to the cloud instance via pub sub
+/// Send *all* relevant redis data upstream
+/// to the cloud instance via pub sub.
+///
+/// This is expected to be invoked on service startup.
 ///
 /// # How to do this
 ///
@@ -57,7 +61,24 @@ pub fn hello_world(_redis_ctx: &RedisContext, pubsub_ctx: &PubSubContext) {
 /// - Query each individual sensor of each type
 ///
 /// Push as you satisfy each individual step.
-pub fn clone_the_world(_redis_ctx: &RedisContext, _pubsub_ctx: &PubSubContext) {
+pub fn clone_the_world(
+    _redis_ctx: &RedisContext,
+    _pubsub_ctx: &PubSubContext,
+) -> Result<(), CloneErr> {
+    let __all_ids: Vec<REvent> = instantiate_all_ids()?;
+
+    unimplemented!()
+}
+pub enum CloneErr {
+    Redis(redis::RedisError),
+}
+impl From<redis::RedisError> for CloneErr {
+    fn from(error: redis::RedisError) -> Self {
+        CloneErr::Redis(error)
+    }
+}
+
+fn instantiate_all_ids() -> Result<Vec<REvent>, redis::RedisError> {
     unimplemented!()
 }
 

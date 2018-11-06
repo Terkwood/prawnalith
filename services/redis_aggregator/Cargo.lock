@@ -233,26 +233,6 @@ version = "0.1.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
-name = "gcloud_push"
-version = "0.1.0"
-dependencies = [
- "base64 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "dotenv 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "envy 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "google-pubsub1 1.0.8+20181001 (registry+https://github.com/rust-lang/crates.io-index)",
- "hyper 0.10.15 (registry+https://github.com/rust-lang/crates.io-index)",
- "hyper-native-tls 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "redis 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "redis_context 0.1.0",
- "redis_delta 0.1.1",
- "serde 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_derive 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_json 1.0.32 (registry+https://github.com/rust-lang/crates.io-index)",
- "uuid 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "yup-oauth2 1.0.9 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
 name = "google-pubsub1"
 version = "1.0.8+20181001"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -672,6 +652,26 @@ dependencies = [
  "tokio-io 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio-tcp 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "url 1.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "redis_aggregator"
+version = "0.2.0"
+dependencies = [
+ "base64 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "dotenv 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "envy 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "google-pubsub1 1.0.8+20181001 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hyper 0.10.15 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hyper-native-tls 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "redis 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "redis_context 0.1.0",
+ "redis_delta 0.1.1",
+ "serde 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_derive 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_json 1.0.32 (registry+https://github.com/rust-lang/crates.io-index)",
+ "uuid 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "yup-oauth2 1.0.9 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
