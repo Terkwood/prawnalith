@@ -80,7 +80,9 @@ pub fn push_recent(
         .for_each(|revent| match fetch(revent, redis_ctx) {
             Err(e) => eprintln!("Redis fetch error: {:?}", e),
             Ok(Some(found)) => {
-                push(&found, pubsub_ctx).unwrap_or(eprintln!("Error pushing {:?}", &found))
+                if let Err(e) = push(&found, pubsub_ctx) {
+                    eprintln!("Error pushing {:?}: {:?}", &found, e)
+                }
             }
             _ => (),
         })
