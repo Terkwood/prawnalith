@@ -18,7 +18,7 @@ mod model;
 use base64;
 use redis::Commands;
 use redis_context::RedisContext;
-use redis_delta::{RDelta, REvent};
+use redis_delta::{RDelta, REvent, RField};
 
 use self::model::{PubSubClient, PubSubContext};
 use self::pubsub::PublishRequest;
@@ -122,7 +122,11 @@ fn fetch_hash_delta<'a, 'b>(
     fields: Vec<String>,
     ctx: &RedisContext,
 ) -> Result<RDelta<'a, 'b>, redis::RedisError> {
+    let fields_forever = fields.clone();
     let found: Vec<Option<String>> = ctx.conn.hget(key, fields)?;
+    let zipped = fields_forever.iter().zip(found);
+    let rfields = zipped.map(|(f, maybe_v)| maybe_v.map(|v| RField { name: f, val: v }));
+
     Ok(RDelta::UpdateHash {
         key,
         fields: unimplemented!(),

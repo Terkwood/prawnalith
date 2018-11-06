@@ -94,8 +94,8 @@ pub enum RDelta<'a, 'b> {
 /// A field which is stored in Redis.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RField<'a> {
-    name: &'a str,
-    val: &'a str,
+    pub name: &'a str,
+    pub val: String,
 }
 
 /// Represents a message that lets you know that a specific
