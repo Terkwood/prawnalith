@@ -2,7 +2,7 @@ use redis::Commands;
 
 use super::model;
 use redis_context::RedisContext;
-use redis_delta::RDeltaEvent;
+use redis_delta::REvent;
 use serde_json;
 use std::time::SystemTime;
 use uuid::Uuid;
@@ -15,8 +15,8 @@ pub fn update<'a, 'b>(
     redis_ctx: &RedisContext,
     measure: &model::Measurement,
     ext_device_id: &str,
-) -> Vec<RDeltaEvent> {
-    let mut delta_events: Vec<RDeltaEvent> = vec![];
+) -> Vec<REvent> {
+    let mut delta_events: Vec<REvent> = vec![];
 
     println!("Received redis {} update: {:?}", measure.name(), measure);
     let ext_device_namespace = &redis_ctx
@@ -71,7 +71,7 @@ fn update_sensor_set(
     rn: &str,
     measure: &model::Measurement,
     device_id: Uuid,
-) -> Option<RDeltaEvent> {
+) -> Option<REvent> {
     let set_sensor_type_key = format!("{}/sensors/{}", rn, measure.name());
     // add to the member set if it doesn't already exist
     let sensors_added: Result<u64, _> = redis_ctx
@@ -79,7 +79,7 @@ fn update_sensor_set(
         .sadd(&set_sensor_type_key, &format!("{}", device_id));
 
     match sensors_added {
-        Ok(n) if n > 0 => Some(RDeltaEvent::SetUpdated {
+        Ok(n) if n > 0 => Some(REvent::SetUpdated {
             key: set_sensor_type_key,
         }),
         _ => None,
@@ -90,7 +90,7 @@ fn update_tank_hash(
     redis_ctx: &RedisContext,
     tank_num: &u64,
     measure: &model::Measurement,
-) -> Option<RDeltaEvent> {
+) -> Option<REvent> {
     // We found the tank associated with this
     // sensor ID, so we should update that tank's
     // current reading.
@@ -128,7 +128,7 @@ fn update_tank_hash(
         }
         (Ok(_), fields) if fields.len() > 0 => {
             let fs = fields.iter().map(|s| s.to_string()).collect();
-            Some(RDeltaEvent::HashUpdated {
+            Some(REvent::HashUpdated {
                 key: tank_key.to_string(),
                 fields: fs,
             })
@@ -141,13 +141,13 @@ fn ensure_sensor_hash_exists(
     redis_ctx: &RedisContext,
     sensor_hash_key: &str,
     ext_device_id_str: &str,
-) -> Option<RDeltaEvent> {
+) -> Option<REvent> {
     // We know that there's no associated "tank"
     // field for this key.  Let's make sure the record
     // for this sensor exists -- we'll need a human
     // to come in and link this device to a specific tank
     // using redis-cli!
-    let mut result: Option<RDeltaEvent> = None;
+    let mut result: Option<REvent> = None;
 
     redis_ctx
         .conn
@@ -166,7 +166,7 @@ fn ensure_sensor_hash_exists(
                     redis_ctx.conn.hset_multiple(sensor_hash_key, field_vals);
 
                 let fields = vec![cf, ed];
-                result = Some(RDeltaEvent::HashUpdated {
+                result = Some(REvent::HashUpdated {
                     key: sensor_hash_key.to_string(),
                     fields,
                 })
@@ -181,7 +181,7 @@ fn update_sensor_hash(
     sensor_hash_key: &str,
     measure: &model::Measurement,
     maybe_sensor_upd_count: &Option<u64>,
-) -> Option<RDeltaEvent> {
+) -> Option<REvent> {
     let upd_c = &format!("{}_update_count", measure.name());
     let mut data: Vec<(&str, String)> = vec![(
         upd_c,
@@ -202,7 +202,7 @@ fn update_sensor_hash(
         let mut fields: Vec<String> = vec![];
         data.iter().for_each(|(f, _)| fields.push(f.to_string()));
 
-        Some(RDeltaEvent::HashUpdated {
+        Some(REvent::HashUpdated {
             key: sensor_hash_key.to_string(),
             fields,
         })
@@ -226,7 +226,7 @@ fn epoch_secs() -> u64 {
         .as_secs()
 }
 
-pub fn publish_updates(redis_ctx: &RedisContext, topic: &str, updates: Vec<RDeltaEvent>) {
+pub fn publish_updates(redis_ctx: &RedisContext, topic: &str, updates: Vec<REvent>) {
     updates.iter().for_each(|delta_event| {
         let published: Result<u64, _> = redis_ctx
             .conn

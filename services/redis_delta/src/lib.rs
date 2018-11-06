@@ -5,7 +5,6 @@ extern crate serde_json;
 extern crate serde_derive;
 
 use uuid::Uuid;
-
 /// This enum represents various keys which should
 /// exist in our database.  They each have a namespace
 /// parameter `ns`, which indicates a common "root"
@@ -68,30 +67,34 @@ impl<'a, 'b> Key<'a, 'b> {
 /// Represents a change to a value in Redis.
 /// Currently only supports the minimum combinations
 /// of key/value used by the prawnalith.
+/// The `time` field represents epoch secs in UTC
+/// for when this record was retrieved.
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
-enum RDelta<'a, 'b> {
+pub enum RDelta<'a> {
     UpdateSet {
         #[serde(borrow)]
         key: &'a str,
-        #[serde(borrow)]
-        vals: Vec<&'b str>,
+        vals: Vec<String>,
+        time: u64,
     },
     UpdateHash {
         key: &'a str,
-        fields: Vec<RField<'b>>,
+        fields: Vec<RField>,
+        time: u64,
     },
     UpdateString {
         key: &'a str,
-        val: &'b str,
+        val: String,
+        time: u64,
     },
 }
 
 /// A field which is stored in Redis.
 #[derive(Serialize, Deserialize, Debug)]
-pub struct RField<'a> {
-    name: &'a str,
-    val: &'a str,
+pub struct RField {
+    pub name: String,
+    pub val: String,
 }
 
 /// Represents a message that lets you know that a specific
@@ -100,7 +103,7 @@ pub struct RField<'a> {
 /// it *does* include a list of fields which were changed.
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
-pub enum RDeltaEvent {
+pub enum REvent {
     SetUpdated { key: String },
     HashUpdated { key: String, fields: Vec<String> },
     StringUpdated { key: String },
@@ -179,12 +182,12 @@ mod rdelta_test {
         Namespace("prawnspace")
     }
 
-    fn id_str() -> &'static str {
-        "123e4567-e89b-12d3-a456-426655440000"
+    fn id_str() -> String {
+        "123e4567-e89b-12d3-a456-426655440000".to_string()
     }
 
     fn id() -> Uuid {
-        Uuid::parse_str(id_str()).unwrap()
+        Uuid::parse_str(&id_str()).unwrap()
     }
 
     #[test]
@@ -198,16 +201,17 @@ mod rdelta_test {
         let set_friend = &RDelta::UpdateSet {
             key: &Key::AllSensorTypes { ns: ns() }.to_string(),
             vals: vec![id_str()],
+            time: 0,
         };
         assert_eq!(serde_json::to_string(set_friend).unwrap(),
-        r#"{"update_set":{"key":"prawnspace/sensors","vals":["123e4567-e89b-12d3-a456-426655440000"]}}"#);
+        r#"{"update_set":{"key":"prawnspace/sensors","vals":["123e4567-e89b-12d3-a456-426655440000"],"time":0}}"#);
     }
 
     #[test]
     fn update_hash_ser() {
         let fields: Vec<RField> = vec![RField {
-            name: "temp_f",
-            val: "82.31",
+            name: "temp_f".to_string(),
+            val: "82.31".to_string(),
         }];
         let new_potatoes = &RDelta::UpdateHash {
             key: &Key::Sensor {
@@ -217,26 +221,32 @@ mod rdelta_test {
             }
             .to_string(),
             fields,
+            time: 0,
         };
 
         assert_eq!(serde_json::to_string(new_potatoes).unwrap(),
-         r#"{"update_hash":{"key":"prawnspace/sensors/temp/123e4567-e89b-12d3-a456-426655440000","fields":[{"name":"temp_f","val":"82.31"}]}}"#);
+         r#"{"update_hash":{"key":"prawnspace/sensors/temp/123e4567-e89b-12d3-a456-426655440000","fields":[{"name":"temp_f","val":"82.31"}],"time":0}}"#);
     }
 
     #[test]
     fn update_string_ser() {
         let uk = &Key::AllTanks { ns: ns() }.to_string();
         let uv = "2";
-        let update = &RDelta::UpdateString { key: uk, val: uv };
+        let update = &RDelta::UpdateString {
+            key: uk,
+            val: uv.to_string(),
+            time: 0,
+        };
 
-        let expected = &r#"{"update_string":{"key":"prawnspace/tanks","val":"2"}}"#;
+        let expected = &r#"{"update_string":{"key":"prawnspace/tanks","val":"2","time":0}}"#;
         assert_eq!(serde_json::to_string(update).unwrap(), expected.to_string());
 
         let deser: RDelta = serde_json::from_str(expected).unwrap();
         match deser {
-            RDelta::UpdateString { key, val } => {
+            RDelta::UpdateString { key, val, time } => {
                 assert_eq!(key, *uk);
-                assert_eq!(val, uv);
+                assert_eq!(val, uv.to_string());
+                assert_eq!(time, 0);
             }
             _ => assert!(false),
         }
