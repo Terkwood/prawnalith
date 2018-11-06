@@ -20,7 +20,7 @@ use redis::Commands;
 use redis_context::RedisContext;
 use redis_delta::{RDelta, REvent, RField};
 
-use self::model::{PubSubClient, PubSubContext};
+use self::model::PubSubContext;
 use self::pubsub::PublishRequest;
 use std::default::Default;
 use std::time::SystemTime;
@@ -74,12 +74,16 @@ pub fn push_recent<E>(
     redis_ctx: &RedisContext,
     pubsub_ctx: &PubSubContext,
     redis_events: Vec<REvent>,
-) -> Result<(), E> {
-    redis_events.iter().for_each(move |revent| {
-        fetch(revent, redis_ctx);
-    });
-
-    Ok(())
+) {
+    redis_events
+        .iter()
+        .for_each(|revent| match fetch(revent, redis_ctx) {
+            Err(e) => eprintln!("Redis fetch error: {:?}", e),
+            Ok(Some(found)) => {
+                push(&found, pubsub_ctx).unwrap_or(eprintln!("Error pushing {:?}", &found))
+            }
+            _ => (),
+        })
 }
 
 fn fetch<'a>(
@@ -87,7 +91,9 @@ fn fetch<'a>(
     ctx: &RedisContext,
 ) -> Result<Option<RDelta<'a>>, redis::RedisError> {
     match event {
-        REvent::HashUpdated { key, fields } => unimplemented!(),
+        REvent::HashUpdated { key, fields } => {
+            fetch_hash_delta(key, fields.to_vec(), ctx).map(|r| Some(r))
+        }
         REvent::StringUpdated { key } => fetch_string_delta(key, ctx),
         REvent::SetUpdated { key } => fetch_set_delta(key, ctx),
     }
@@ -143,7 +149,8 @@ fn fetch_hash_delta<'a>(
     })
 }
 
-fn push<E>(data: &RDelta, _pubsub_ctx: &PubSubContext) -> Result<(), E> {
+struct PushErr;
+fn push(data: &RDelta, _pubsub_ctx: &PubSubContext) -> Result<(), PushErr> {
     unimplemented!()
 }
 
