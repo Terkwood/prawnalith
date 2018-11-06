@@ -70,7 +70,7 @@ pub fn clone_the_world(_redis_ctx: &RedisContext, _pubsub_ctx: &PubSubContext) {
 ///   entire set, or the string itself.
 /// - For hash field updates, we only retrieve the fields
 ///   which have been updated.
-pub fn push_recent<E>(
+pub fn push_recent(
     redis_ctx: &RedisContext,
     pubsub_ctx: &PubSubContext,
     redis_events: Vec<REvent>,
