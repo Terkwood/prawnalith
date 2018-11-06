@@ -1,6 +1,6 @@
 [package]
-name = "gcloud_push"
-version = "0.1.0"
+name = "redis_aggregator"
+version = "0.2.0"
 authors = ["Terkwood <metaterkhorn@gmail.com>"]
 edition = "2018"
 
