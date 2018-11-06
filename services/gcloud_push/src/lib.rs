@@ -82,10 +82,10 @@ pub fn push_recent<E>(
     Ok(())
 }
 
-fn fetch<'a, 'b>(
+fn fetch<'a>(
     event: &'a REvent,
     ctx: &RedisContext,
-) -> Result<Option<RDelta<'a, 'b>>, redis::RedisError> {
+) -> Result<Option<RDelta<'a>>, redis::RedisError> {
     match event {
         REvent::HashUpdated { key, fields } => unimplemented!(),
         REvent::StringUpdated { key } => fetch_string_delta(key, ctx),
@@ -93,10 +93,10 @@ fn fetch<'a, 'b>(
     }
 }
 
-fn fetch_string_delta<'a, 'b>(
+fn fetch_string_delta<'a>(
     key: &'a str,
     ctx: &RedisContext,
-) -> Result<Option<RDelta<'a, 'b>>, redis::RedisError> {
+) -> Result<Option<RDelta<'a>>, redis::RedisError> {
     let found: Option<String> = ctx.conn.get(key)?;
     Ok(found.map(|f| RDelta::UpdateString {
         key,
@@ -105,10 +105,10 @@ fn fetch_string_delta<'a, 'b>(
     }))
 }
 
-fn fetch_set_delta<'a, 'b>(
+fn fetch_set_delta<'a>(
     key: &'a str,
     ctx: &RedisContext,
-) -> Result<Option<RDelta<'a, 'b>>, redis::RedisError> {
+) -> Result<Option<RDelta<'a>>, redis::RedisError> {
     let found: Option<Vec<String>> = ctx.conn.smembers(key)?;
     Ok(found.map(|f| RDelta::UpdateSet {
         key,
@@ -121,14 +121,20 @@ fn fetch_hash_delta<'a>(
     key: &'a str,
     fields: Vec<String>,
     ctx: &RedisContext,
-) -> Result<RDelta<'a, 'b>, redis::RedisError> {
+) -> Result<RDelta<'a>, redis::RedisError> {
     let fields_forever = fields.clone();
     let found: Vec<Option<String>> = ctx.conn.hget(key, fields)?;
     let zipped = fields_forever.iter().zip(found);
     let rfields: Vec<RField> = zipped
-        .map(|(f, maybe_v)| maybe_v.map(|v| RField { name: f, val: v }))
+        .map(|(f, maybe_v)| {
+            maybe_v.map(|v| RField {
+                name: f.to_string(),
+                val: v,
+            })
+        })
         .filter(|maybe| maybe.is_some())
-        .map(|some| some.unwrap()).collect();
+        .map(|some| some.unwrap())
+        .collect();
 
     Ok(RDelta::UpdateHash {
         key,
