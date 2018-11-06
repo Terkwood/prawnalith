@@ -83,17 +83,17 @@ pub fn push_recent<E>(
 }
 
 fn fetch<'a, 'b>(
-    event: &REvent,
-    _redis_context: &RedisContext,
+    event: &'a REvent,
+    ctx: &RedisContext,
 ) -> Result<Option<RDelta<'a, 'b>>, redis::RedisError> {
     match event {
         REvent::HashUpdated { key, fields } => unimplemented!(),
-        REvent::StringUpdated { key } => unimplemented!(),
+        REvent::StringUpdated { key } => fetch_string_delta(key, ctx),
         REvent::SetUpdated { key } => unimplemented!(),
     }
 }
 
-fn fetch_string<'a, 'b>(
+fn fetch_string_delta<'a, 'b>(
     key: &'a str,
     ctx: &RedisContext,
 ) -> Result<Option<RDelta<'a, 'b>>, redis::RedisError> {
@@ -101,6 +101,18 @@ fn fetch_string<'a, 'b>(
     Ok(found.map(|f| RDelta::UpdateString {
         key,
         val: f,
+        time: epoch_secs(),
+    }))
+}
+
+fn fetch_set_delta<'a, 'b>(
+    key: &'a str,
+    ctx: &RedisContext,
+) -> Result<Option<RDelta<'a, 'b>>, redis::RedisError> {
+    let found: Option<Vec<String>> = ctx.conn.smembers(key)?;
+    Ok(found.map(|f| RDelta::UpdateSet {
+        key,
+        vals: f,
         time: epoch_secs(),
     }))
 }

@@ -75,12 +75,12 @@ pub enum RDelta<'a, 'b> {
     UpdateSet {
         #[serde(borrow)]
         key: &'a str,
-        #[serde(borrow)]
-        vals: Vec<&'b str>,
+        vals: Vec<String>,
         time: u64,
     },
     UpdateHash {
         key: &'a str,
+        #[serde(borrow)]
         fields: Vec<RField<'b>>,
         time: u64,
     },
