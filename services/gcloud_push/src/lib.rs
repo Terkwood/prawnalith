@@ -117,7 +117,7 @@ fn fetch_set_delta<'a, 'b>(
     }))
 }
 
-fn fetch_hash_delta<'a, 'b>(
+fn fetch_hash_delta<'a>(
     key: &'a str,
     fields: Vec<String>,
     ctx: &RedisContext,
@@ -125,11 +125,14 @@ fn fetch_hash_delta<'a, 'b>(
     let fields_forever = fields.clone();
     let found: Vec<Option<String>> = ctx.conn.hget(key, fields)?;
     let zipped = fields_forever.iter().zip(found);
-    let rfields = zipped.map(|(f, maybe_v)| maybe_v.map(|v| RField { name: f, val: v }));
+    let rfields: Vec<RField> = zipped
+        .map(|(f, maybe_v)| maybe_v.map(|v| RField { name: f, val: v }))
+        .filter(|maybe| maybe.is_some())
+        .map(|some| some.unwrap()).collect();
 
     Ok(RDelta::UpdateHash {
         key,
-        fields: unimplemented!(),
+        fields: rfields,
         time: epoch_secs(),
     })
 }

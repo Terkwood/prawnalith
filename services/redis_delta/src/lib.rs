@@ -71,7 +71,7 @@ impl<'a, 'b> Key<'a, 'b> {
 /// for when this record was retrieved.
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
-pub enum RDelta<'a, 'b> {
+pub enum RDelta<'a> {
     UpdateSet {
         #[serde(borrow)]
         key: &'a str,
@@ -80,8 +80,7 @@ pub enum RDelta<'a, 'b> {
     },
     UpdateHash {
         key: &'a str,
-        #[serde(borrow)]
-        fields: Vec<RField<'b>>,
+        fields: Vec<RField>,
         time: u64,
     },
     UpdateString {
@@ -93,8 +92,8 @@ pub enum RDelta<'a, 'b> {
 
 /// A field which is stored in Redis.
 #[derive(Serialize, Deserialize, Debug)]
-pub struct RField<'a> {
-    pub name: &'a str,
+pub struct RField {
+    pub name: String,
     pub val: String,
 }
 
@@ -183,12 +182,12 @@ mod rdelta_test {
         Namespace("prawnspace")
     }
 
-    fn id_str() -> &'static str {
-        "123e4567-e89b-12d3-a456-426655440000"
+    fn id_str() -> String {
+        "123e4567-e89b-12d3-a456-426655440000".to_string()
     }
 
     fn id() -> Uuid {
-        Uuid::parse_str(id_str()).unwrap()
+        Uuid::parse_str(&id_str()).unwrap()
     }
 
     #[test]
@@ -211,8 +210,8 @@ mod rdelta_test {
     #[test]
     fn update_hash_ser() {
         let fields: Vec<RField> = vec![RField {
-            name: "temp_f",
-            val: "82.31",
+            name: "temp_f".to_string(),
+            val: "82.31".to_string(),
         }];
         let new_potatoes = &RDelta::UpdateHash {
             key: &Key::Sensor {
