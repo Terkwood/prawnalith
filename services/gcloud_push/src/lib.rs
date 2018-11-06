@@ -89,7 +89,7 @@ fn fetch<'a, 'b>(
     match event {
         REvent::HashUpdated { key, fields } => unimplemented!(),
         REvent::StringUpdated { key } => fetch_string_delta(key, ctx),
-        REvent::SetUpdated { key } => unimplemented!(),
+        REvent::SetUpdated { key } => fetch_set_delta(key, ctx),
     }
 }
 
@@ -115,6 +115,19 @@ fn fetch_set_delta<'a, 'b>(
         vals: f,
         time: epoch_secs(),
     }))
+}
+
+fn fetch_hash_delta<'a, 'b>(
+    key: &'a str,
+    fields: Vec<String>,
+    ctx: &RedisContext,
+) -> Result<RDelta<'a, 'b>, redis::RedisError> {
+    let found: Vec<Option<String>> = ctx.conn.hget(key, fields)?;
+    Ok(RDelta::UpdateHash {
+        key,
+        fields: unimplemented!(),
+        time: epoch_secs(),
+    })
 }
 
 fn push<E>(data: &RDelta, _pubsub_ctx: &PubSubContext) -> Result<(), E> {
