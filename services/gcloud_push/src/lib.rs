@@ -151,8 +151,10 @@ fn fetch_hash_delta<'a>(
 
 fn push(data: &RDelta, pubsub_ctx: &PubSubContext) -> Result<(), pubsub::Error> {
     let message = google_pubsub1::PubsubMessage {
-        // Base64 encoded!
-        data: Some(base64::encode("HELLO ANYONE!".as_bytes())),
+        // This must be base64 encoded!
+        data: Some(base64::encode(
+            serde_json::to_string(data).unwrap().as_bytes(),
+        )),
         ..Default::default()
     };
 
@@ -160,7 +162,6 @@ fn push(data: &RDelta, pubsub_ctx: &PubSubContext) -> Result<(), pubsub::Error> 
         messages: Some(vec![message]),
     };
 
-    println!("Publishing to {}", &pubsub_ctx.fq_topic);
     pubsub_ctx
         .client
         .projects()
