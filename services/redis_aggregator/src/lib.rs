@@ -20,7 +20,7 @@ pub mod pubsub;
 use base64;
 use redis::Commands;
 use redis_context::RedisContext;
-use redis_delta::{RDelta, REvent, RField};
+use redis_delta::{Key, RDelta, REvent, RField};
 
 use self::pubsub::PubSubContext;
 use std::default::Default;
@@ -40,24 +40,52 @@ use std::time::SystemTime;
 /// - Query each individual sensor of each type
 ///
 /// Push as you satisfy each individual step.
-pub fn clone_the_world(
-    _redis_ctx: &RedisContext,
-    _pubsub_ctx: &PubSubContext,
-) -> Result<(), CloneErr> {
-    let __all_ids: Vec<REvent> = instantiate_all_ids()?;
+pub fn clone_the_world(redis_ctx: &RedisContext, pubsub_ctx: &PubSubContext) -> Result<(), AggErr> {
+    let all_ids: Vec<REvent> = instantiate_all_ids(redis_ctx)?;
 
-    unimplemented!()
+    match push_recent(redis_ctx, pubsub_ctx, all_ids) {
+        Ok(_) => Ok(()),
+        Err(_) => Err(AggErr::PubSub),
+    }
 }
-pub enum CloneErr {
+pub enum AggErr {
     Redis(redis::RedisError),
+    PubSub,
+    Push,
 }
-impl From<redis::RedisError> for CloneErr {
+
+impl From<redis::RedisError> for AggErr {
     fn from(error: redis::RedisError) -> Self {
-        CloneErr::Redis(error)
+        AggErr::Redis(error)
+    }
+}
+impl From<google_pubsub1::Error> for AggErr {
+    fn from(_error: google_pubsub1::Error) -> Self {
+        AggErr::PubSub
     }
 }
 
-fn instantiate_all_ids() -> Result<Vec<REvent>, redis::RedisError> {
+fn instantiate_all_ids(redis_ctx: &RedisContext) -> Result<Vec<REvent>, redis::RedisError> {
+    let mut result: Vec<REvent> = vec![];
+
+    let ns = redis_delta::Namespace(&redis_ctx.namespace);
+
+    let all_tanks_key = Key::AllTanks { ns }.to_string();
+
+    let maybe_num_tanks: Option<u16> = redis_ctx.conn.get(&all_tanks_key)?;
+
+    if let Some(_) = maybe_num_tanks {
+        // We know that there's an entry describing the number of
+        // tanks in the system, so we'll return the ID.
+        result.push(REvent::StringUpdated { key: all_tanks_key });
+
+        // We should see if there are hash entries for the individual tanks.
+        let tank_hash_events: Result<Vec<REvent>, redis::RedisError> = unimplemented!();
+        unimplemented!();
+    }
+
+    let _sensor_types_key = Key::AllSensorTypes { ns }.to_string();
+
     unimplemented!()
 }
 
@@ -70,22 +98,27 @@ fn instantiate_all_ids() -> Result<Vec<REvent>, redis::RedisError> {
 ///   entire set, or the string itself.
 /// - For hash field updates, we only retrieve the fields
 ///   which have been updated.
-pub fn push_recent(
-    redis_ctx: &RedisContext,
-    pubsub_ctx: &PubSubContext,
+pub fn push_recent<'a, 'b>(
+    redis_ctx: &'a RedisContext,
+    pubsub_ctx: &'b PubSubContext,
     redis_events: Vec<REvent>,
-) {
-    redis_events
+) -> Result<(), AggErr> {
+    let them: Vec<Result<(), google_pubsub1::Error>> = redis_events
         .iter()
-        .for_each(|revent| match fetch(revent, redis_ctx) {
-            Err(e) => eprintln!("Redis fetch error: {:?}", e),
-            Ok(Some(found)) => {
-                if let Err(e) = push(&found, pubsub_ctx) {
-                    eprintln!("Error pushing {:?}: {:?}", &found, e)
-                }
-            }
-            _ => (),
+        .map(|revent| {
+            let fetched = fetch(revent, redis_ctx);
+            fetched.map(|found| found.map(|f| push(&f, pubsub_ctx)))
         })
+        .flatten()
+        .filter(|maybe| maybe.is_some())
+        .map(|some| some.unwrap())
+        .collect();
+
+    if them.iter().any(|i| i.is_err()) {
+        Err(AggErr::Push) // maybe this could be related to redis. unsure.
+    } else {
+        Ok(())
+    }
 }
 
 fn fetch<'a>(

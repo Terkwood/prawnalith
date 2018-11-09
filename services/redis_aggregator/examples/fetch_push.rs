@@ -30,7 +30,7 @@ fn main() {
         pubsub_ctx,
         vec![REvent::HashUpdated {
             key: format!("{}/tanks/1", redis_ctx.namespace).to_string(),
-            fields: vec![ "name".to_string() ]
-        }]
+            fields: vec!["name".to_string()],
+        }],
     );
 }
