@@ -23,7 +23,8 @@ fn main() {
         vec![REvent::StringUpdated {
             key: format!("{}/tanks", redis_ctx.namespace).to_string(),
         }],
-    );
+    )
+    .unwrap();
 
     push_recent(
         redis_ctx,
@@ -32,5 +33,6 @@ fn main() {
             key: format!("{}/tanks/1", redis_ctx.namespace).to_string(),
             fields: vec!["name".to_string()],
         }],
-    );
+    )
+    .unwrap();
 }

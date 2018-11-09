@@ -46,6 +46,8 @@ pub fn clone_the_world(redis_ctx: &RedisContext, pubsub_ctx: &PubSubContext) -> 
 
     push_recent(redis_ctx, pubsub_ctx, all_ids)
 }
+
+#[derive(Debug)]
 pub enum AggErr {
     Redis(redis::RedisError),
     PubSub,
