@@ -74,19 +74,23 @@ fn instantiate_all_ids(redis_ctx: &RedisContext) -> Result<Vec<REvent>, redis::R
     if let Some(num_tanks) = maybe_num_tanks {
         // We know that there's an entry describing the number of
         // tanks in the system, so we'll return the ID.
-        result.push(REvent::StringUpdated { key: all_tanks_key });
+        let all_tanks_event = REvent::StringUpdated { key: all_tanks_key };
+        result.push(all_tanks_event);
 
         // We should see if there are hash entries for the individual tanks.
         // Use https://redis.io/commands/hkeys to look up all field names
         // for each tank that we find.
         let each_tank_events: Result<Vec<REvent>, redis::RedisError> =
             tank_hash_events(num_tanks, redis_ctx);
-        unimplemented!();
+
+        for e in each_tank_events? {
+            result.push(e);
+        }
     }
 
     let _sensor_types_key = Key::AllSensorTypes { ns }.to_string();
 
-    unimplemented!()
+    Ok(result)
 }
 
 fn tank_hash_events(
@@ -105,7 +109,7 @@ fn tank_hash_events(
 ///   entire set, or the string itself.
 /// - For hash field updates, we only retrieve the fields
 ///   which have been updated.
-pub fn push_recent<'a, 'b>(
+pub fn push_recent<'a, 'b, 'c>(
     redis_ctx: &'a RedisContext,
     pubsub_ctx: &'b PubSubContext,
     redis_events: Vec<REvent>,
