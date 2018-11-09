@@ -87,7 +87,31 @@ fn instantiate_all_ids(redis_ctx: &RedisContext) -> Result<Vec<REvent>, redis::R
         }
     }
 
-    let _sensor_types_key = Key::AllSensorTypes { ns }.to_string();
+    let sensor_types_key = Key::AllSensorTypes { ns }.to_string();
+    let sensor_type_members: Vec<String> = redis_ctx.conn.smembers(&sensor_types_key)?;
+    if sensor_type_members.len() > 0 {
+        result.push(REvent::SetUpdated {
+            key: sensor_types_key,
+        })
+    }
+
+    for sensor_type in sensor_type_members {
+        // look up each "all temp sensors", "all ph sensors" set
+        let all_sensors_key = Key::AllSensors {
+            ns,
+            st: redis_delta::SensorType(&sensor_type),
+        }
+        .to_string();
+        let all_sensors_members: Vec<String> = redis_ctx.conn.smembers(&all_sensors_key)?;
+        if all_sensors_members.len() > 0 {
+            result.push(REvent::SetUpdated {
+                key: all_sensors_key,
+            })
+        }
+
+        // deal with each individual sensor hash
+        unimplemented!()
+    }
 
     unimplemented!();
 
