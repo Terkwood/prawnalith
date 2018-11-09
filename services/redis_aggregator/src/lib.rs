@@ -90,7 +90,7 @@ fn instantiate_all_ids(redis_ctx: &RedisContext) -> Result<Vec<REvent>, redis::R
 
     let sensor_types_key = Key::AllSensorTypes { ns }.to_string();
     let sensor_type_members: Vec<String> = redis_ctx.conn.smembers(&sensor_types_key)?;
-    if sensor_type_members.len() > 0 {
+    if sensor_type_members.is_empty() {
         result.push(REvent::SetUpdated {
             key: sensor_types_key,
         })
@@ -157,7 +157,15 @@ fn tank_hash_events(
 }
 
 fn hash_event(key: &str, redis_ctx: &RedisContext) -> Result<Option<REvent>, redis::RedisError> {
-    unimplemented!()
+    let fields: Vec<String> = redis_ctx.conn.hkeys(key)?;
+    if fields.is_empty() {
+        Ok(None)
+    } else {
+        Ok(Some(REvent::HashUpdated {
+            key: key.to_string(),
+            fields,
+        }))
+    }
 }
 
 /// Publish a vec of redis changes (hash updates, string updates, etc)
