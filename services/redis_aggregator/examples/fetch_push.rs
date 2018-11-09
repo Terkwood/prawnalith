@@ -7,7 +7,7 @@ extern crate uuid;
 
 use redis_aggregator::config::PubSubConfig;
 use redis_aggregator::push_recent;
-use redis_delta::{REvent, RField};
+use redis_delta::REvent;
 
 fn main() {
     dotenv::dotenv().expect("Unable to load .env file");
