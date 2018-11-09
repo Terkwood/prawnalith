@@ -7,7 +7,7 @@ extern crate uuid;
 
 use redis_aggregator::config::PubSubConfig;
 use redis_aggregator::push_recent;
-use redis_delta::REvent;
+use redis_delta::{REvent, RField};
 
 fn main() {
     dotenv::dotenv().expect("Unable to load .env file");
@@ -21,7 +21,16 @@ fn main() {
         redis_ctx,
         pubsub_ctx,
         vec![REvent::StringUpdated {
-            key: format!("/{}/tanks", redis_ctx.namespace).to_string(),
+            key: format!("{}/tanks", redis_ctx.namespace).to_string(),
         }],
-    )
+    );
+
+    push_recent(
+        redis_ctx,
+        pubsub_ctx,
+        vec![REvent::HashUpdated {
+            key: format!("{}/tanks/1", redis_ctx.namespace).to_string(),
+            fields: vec![ "name".to_string() ]
+        }]
+    );
 }
