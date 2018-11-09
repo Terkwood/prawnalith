@@ -25,6 +25,7 @@ use redis_delta::{Key, RDelta, REvent, RField};
 use self::pubsub::PubSubContext;
 use std::default::Default;
 use std::time::SystemTime;
+use uuid::Uuid;
 
 /// Send *all* relevant redis data upstream
 /// to the cloud instance via pub sub.
@@ -96,12 +97,10 @@ fn instantiate_all_ids(redis_ctx: &RedisContext) -> Result<Vec<REvent>, redis::R
     }
 
     for sensor_type in sensor_type_members {
+        let st = redis_delta::SensorType(&sensor_type);
+
         // look up each "all temp sensors", "all ph sensors" set
-        let all_sensors_key = Key::AllSensors {
-            ns,
-            st: redis_delta::SensorType(&sensor_type),
-        }
-        .to_string();
+        let all_sensors_key = Key::AllSensors { ns, st }.to_string();
         let all_sensors_members: Vec<String> = redis_ctx.conn.smembers(&all_sensors_key)?;
         if all_sensors_members.len() > 0 {
             result.push(REvent::SetUpdated {
@@ -110,18 +109,54 @@ fn instantiate_all_ids(redis_ctx: &RedisContext) -> Result<Vec<REvent>, redis::R
         }
 
         // deal with each individual sensor hash
-        unimplemented!()
+        for e in sensor_hash_events(st, all_sensors_members, redis_ctx)? {
+            result.push(e)
+        }
     }
 
-    unimplemented!();
-
     Ok(result)
+}
+
+fn sensor_hash_events(
+    st: redis_delta::SensorType,
+    ids: Vec<String>,
+    redis_ctx: &RedisContext,
+) -> Result<Vec<REvent>, redis::RedisError> {
+    let mut r: Vec<REvent> = vec![];
+    for id in ids {
+        let key = Key::Sensor {
+            ns: redis_delta::Namespace(&redis_ctx.namespace),
+            st,
+            id: Uuid::parse_str(&id).unwrap(),
+        }
+        .to_string();
+        for hash in hash_event(&key, redis_ctx)? {
+            r.push(hash)
+        }
+    }
+    Ok(r)
 }
 
 fn tank_hash_events(
     num_tanks: u16,
     redis_ctx: &RedisContext,
 ) -> Result<Vec<REvent>, redis::RedisError> {
+    let mut r: Vec<REvent> = vec![];
+    for id in 1..=num_tanks {
+        let key = Key::Tank {
+            ns: redis_delta::Namespace(&redis_ctx.namespace),
+            id,
+        }
+        .to_string();
+        for hash in hash_event(&key, redis_ctx)? {
+            r.push(hash)
+        }
+    }
+
+    Ok(r)
+}
+
+fn hash_event(key: &str, redis_ctx: &RedisContext) -> Result<Option<REvent>, redis::RedisError> {
     unimplemented!()
 }
 
