@@ -43,10 +43,7 @@ use std::time::SystemTime;
 pub fn clone_the_world(redis_ctx: &RedisContext, pubsub_ctx: &PubSubContext) -> Result<(), AggErr> {
     let all_ids: Vec<REvent> = instantiate_all_ids(redis_ctx)?;
 
-    match push_recent(redis_ctx, pubsub_ctx, all_ids) {
-        Ok(_) => Ok(()),
-        Err(_) => Err(AggErr::PubSub),
-    }
+    push_recent(redis_ctx, pubsub_ctx, all_ids)
 }
 pub enum AggErr {
     Redis(redis::RedisError),
