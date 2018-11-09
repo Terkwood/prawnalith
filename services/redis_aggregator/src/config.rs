@@ -2,7 +2,7 @@ use hyper::net::HttpsConnector;
 use redis_context::RedisContext;
 use yup_oauth2::GetToken;
 
-use crate::model::{PubSubClient, PubSubContext};
+use crate::pubsub::{PubSubClient, PubSubContext};
 use hyper_native_tls::NativeTlsClient;
 
 #[derive(Deserialize, Serialize, Debug)]

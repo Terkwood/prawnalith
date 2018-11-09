@@ -6,7 +6,7 @@
 //! queries Redis for the values related to those keys,
 //! then pushing the values via Google pub sub.
 #![feature(custom_attribute)]
-extern crate google_pubsub1 as pubsub;
+extern crate google_pubsub1;
 extern crate hyper;
 extern crate hyper_native_tls;
 extern crate redis_context;
@@ -15,37 +15,16 @@ extern crate serde_derive;
 extern crate yup_oauth2;
 
 pub mod config;
-mod model;
+pub mod pubsub;
 
 use base64;
 use redis::Commands;
 use redis_context::RedisContext;
 use redis_delta::{RDelta, REvent, RField};
 
-use self::model::PubSubContext;
-use self::pubsub::PublishRequest;
+use self::pubsub::PubSubContext;
 use std::default::Default;
 use std::time::SystemTime;
-
-pub fn hello_world(_redis_ctx: &RedisContext, pubsub_ctx: &PubSubContext) {
-    let message = google_pubsub1::PubsubMessage {
-        // Base64 encoded!
-        data: Some(base64::encode("HELLO ANYONE!".as_bytes())),
-        ..Default::default()
-    };
-
-    let req = PublishRequest {
-        messages: Some(vec![message]),
-    };
-
-    println!("Publishing to {}", &pubsub_ctx.fq_topic);
-    pubsub_ctx
-        .client
-        .projects()
-        .topics_publish(req, &pubsub_ctx.fq_topic)
-        .doit()
-        .unwrap();
-}
 
 /// Send *all* relevant redis data upstream
 /// to the cloud instance via pub sub.
@@ -172,7 +151,7 @@ fn fetch_hash_delta<'a>(
     })
 }
 
-fn push(data: &RDelta, pubsub_ctx: &PubSubContext) -> Result<(), pubsub::Error> {
+fn push(data: &RDelta, pubsub_ctx: &PubSubContext) -> Result<(), google_pubsub1::Error> {
     let message = google_pubsub1::PubsubMessage {
         // This must be base64 encoded!
         data: Some(base64::encode(
@@ -181,7 +160,7 @@ fn push(data: &RDelta, pubsub_ctx: &PubSubContext) -> Result<(), pubsub::Error> 
         ..Default::default()
     };
 
-    let req = PublishRequest {
+    let req = google_pubsub1::PublishRequest {
         messages: Some(vec![message]),
     };
 
