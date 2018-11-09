@@ -71,18 +71,28 @@ fn instantiate_all_ids(redis_ctx: &RedisContext) -> Result<Vec<REvent>, redis::R
 
     let maybe_num_tanks: Option<u16> = redis_ctx.conn.get(&all_tanks_key)?;
 
-    if let Some(_) = maybe_num_tanks {
+    if let Some(num_tanks) = maybe_num_tanks {
         // We know that there's an entry describing the number of
         // tanks in the system, so we'll return the ID.
         result.push(REvent::StringUpdated { key: all_tanks_key });
 
         // We should see if there are hash entries for the individual tanks.
-        let tank_hash_events: Result<Vec<REvent>, redis::RedisError> = unimplemented!();
+        // Use https://redis.io/commands/hkeys to look up all field names
+        // for each tank that we find.
+        let each_tank_events: Result<Vec<REvent>, redis::RedisError> =
+            tank_hash_events(num_tanks, redis_ctx);
         unimplemented!();
     }
 
     let _sensor_types_key = Key::AllSensorTypes { ns }.to_string();
 
+    unimplemented!()
+}
+
+fn tank_hash_events(
+    num_tanks: u16,
+    redis_ctx: &RedisContext,
+) -> Result<Vec<REvent>, redis::RedisError> {
     unimplemented!()
 }
 
