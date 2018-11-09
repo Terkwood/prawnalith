@@ -48,7 +48,6 @@ pub fn clone_the_world(redis_ctx: &RedisContext, pubsub_ctx: &PubSubContext) -> 
 pub enum AggErr {
     Redis(redis::RedisError),
     PubSub,
-    Push,
 }
 
 impl From<redis::RedisError> for AggErr {
@@ -90,6 +89,8 @@ fn instantiate_all_ids(redis_ctx: &RedisContext) -> Result<Vec<REvent>, redis::R
 
     let _sensor_types_key = Key::AllSensorTypes { ns }.to_string();
 
+    unimplemented!();
+
     Ok(result)
 }
 
@@ -126,7 +127,7 @@ pub fn push_recent<'a, 'b, 'c>(
         .collect();
 
     if them.iter().any(|i| i.is_err()) {
-        Err(AggErr::Push) // maybe this could be related to redis. unsure.
+        Err(AggErr::PubSub)
     } else {
         Ok(())
     }
