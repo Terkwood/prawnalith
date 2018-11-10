@@ -24,3 +24,7 @@ yup-oauth2 = "^1.0"
 google-pubsub1 = "^1.0"
 hyper = "0.10"
 hyper-native-tls = "0.2"
+
+[[bin]]
+name = "redis_aggregator"
+path = "src/bin/main.rs"
