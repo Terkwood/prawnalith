@@ -294,21 +294,19 @@ fn epoch_secs() -> u64 {
 }
 
 /// Consume all outstanding messages from a pubsub connection.
-pub fn consume_redis_messages(
-    topic: &str,
-    redis_client: redis::Client,
-) -> Result<Vec<REvent>, redis::RedisError> {
-    // FIXME tediously move initialization
-    // FIXME and deal with glorious borrow
-    let mut sub_conn = redis_client.get_connection()?;
+/// Will send messages via a channel to some other thread who
+/// can use them properly.
+pub fn consume_redis_messages(topic: &str, redis_client: redis::Client) {
+    let mut sub_conn = redis_client.get_connection().unwrap();
     let mut sub = sub_conn.as_pubsub();
-    sub.subscribe(topic)?;
+    sub.subscribe(topic).unwrap();
 
-    let mut result: Vec<REvent> = vec![];
+    println!("Subscribed to redis channel: {}", topic);
 
-    while let Ok(msg) = sub.get_message() {
-        unimplemented!()
+    loop {
+        if let Ok(msg) = sub.get_message() {
+            let payload = msg.get_payload().unwrap_or("".to_string());
+            println!("{}", payload);
+        }
     }
-
-    Ok(result)
 }

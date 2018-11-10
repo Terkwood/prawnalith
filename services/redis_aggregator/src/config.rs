@@ -8,12 +8,13 @@ use hyper_native_tls::NativeTlsClient;
 #[derive(Deserialize, Serialize, Debug)]
 pub struct PubSubConfig {
     pub pubsub_project_id: Option<String>,
-    pub pubsub_topic_name: Option<String>,
+    pub pubsub_dest_topic_name: String,
     pub pubsub_secret_file: Option<String>,
     pub redis_auth: Option<String>,
     pub redis_host: Option<String>,
     pub redis_port: Option<u16>,
     pub redis_namespace: Option<String>,
+    pub redis_source_topic_name: String,
 }
 
 impl PubSubConfig {
@@ -33,6 +34,17 @@ impl PubSubConfig {
             self.redis_auth.clone(),
             self.redis_namespace.clone().unwrap_or("".to_string()),
         )
+    }
+
+    pub fn to_redis_client(&self) -> redis::Client {
+        let host = (self.redis_host.clone().unwrap_or("127.0.0.1".to_string())).to_string();
+        let port = self.redis_port.unwrap_or(6379);
+        let rci = redis::ConnectionInfo {
+            addr: Box::new(redis::ConnectionAddr::Tcp(host, port)),
+            db: 0,
+            passwd: self.redis_auth.clone(),
+        };
+        redis::Client::open(rci).unwrap()
     }
 
     /// Create a client used to publish to google pub/sub.
@@ -65,10 +77,7 @@ impl PubSubConfig {
             .pubsub_project_id
             .clone()
             .unwrap_or("project".to_string());
-        let topic_name = self
-            .pubsub_topic_name
-            .clone()
-            .unwrap_or("topic".to_string());
+        let topic_name = self.pubsub_dest_topic_name.clone();
         let fq_topic = format!("projects/{}/topics/{}", project_id, topic_name);
         let client = self.to_pubsub_client();
         PubSubContext { fq_topic, client }
