@@ -69,7 +69,7 @@ impl<'a, 'b> Key<'a, 'b> {
 /// of key/value used by the prawnalith.
 /// The `time` field represents epoch secs in UTC
 /// for when this record was retrieved.
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Hash, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum RDelta<'a> {
     UpdateSet {
@@ -91,7 +91,7 @@ pub enum RDelta<'a> {
 }
 
 /// A field which is stored in Redis.
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Hash, PartialEq, Eq)]
 pub struct RField {
     pub name: String,
     pub val: String,
@@ -101,7 +101,7 @@ pub struct RField {
 /// string, hash, or set has changed.  It does not include
 /// the data which has changed, though in the case of hashes,
 /// it *does* include a list of fields which were changed.
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Hash, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum REvent {
     SetUpdated { key: String },
