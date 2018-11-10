@@ -6,4 +6,8 @@ WORKDIR /prawnalith/services/redis_aggregator
 
 RUN cargo build --release
 
-ENTRYPOINT [ "target/release/redis_aggregator" ]
+RUN cargo install --path . 
+
+WORKDIR /data
+
+ENTRYPOINT [ "redis_aggregator" ]
