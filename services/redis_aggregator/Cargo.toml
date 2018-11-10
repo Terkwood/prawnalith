@@ -1,0 +1,26 @@
+[package]
+name = "redis_aggregator"
+version = "0.2.0"
+authors = ["Terkwood <metaterkhorn@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+base64 = "0.10"
+crossbeam-channel = "0.3"
+dotenv = "0.13"
+envy = "0.3"
+hashbrown = "0.1"
+redis = "0.9"
+redis_context = { path = "../redis_context" }
+redis_delta = { path = "../redis_delta" }
+serde = "^1.0"
+serde_derive = "^1.0"
+serde_json = "^1.0"
+uuid = { version = "0.7", features = ["v4", "v5", "serde"] }
+
+# we need a specific version of hyper, for the google pubsub bindings
+# to work
+yup-oauth2 = "^1.0"
+google-pubsub1 = "^1.0"
+hyper = "0.10"
+hyper-native-tls = "0.2"
