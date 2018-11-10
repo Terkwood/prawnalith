@@ -45,7 +45,10 @@ use uuid::Uuid;
 /// - Query each individual sensor of each type
 ///
 /// Push as you satisfy each individual step.
-pub fn clone_the_world(redis_ctx: &RedisContext, pubsub_ctx: &PubSubContext) -> Result<(), AggErr> {
+pub fn clone_the_world(config: &config::PubSubConfig) -> Result<(), AggErr> {
+    let redis_ctx = &config.to_redis_context();
+    let pubsub_ctx = &config.to_pubsub_context();
+
     let all_ids: Vec<REvent> = instantiate_all_ids(redis_ctx)?;
 
     push_recent(redis_ctx, pubsub_ctx, all_ids)
@@ -325,7 +328,7 @@ pub fn handle_revents(rx: crossbeam_channel::Receiver<REvent>, config: &config::
     let pubsub_ctx = config.to_pubsub_context();
 
     // For redis hash type, where we also need to track fields
-    let mut hash_events = HashMap::<&str, REvent>::new();
+    let mut hash_fields = HashMap::<String, HashSet<String>>::new();
 
     // For redis string and set types, where we can just store their keys
     let mut kv_events = HashSet::<String>::new();
@@ -334,7 +337,24 @@ pub fn handle_revents(rx: crossbeam_channel::Receiver<REvent>, config: &config::
         select! {
             recv(rx) -> ev => {
                 match ev.unwrap() {
-                    REvent::HashUpdated { key, fields } => unimplemented!(),
+                    REvent::HashUpdated { key, fields } =>  {
+                        let mut hs = HashSet::<String>::new();
+                        for f in fields {
+                                hs.insert(f);
+                            }
+
+                        // check for an existing entry related to this hash
+                        // if it exists we want to union the fields
+                        if hash_fields.contains_key(&key) {
+                            let hs_existing = hash_fields.remove(&key).unwrap();
+
+                            for f in hs_existing {
+                                hs.insert(f);
+                            }
+                        }
+
+                        hash_fields.insert(key, hs);
+                    },
                     REvent::SetUpdated  {key }=> { kv_events.insert(key); },
                     REvent::StringUpdated  {key}=> { kv_events.insert(key); },
                 }
