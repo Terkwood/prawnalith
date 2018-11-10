@@ -6,6 +6,7 @@
 //! queries Redis for the values related to those keys,
 //! then pushing the values via Google pub sub.
 #![feature(custom_attribute)]
+extern crate crossbeam_channel as crossbeam;
 extern crate google_pubsub1;
 extern crate hyper;
 extern crate hyper_native_tls;
@@ -296,9 +297,11 @@ fn epoch_secs() -> u64 {
 /// Consume all outstanding messages from a pubsub connection.
 /// Will send messages via a channel to some other thread who
 /// can use them properly.
-pub fn consume_redis_messages(topic: &str, redis_client: redis::Client) {
+pub fn consume_redis_messages(config: &config::PubSubConfig, tx: crossbeam::Sender<REvent>) {
+    let redis_client = config.to_redis_client();
     let mut sub_conn = redis_client.get_connection().unwrap();
     let mut sub = sub_conn.as_pubsub();
+    let topic = &config.redis_source_topic_name;
     sub.subscribe(topic).unwrap();
 
     println!("Subscribed to redis channel: {}", topic);
@@ -307,6 +310,8 @@ pub fn consume_redis_messages(topic: &str, redis_client: redis::Client) {
         if let Ok(msg) = sub.get_message() {
             let payload = msg.get_payload().unwrap_or("".to_string());
             println!("{}", payload);
+
+            tx.send(unimplemented!()).unwrap()
         }
     }
 }
