@@ -28,7 +28,7 @@ use redis_delta::{Key, RDelta, REvent, RField};
 
 use self::pubsub::PubSubContext;
 use std::default::Default;
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime};
 use uuid::Uuid;
 
 /// Send *all* relevant redis data upstream
@@ -331,9 +331,32 @@ pub fn handle_revents(rx: crossbeam_channel::Receiver<REvent>, config: &config::
     let mut hash_fields = HashMap::<String, HashSet<String>>::new();
 
     // For redis string and set types, where we can just store their keys
-    let mut kv_events = HashSet::<String>::new();
+    let mut kv_events = HashSet::<REvent>::new();
+
+    let mut last_push = SystemTime::now();
+    let publish_interval = config.pubsub_publish_interval_secs.unwrap_or(10);
 
     loop {
+        if SystemTime::now().duration_since(last_push).unwrap()
+            > Duration::from_secs(publish_interval)
+        {
+            let mut events: Vec<REvent> = Vec::with_capacity(&kv_events.len() + &hash_fields.len());
+            for ev in kv_events.drain() {
+                events.push(ev);
+            }
+            for (key, fields) in hash_fields.drain() {
+                events.push(REvent::HashUpdated {
+                    key,
+                    fields: unimplemented!(),
+                });
+            }
+
+            if let Err(e) = push_recent(&redis_ctx, &pubsub_ctx, events) {
+                eprintln!("Push error: {:?}", e);
+            }
+            last_push = SystemTime::now()
+        }
+
         select! {
             recv(rx) -> ev => {
                 match ev.unwrap() {
@@ -355,8 +378,8 @@ pub fn handle_revents(rx: crossbeam_channel::Receiver<REvent>, config: &config::
 
                         hash_fields.insert(key, hs);
                     },
-                    REvent::SetUpdated  {key }=> { kv_events.insert(key); },
-                    REvent::StringUpdated  {key}=> { kv_events.insert(key); },
+                    setu @ REvent::SetUpdated { key: _ } => { kv_events.insert(setu); },
+                    stru @ REvent::StringUpdated { key: _ } => { kv_events.insert(stru); },
                 }
             }
         }

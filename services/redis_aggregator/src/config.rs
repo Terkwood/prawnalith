@@ -7,6 +7,7 @@ use hyper_native_tls::NativeTlsClient;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct PubSubConfig {
+    pub pubsub_publish_interval_secs: Option<u64>,
     pub pubsub_project_id: Option<String>,
     pub pubsub_dest_topic_name: String,
     pub pubsub_secret_file: Option<String>,
