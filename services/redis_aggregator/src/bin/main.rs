@@ -10,7 +10,6 @@ use redis_aggregator::config::PubSubConfig;
 use redis_aggregator::{clone_the_world, consume_redis_messages, handle_revents};
 
 fn main() {
-    let x = 1;
     dotenv::dotenv().expect("Unable to load .env file");
 
     let config = PubSubConfig::new();
