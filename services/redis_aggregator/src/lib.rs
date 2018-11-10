@@ -344,11 +344,12 @@ pub fn handle_revents(rx: crossbeam_channel::Receiver<REvent>, config: &config::
             for ev in kv_events.drain() {
                 events.push(ev);
             }
-            for (key, fields) in hash_fields.drain() {
-                events.push(REvent::HashUpdated {
-                    key,
-                    fields: unimplemented!(),
-                });
+            for (key, mut field_set) in hash_fields.drain() {
+                let mut fields: Vec<String> = vec![];
+                for f in field_set.drain() {
+                    fields.push(f);
+                }
+                events.push(REvent::HashUpdated { key, fields });
             }
 
             if let Err(e) = push_recent(&redis_ctx, &pubsub_ctx, events) {
