@@ -3,3 +3,5 @@ grafana_volume
 telegraf_volume
 influxdb_volume
 redis_volume
+redis_aggregator_volume
+
