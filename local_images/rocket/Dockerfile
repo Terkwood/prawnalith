@@ -1,6 +1,5 @@
 FROM prawnalith/local/rust
 
-RUN git clone https://github.com/SergioBenitez/Rocket
 WORKDIR "/Rocket"
 RUN git checkout v0.3.16
 WORKDIR "/Rocket/examples/hello_world"

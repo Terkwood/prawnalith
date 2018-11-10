@@ -28,4 +28,6 @@ rustc --version;
 RUN rustup default nightly
 RUN rustup update
 
+RUN git clone https://github.com/Terkwood/prawnalith
+
 ENTRYPOINT tail -f /dev/null
