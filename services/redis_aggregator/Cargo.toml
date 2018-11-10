@@ -9,6 +9,7 @@ base64 = "0.10"
 crossbeam-channel = "0.3"
 dotenv = "0.13"
 envy = "0.3"
+hashbrown = "0.1"
 redis = "0.9"
 redis_context = { path = "../redis_context" }
 redis_delta = { path = "../redis_delta" }

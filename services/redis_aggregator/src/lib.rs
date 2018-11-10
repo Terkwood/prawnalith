@@ -6,8 +6,10 @@
 //! queries Redis for the values related to those keys,
 //! then pushing the values via Google pub sub.
 #![feature(custom_attribute)]
+#[macro_use]
 extern crate crossbeam_channel as crossbeam;
 extern crate google_pubsub1;
+extern crate hashbrown;
 extern crate hyper;
 extern crate hyper_native_tls;
 extern crate redis_context;
@@ -19,6 +21,7 @@ pub mod config;
 pub mod pubsub;
 
 use base64;
+use hashbrown::{HashMap, HashSet};
 use redis::Commands;
 use redis_context::RedisContext;
 use redis_delta::{Key, RDelta, REvent, RField};
@@ -309,9 +312,33 @@ pub fn consume_redis_messages(config: &config::PubSubConfig, tx: crossbeam::Send
     loop {
         if let Ok(msg) = sub.get_message() {
             let payload = msg.get_payload().unwrap_or("".to_string());
-            println!("{}", payload);
+            let revent: Result<REvent, _> = serde_json::from_str(&payload);
+            if let Ok(e) = revent {
+                tx.send(e).unwrap()
+            }
+        }
+    }
+}
 
-            tx.send(unimplemented!()).unwrap()
+pub fn handle_revents(rx: crossbeam_channel::Receiver<REvent>, config: &config::PubSubConfig) {
+    let redis_ctx = config.to_redis_context();
+    let pubsub_ctx = config.to_pubsub_context();
+
+    // For redis hash type, where we also need to track fields
+    let mut hash_events = HashMap::<&str, REvent>::new();
+
+    // For redis string and set types, where we can just store their keys
+    let mut kv_events = HashSet::<String>::new();
+
+    loop {
+        select! {
+            recv(rx) -> ev => {
+                match ev.unwrap() {
+                    REvent::HashUpdated { key, fields } => unimplemented!(),
+                    REvent::SetUpdated  {key }=> { kv_events.insert(key); },
+                    REvent::StringUpdated  {key}=> { kv_events.insert(key); },
+                }
+            }
         }
     }
 }
