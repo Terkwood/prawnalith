@@ -1,5 +1,7 @@
 FROM prawnalith/local/rust
 
+RUN apt-get install -y pkg-config libssl-dev
+
 WORKDIR /prawnalith/services/redis_aggregator
 
 ENV BUILD_MODE="release"
