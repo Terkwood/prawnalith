@@ -7,6 +7,4 @@ COPY . .
 
 RUN cargo install --path .
 
-RUN echo "hello"
-
 CMD ["pond"]
