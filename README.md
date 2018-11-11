@@ -2,9 +2,7 @@
 
 Various programs to manage sensor data from a freshwater prawn grow, and make it available from anywhere in the world, via a minimal UI.
 
-![Prawn Devouring Plankton](https://pbs.twimg.com/media/DpPZJWwUUAAZNEx.jpg:small)
-
-![Networked LED Goodness](demo.gif)
+![Get a Skillet... Prawnto](https://gist.githubusercontent.com/Terkwood/c37c50d41bcc84b409eeaa555f788ed0/raw/ec42ccbdee0c3f518400253b5e1270f5488f4f1c/prawnto.gif)
 
 We currently support the display of temperature and pH readings onto small LED matrix screens attached to inexpensive ESP8266 microcontrollers.
 

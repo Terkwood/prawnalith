@@ -1,6 +1,6 @@
 # Prawn Tank LED Heads-Up Display
 
-![See the status of your very own prawn tank](doc/led_demo.png)
+![Networked LED Goodness](../../demo.gif)
 
 This directory contains C++/ino code which implements an artifact
 that receives status updates on the overall prawn tank system.
