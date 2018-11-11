@@ -109,6 +109,10 @@ mod tests {
             iat: earlier(3600),
             auth_time: earlier(3600),
         };
-        unimplemented!()
+
+        // TODO this header isn't reasonable
+        let encoded = jwt::encode(&jwt::Header::default(), &claims, "secret".as_ref()).unwrap();
+
+        assert_eq!(encoded.is_empty(), false)
     }
 }
