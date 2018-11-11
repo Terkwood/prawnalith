@@ -2,7 +2,7 @@
 
 Various programs to manage sensor data from a freshwater prawn grow, and make it available from anywhere in the world, via a minimal UI.
 
-![Get a Skillet... Prawnto](https://gist.githubusercontent.com/Terkwood/c37c50d41bcc84b409eeaa555f788ed0/raw/ed7a89ce8c3624361bb1a5991d61e92c914a1e85/prawnto_med.gif)
+![Get a Skillet... Prawnto](https://gist.githubusercontent.com/Terkwood/c37c50d41bcc84b409eeaa555f788ed0/raw/ec42ccbdee0c3f518400253b5e1270f5488f4f1c/prawnto.gif)
 
 ![Networked LED Goodness](demo.gif)
 
