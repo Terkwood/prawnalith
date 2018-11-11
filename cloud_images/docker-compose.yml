@@ -5,6 +5,4 @@ services:
     ports:
       - "63797:6379"
     volumes:
-      - "/home/$USER/volumes/redis:/data"
-    environment:
-      - USER:${USER}  # write this in your .env file
+      - "/var/volumes/redis:/data"

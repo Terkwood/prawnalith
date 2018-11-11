@@ -1,12 +1,12 @@
 #!/bin/bash
 
-sudo mkdir -p /var/prawnalith/data
+sudo mkdir -p /var/volumes
+sudo chown -R $USER:$USER /var/volumes
 sudo chown -R $USER:$USER /var/prawnalith
 
 cd /var/prawnalith
 
-[[ -d /var/prawnalith/src ]] || git clone https://github.com/Terkwood/prawnalith 
-[[ -d /var/prawnalith/prawnalith ]] || mv /var/prawnalith/prawnalith /var/prawnalith/src
+[[ -d /var/prawnalith ]] || git clone https://github.com/Terkwood/prawnalith 
 
 echo alias docker-compose="'"'docker run --rm \
     -v /var/run/docker.sock:/var/run/docker.sock \
