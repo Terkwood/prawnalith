@@ -1,15 +1,7 @@
 #!/bin/bash
 
-apt-get install -y screen
-
-# see https://docs.docker.com/install/linux/docker-ce/debian/
-apt-get remove docker docker-engine docker.io
-apt-get update
-apt-get install -y \
-     apt-transport-https \
-     ca-certificates \
-     curl \
-     gnupg2 \
-     software-properties-common
-# curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
-
+alias docker-compose="'"'docker run --rm \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v "$PWD:/rootfs/$PWD" \
+    -w="/rootfs/$PWD" \
+    docker/compose:1.13.0'"'" >> ~/.bashrc
