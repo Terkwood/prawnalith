@@ -11,3 +11,4 @@ echo alias htop="'"'docker run --rm -it --pid host frapsoft/htop'"'" >> ~/.bashr
 echo alias gfp="'"'git fetch && git pull'"'" >> ~/.bashrc
 echo alias gc="'"'git checkout'"'" >> ~/.bashrc
 
+docker pull rust
