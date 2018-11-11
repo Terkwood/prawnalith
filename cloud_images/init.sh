@@ -7,4 +7,4 @@ echo alias docker-compose="'"'docker run --rm \
     docker/compose:1.13.0'"'" >> ~/.bashrc
 
 docker pull frapsoft/htop
-echo alias htop="docker run --rm -it --pid host frapsoft/htop"
+echo alias htop="docker run --rm -it --pid host frapsoft/htop" >> ~/.bashrc
