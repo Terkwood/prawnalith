@@ -25,4 +25,5 @@ docker pull frapsoft/htop
 
 # install systemd scripts
 sudo cp /var/prawnalith/cloud_images/systemd/*.service /etc/systemd/system/.
-for i in /var/prawnalith/cloud_images/systemd/*.service; do [ -f "$i" ] && sudo systemctl enable $i && sudo systemctl start $i; done
+cd /var/prawnalith/cloud_images/systemd
+for i in *.service; do [ -f "$i" ] && sudo systemctl enable $i && sudo systemctl start $i; done
