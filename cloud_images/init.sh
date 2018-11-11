@@ -23,7 +23,12 @@ echo alias gc="'"'git checkout'"'" >> ~/.bashrc
 echo alias cdw="'"'cd /var/prawnalith'"'" >> ~/.bashrc
 
 docker pull rust
-docker pull frapsoft/htop
+
+# set up CoreOS toolbox so that you have the persistent
+# debian-like chroot with access to htop, etc
+
+toolbox         # once for human user
+sudo toolbox    # once for root
 
 # install systemd scripts
 sudo cp /var/prawnalith/cloud_images/systemd/*.service /etc/systemd/system/.
