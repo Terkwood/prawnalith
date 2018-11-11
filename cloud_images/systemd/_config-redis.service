@@ -7,7 +7,7 @@ Type=oneshot
 RemainAfterExit=no
 User=root
 WorkingDirectory=/tmp
-ExecStart=/bin/sh /etc/rc.local
+ExecStart=/bin/sh /var/prawnalith/cloud_images/systemd/rc.local
 ExecStop=/bin/cat /dev/null
 Restart=no
 
