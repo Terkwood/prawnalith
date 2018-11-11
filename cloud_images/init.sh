@@ -4,9 +4,11 @@ sudo mkdir -p /var/volumes
 sudo chown -R $USER:$USER /var/volumes
 sudo chown -R $USER:$USER /var/prawnalith
 
-cd /var/prawnalith
-
 [[ -d /var/prawnalith ]] || git clone https://github.com/Terkwood/prawnalith 
+
+sudo mv prawnalith /var/.
+
+cd /var/prawnalith
 
 echo alias docker-compose="'"'docker run --rm \
     -v /var/run/docker.sock:/var/run/docker.sock \
