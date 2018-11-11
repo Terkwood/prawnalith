@@ -2,8 +2,6 @@
 
 ![Networked LED Goodness](../../demo.gif)
 
-![See the status of your very own prawn tank](doc/led_demo.png)
-
 This directory contains C++/ino code which implements an artifact
 that receives status updates on the overall prawn tank system.
 We use LED matrix electronics to display the status updates.
