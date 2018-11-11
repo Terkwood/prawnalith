@@ -5,6 +5,7 @@ echo alias docker-compose="'"'docker run --rm \
     -v "$PWD:/rootfs/$PWD" \
     -w="/rootfs/$PWD" \
     docker/compose:1.13.0'"'" >> ~/.bashrc
+echo alias dc="'"'docker-compose'"'"
 
 echo alias htop="'"'docker run --rm -it --pid host frapsoft/htop'"'" >> ~/.bashrc
 echo alias gfp="'"'git fetch && git pull'"'" >> ~/.bashrc
