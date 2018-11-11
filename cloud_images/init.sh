@@ -8,3 +8,6 @@ echo alias docker-compose="'"'docker run --rm \
 
 docker pull frapsoft/htop
 echo alias htop="docker run --rm -it --pid host frapsoft/htop" >> ~/.bashrc
+echo alias gfp="git fetch && git pull" >> ~/.bashrc
+echo alias gc="git checkout" >> ~/.bashrc
+
