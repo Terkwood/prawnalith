@@ -18,7 +18,7 @@ echo alias dc="'"'docker-compose'"'" >> ~/.bashrc
 echo alias htop="'"'docker run --rm -it --pid host frapsoft/htop'"'" >> ~/.bashrc
 echo alias gfp="'"'git fetch && git pull'"'" >> ~/.bashrc
 echo alias gc="'"'git checkout'"'" >> ~/.bashrc
-echo alias cdw="'"'cd /var/prawnalith/src'"'" >> ~/.bashrc
+echo alias cdw="'"'cd /var/prawnalith'"'" >> ~/.bashrc
 
 docker pull rust
 docker pull frapsoft/htop
