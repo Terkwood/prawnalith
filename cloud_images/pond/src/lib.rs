@@ -17,7 +17,7 @@ use self::jwt::{Algorithm, Validation};
 /// - `auth_time`: Must be in the past. The time when the user authenticated.
 #[derive(Debug, Serialize, Deserialize)]
 struct FirebaseClaims {
-    sub: String,
+    sub: SubjectClaim,
     iss: String,
     aud: String,
     iat: usize,
@@ -25,9 +25,18 @@ struct FirebaseClaims {
     auth_time: usize,
 }
 
+/// Must be a non-empty string and must be the uid of the user or device
+#[derive(Debug, Serialize, Deserialize)]
+struct SubjectClaim(String);
+impl SubjectClaim {
+    fn validate(&self, allowed_uids: Vec<&str>) -> bool {
+        !self.0.is_empty() && allowed_uids.iter().any(|uid| uid == &self.0)
+    }
+}
+
 /// Creates a Validation struct which conforms to Firebase auth expectations.
 /// See See https://firebase.google.com/docs/auth/admin/verify-id-tokens#verify_id_tokens_using_a_third-party_jwt_library
-fn firebase_validation<E>(token: jwt::TokenData<FirebaseClaims>) -> Result<AuthResult, E> {
+fn validate_token<E>(token: jwt::TokenData<FirebaseClaims>) -> Result<AuthResult, E> {
     // TODO: VERIFY HEADER `alg` is "RS256" (NOT the default!)
     unimplemented!();
 
