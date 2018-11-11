@@ -5,3 +5,4 @@ echo alias docker-compose="'"'docker run --rm \
     -v "$PWD:/rootfs/$PWD" \
     -w="/rootfs/$PWD" \
     docker/compose:1.13.0'"'" >> ~/.bashrc
+

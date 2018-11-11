@@ -5,4 +5,4 @@ services:
     ports:
       - "63797:6379"
     volumes:
-      - "$PWD/redis_volume:/data"
+      - "/home/$USER/prawnalith/cloud_images:/data"
