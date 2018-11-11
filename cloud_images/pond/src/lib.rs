@@ -82,9 +82,33 @@ enum AuthFailureReason {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use std::time::SystemTime;
+    fn now() -> usize {
+        SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as usize
+    }
+    fn earlier(offset: u64) -> usize {
+        now() - offset as usize
+    }
+    fn later(offset: u64) -> usize {
+        now() + offset as usize
+    }
+
     // TODO TODO TODO TODO
     #[test]
-    fn basic_validation() {
-        assert_eq!(2 + 2, 4);
+    fn encode_claims() {
+        let sub = SubjectClaim("abc".to_string());
+        let claims = FirebaseClaims {
+            sub,
+            aud: "nope".to_string(),   // TODO
+            iss: "foogle".to_string(), // TODO
+            exp: later(3600),
+            iat: earlier(3600),
+            auth_time: earlier(3600),
+        };
+        unimplemented!()
     }
 }
