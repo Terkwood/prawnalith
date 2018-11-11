@@ -1,5 +1,7 @@
 # Pond Service
 
+[![Docker badge](https://img.shields.io/docker/pulls/prawnalith/pond.svg)](https://hub.docker.com/r/prawnalith/pond/)
+
 A small webservice used to serve aquarium data (temp and pH)
 over the  🌎 World 🦀 Wide 🦐 Web 🕸.
 
