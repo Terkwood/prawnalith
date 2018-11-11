@@ -4,8 +4,6 @@ Various programs to manage sensor data from a freshwater prawn grow, and make it
 
 ![Get a Skillet... Prawnto](https://gist.githubusercontent.com/Terkwood/c37c50d41bcc84b409eeaa555f788ed0/raw/ec42ccbdee0c3f518400253b5e1270f5488f4f1c/prawnto.gif)
 
-![Networked LED Goodness](demo.gif)
-
 We currently support the display of temperature and pH readings onto small LED matrix screens attached to inexpensive ESP8266 microcontrollers.
 
 Temperature and pH levels are read continuously from the prawns' tank using a DS18B20 submersible temperature sensor, and a SEN 0169 pH meter.
