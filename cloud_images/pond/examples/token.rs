@@ -5,7 +5,7 @@ extern crate jsonwebtoken as jwt;
 #[macro_use]
 extern crate serde_derive;
 
-use self::jwt::{decode, decode_header, encode, Algorithm, Header, Validation};
+use self::jwt::{decode, decode_header, encode, Header, Validation};
 use std::time::SystemTime;
 
 /// Our claims struct, it needs to derive `Serialize` and/or `Deserialize`
@@ -13,6 +13,7 @@ use std::time::SystemTime;
 struct Claims {
     sub: String,
     company: String,
+    iss: String,
     exp: usize,
 }
 
@@ -20,10 +21,19 @@ pub fn main() {
     let my_claims = Claims {
         sub: "Monger".to_string(),
         company: "Norporate".to_string(),
+        iss: "River".to_string(),
         exp: the_future(),
     };
+
     let there = encode(&Header::default(), &my_claims, "secret".as_ref()).unwrap();
-    let _back = decode::<Claims>(&there, "secret".as_ref(), &Validation::default()).unwrap();
+
+    // Checking issuer
+    let validation = Validation {
+        iss: Some("River".to_string()),
+        ..Default::default()
+    };
+
+    let _back = decode::<Claims>(&there, "secret".as_ref(), &validation).unwrap();
 
     // In some cases, for example if you don't know the algorithm used, you will want to only decode the header:
     let _header = decode_header(&there).unwrap();
