@@ -1,12 +1,12 @@
 #!/bin/bash
 
-sudo mkdir -p /var/volumes
-sudo chown -R $USER:$USER /var/volumes
-sudo chown -R $USER:$USER /var/prawnalith
-
 [[ -d /var/prawnalith ]] || git clone https://github.com/Terkwood/prawnalith 
 
 sudo mv prawnalith /var/.
+sudo chown -R $USER:$USER /var/prawnalith
+
+sudo mkdir -p /var/volumes
+sudo chown -R $USER:$USER /var/volumes
 
 cd /var/prawnalith
 
