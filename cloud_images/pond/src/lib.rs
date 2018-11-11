@@ -1,6 +1,7 @@
 extern crate jsonwebtoken as jwt;
 #[macro_use]
 extern crate serde_derive;
+extern crate serde_json;
 
 use self::jwt::{Algorithm, Validation};
 
@@ -83,7 +84,9 @@ enum AuthFailureReason {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json;
     use std::time::SystemTime;
+
     fn now() -> usize {
         SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
@@ -113,6 +116,20 @@ mod tests {
         // TODO this header isn't reasonable
         let encoded = jwt::encode(&jwt::Header::default(), &claims, "secret".as_ref()).unwrap();
 
-        assert_eq!(encoded.is_empty(), false)
+        assert!(!encoded.is_empty())
+    }
+
+    #[test]
+    fn deserialize_claims() {
+        let claims = r#"{
+                            "sub": "abc",
+                            "iss": "foogle",
+                            "aud": "nope",
+                            "iat": 1541969396,
+                            "exp": 1541976596,
+                            "auth_time": 1541969396
+                        }"#;
+        let deser: Result<FirebaseClaims, _> = serde_json::from_str(claims);
+        assert!(deser.is_ok());
     }
 }
