@@ -7,4 +7,4 @@ services:
     volumes:
       - "/home/$USER/prawnalith/cloud_images:/data"
     environment:
-      - USER
+      - USER:${USER}  # write this in your .env file
