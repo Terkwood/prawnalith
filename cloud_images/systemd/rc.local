@@ -1,5 +1,0 @@
-#!/bin/bash
-
-# HAIL REDIS
-sysctl vm.overcommit_memory=1
-sh -c 'echo never > /sys/kernel/mm/transparent_hugepage/enabled'
