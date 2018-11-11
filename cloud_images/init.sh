@@ -5,7 +5,10 @@ sudo chown -R $USER:$USER /var/prawnalith
 
 cd /var/prawnalith
 
-[[ -d /var/prawnalith/src ]] || git clone https://github.com/Terkwood/prawnalith && mv /var/prawnalith/prawnalith /var/prawnalith/src
+if [[ -d /var/prawnalith/src ]]; then
+    git clone https://github.com/Terkwood/prawnalith \ 
+        && mv /var/prawnalith/prawnalith /var/prawnalith/src
+fi
 
 echo alias docker-compose="'"'docker run --rm \
     -v /var/run/docker.sock:/var/run/docker.sock \
