@@ -8,8 +8,8 @@ RemainAfterExit=yes
 # Another Type option: forking
 User=felixt
 WorkingDirectory=/var/prawnalith/cloud_images
-ExecStart=/usr/local/bin/docker-compose up 
-ExecStop=/usr/local/bin/docker-compose down
+ExecStart=/var/prawnalith/cloud_images/docker-compose.sh up 
+ExecStop=/var/prawnalith/cloud_images/docker-compose.sh down
 Restart=no
 
 [Install]
