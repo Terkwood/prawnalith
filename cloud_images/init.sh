@@ -1,5 +1,7 @@
 #!/bin/bash
 
+apt-get install -y screen
+
 # see https://docs.docker.com/install/linux/docker-ce/debian/
 apt-get remove docker docker-engine docker.io
 apt-get update
