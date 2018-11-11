@@ -6,7 +6,7 @@ After=network.target
 Type=oneshot
 RemainAfterExit=yes
 # Another Type option: forking
-User=felixt
+User=root
 WorkingDirectory=/var/prawnalith/cloud_images
 ExecStart=/var/prawnalith/cloud_images/docker-compose.sh up 
 ExecStop=/var/prawnalith/cloud_images/docker-compose.sh down
