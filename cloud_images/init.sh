@@ -10,11 +10,6 @@ sudo mv prawnalith /var/.
 
 cd /var/prawnalith
 
-##FIXME remove
-##FIXME remove
-##FIXME remove
-git checkout feature/cloud_init
-
 echo alias docker-compose="'"'docker run --rm \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v "$PWD:/rootfs/$PWD" \
