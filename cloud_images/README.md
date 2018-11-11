@@ -11,3 +11,9 @@ on Google Compute Engine when running `redis`:
 ```
 sudo sh -c 'echo never > /sys/kernel/mm/transparent_hugepage/enabled'
 ```
+
+And don't forget:
+
+```
+sudo sysctl vm.overcommit_memory=1
+```
