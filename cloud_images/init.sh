@@ -6,10 +6,10 @@ echo alias docker-compose="'"'docker run --rm \
     -w="/rootfs/$PWD" \
     docker/compose:1.13.0'"'" >> ~/.bashrc
 
-docker pull frapsoft/htop
 echo alias htop="'"'docker run --rm -it --pid host frapsoft/htop'"'" >> ~/.bashrc
 echo alias gfp="'"'git fetch && git pull'"'" >> ~/.bashrc
 echo alias gc="'"'git checkout'"'" >> ~/.bashrc
 echo alias cdw="'"'cd ~/prawnalith'"'" >> ~/.bashrc
 
 docker pull rust
+docker pull frapsoft/htop
