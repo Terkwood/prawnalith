@@ -7,4 +7,4 @@ extern crate serde_derive;
 extern crate serde_json;
 
 mod auth;
-mod web;
+pub mod web;

@@ -1,3 +1,9 @@
+#![feature(proc_macro_hygiene, decl_macro)]
+#[macro_use]
+extern crate rocket;
+
+use pond::web;
+
 fn main() {
-    println!("🏖 🦐");
+    rocket::ignite().mount("/", routes![web::index]).launch();
 }
