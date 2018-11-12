@@ -19,13 +19,12 @@ ADD . ./
 RUN sudo chown -R rust:rust /home/rust
 
 # Build our application.
-# TODO --release
-RUN cargo build 
+RUN cargo build --release
 
 # Now, we need to build our _real_ Docker container, copying in `pond`.
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 COPY --from=builder \
-    /home/rust/src/target/x86_64-unknown-linux-musl/debug/pond \
+    /home/rust/src/target/x86_64-unknown-linux-musl/release/pond \
     /usr/local/bin/
 CMD [ "/usr/local/bin/pond" ]
