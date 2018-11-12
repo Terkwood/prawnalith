@@ -1,10 +1,25 @@
-FROM rust:1.30.1-stretch
+# ATTRIBUTION!  Thanks https://github.com/emk/rust-musl-builder/blob/master/examples/using-diesel/Dockerfile
+#               The bulk of the goodness in this file is derived from the above example.
+#
+# Builds a Rust executable using this image,
+# and deploys it to a tiny Alpine Linux container.
 
-RUN rustup default nightly
+# Our first FROM statement declares the build environment.
+FROM ekidd/rust-musl-builder AS builder
 
-WORKDIR /var/pond
-COPY . .
+# Add our source code.
+ADD . ./
 
-RUN cargo install --path .
+# Fix permissions on source code.
+RUN sudo chown -R rust:rust /home/rust
 
-CMD ["pond"]
+# Build our application.
+RUN cargo build --release
+
+# Now, we need to build our _real_ Docker container, copying in `pond`.
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates
+COPY --from=builder \
+    /home/rust/src/target/x86_64-unknown-linux-musl/release/pond \
+    /usr/local/bin/
+CMD [ "/usr/local/bin/pond" ]
