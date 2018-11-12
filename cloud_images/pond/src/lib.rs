@@ -135,7 +135,8 @@ mod tests {
 
     #[test]
     fn validate_subject_claim() {
-        let expect_valid = SubjectClaim("whoever".to_string()).validate(vec!["someone", "nobody", "whoever"]);
+        let expect_valid =
+            SubjectClaim("whoever".to_string()).validate(vec!["someone", "nobody", "whoever"]);
         assert!(expect_valid)
     }
 }
