@@ -33,13 +33,20 @@ impl SubjectClaim {
 const GOOGLE_PUBLIC_KEY_URL: &'static str =
     "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com";
 
+#[derive(Debug, Serialize, Deserialize, Hash, Eq, PartialEq)]
+struct PubKeyId(String);
+#[derive(Debug, Serialize, Deserialize, Hash, Eq, PartialEq)]
+struct PubKey(String);
+#[derive(Debug, Serialize, Deserialize)]
+struct PubKeyMap(std::collections::HashMap<PubKeyId, PubKey>);
+
 /// Creates a Validation struct which conforms to Firebase auth expectations.
 /// See See https://firebase.google.com/docs/auth/admin/verify-id-tokens#verify_id_tokens_using_a_third-party_jwt_library
 fn validate_token<E>(token: jwt::TokenData<FirebaseClaims>) -> Result<AuthResult, E> {
     // TODO: VERIFY HEADER `alg` is "RS256" (NOT the default!)
     unimplemented!();
 
-    // TODO: VERIFY HEADER `kid` correspond to one of the public keys listed at https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com
+    // TODO: VERIFY HEADER `kid` corresponds to one of the public keys listed at `GOOGLE_PUBLIC_KEY_URL`
     unimplemented!();
 
     // TODO: Verify ID token payload fields
@@ -104,20 +111,18 @@ mod tests {
         now() + offset as usize
     }
 
-    // TODO TODO TODO TODO
     #[test]
-    fn encode_claims() {
+    fn basic_encode_claims() {
         let sub = SubjectClaim("abc".to_string());
         let claims = FirebaseClaims {
             sub,
-            aud: "nope".to_string(),   // TODO
-            iss: "foogle".to_string(), // TODO
+            aud: "nope".to_string(),
+            iss: "foogle".to_string(),
             exp: later(3600),
             iat: earlier(3600),
             auth_time: earlier(3600),
         };
 
-        // TODO this header isn't reasonable
         let encoded = jwt::encode(&jwt::Header::default(), &claims, "secret".as_ref()).unwrap();
 
         assert!(!encoded.is_empty())
@@ -148,5 +153,17 @@ mod tests {
     fn invalidate_subject_claim() {
         let expected_invalid = SubjectClaim("nothanks".to_string()).validate(vec!["fail", "no"]);
         assert!(!expected_invalid);
+    }
+
+    #[test]
+    fn deserialize_pubkey_json() {
+        let json = r#"{
+  "deadbeef": "-----BEGIN CERTIFICATE-----\nthistles=\n-----END CERTIFICATE-----\n",
+  "f00d1111": "-----BEGIN CERTIFICATE-----\nclap=\n-----END CERTIFICATE-----\n"
+}
+"#;
+        let deser: Result<PubKeyMap, _> = serde_json::from_str(json);
+        assert!(deser.is_ok());
+        let hash = deser.unwrap();
     }
 }
