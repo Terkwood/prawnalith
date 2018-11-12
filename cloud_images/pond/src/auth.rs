@@ -165,5 +165,11 @@ mod tests {
         let deser: Result<PubKeyMap, _> = serde_json::from_str(json);
         assert!(deser.is_ok());
         let hash = deser.unwrap();
+        assert_eq!(
+            hash.0.get(&PubKeyId("deadbeef".to_string())).unwrap(),
+            &PubKey(
+                "-----BEGIN CERTIFICATE-----\nthistles=\n-----END CERTIFICATE-----\n".to_string()
+            )
+        )
     }
 }
