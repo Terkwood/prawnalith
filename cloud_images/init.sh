@@ -23,12 +23,6 @@ echo alias cdw="'"'cd /var/prawnalith'"'" >> ~/.bashrc
 
 docker pull rust
 
-# set up CoreOS toolbox so that you have the persistent
-# debian-like chroot with access to htop, etc
-
-toolbox         # once for human user
-sudo toolbox    # once for root
-
 # install systemd scripts
 sudo cp /var/prawnalith/cloud_images/systemd/*.service /etc/systemd/system/.
 cd /var/prawnalith/cloud_images/systemd
