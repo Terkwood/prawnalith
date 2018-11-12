@@ -5,8 +5,21 @@ authors = ["Terkwood <metaterkhorn@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-jsonwebtoken = "5"
-rocket = "0.4.0-rc.1"
+base64 = "0.10"
+dotenv = "0.13"
+envy = "0.3"
+frank_jwt = "3.0"
+lazy_static = "1.2"
+openssl = "0.10"
+redis = "0.9"
+regex = "1"
+reqwest = "0.9"
+rocket = { version = "0.4.0-rc.1", features = ["tls"] }
 serde = "1"
 serde_derive = "1"
 serde_json = "1"
+
+[dependencies.rocket_contrib]
+version = "0.4.0-rc.1"
+default-features = false
+features = ["redis_pool"]
