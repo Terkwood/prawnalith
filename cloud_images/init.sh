@@ -21,8 +21,6 @@ echo alias gfp="'"'git fetch && git pull'"'" >> ~/.bashrc
 echo alias gc="'"'git checkout'"'" >> ~/.bashrc
 echo alias cdw="'"'cd /var/prawnalith'"'" >> ~/.bashrc
 
-docker pull rust
-
 # install systemd scripts
 sudo cp /var/prawnalith/cloud_images/systemd/*.service /etc/systemd/system/.
 cd /var/prawnalith/cloud_images/systemd
