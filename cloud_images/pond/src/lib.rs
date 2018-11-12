@@ -132,4 +132,10 @@ mod tests {
         let deser: Result<FirebaseClaims, _> = serde_json::from_str(claims);
         assert!(deser.is_ok());
     }
+
+    #[test]
+    fn validate_subject_claim() {
+        let expect_valid = SubjectClaim("whoever".to_string()).validate(vec!["someone", "nobody", "whoever"]);
+        assert!(expect_valid)
+    }
 }

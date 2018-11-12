@@ -7,6 +7,9 @@
 # Our first FROM statement declares the build environment.
 FROM ekidd/rust-musl-builder AS builder
 
+# Switch to nightly, since 2018 edition (and others) require it
+RUN rustup default nightly
+
 # Add our source code.
 ADD . ./
 
@@ -14,7 +17,8 @@ ADD . ./
 RUN sudo chown -R rust:rust /home/rust
 
 # Build our application.
-RUN cargo build --release
+# TODO --release
+RUN cargo build 
 
 # Now, we need to build our _real_ Docker container, copying in `pond`.
 FROM alpine:latest
