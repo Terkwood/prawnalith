@@ -26,6 +26,6 @@ RUN cargo build
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 COPY --from=builder \
-    /home/rust/src/target/x86_64-unknown-linux-musl/release/pond \
+    /home/rust/src/target/x86_64-unknown-linux-musl/debug/pond \
     /usr/local/bin/
 CMD [ "/usr/local/bin/pond" ]
