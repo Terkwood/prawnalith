@@ -10,6 +10,8 @@ FROM ekidd/rust-musl-builder AS builder
 # Switch to nightly, since 2018 edition (and others) require it
 RUN rustup default nightly
 
+RUN rustup target install x86_64-unknown-linux-musl
+
 # Add our source code.
 ADD . ./
 
