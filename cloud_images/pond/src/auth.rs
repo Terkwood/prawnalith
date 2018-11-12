@@ -30,6 +30,9 @@ impl SubjectClaim {
     }
 }
 
+const GOOGLE_PUBLIC_KEY_URL: &'static str =
+    "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com";
+
 /// Creates a Validation struct which conforms to Firebase auth expectations.
 /// See See https://firebase.google.com/docs/auth/admin/verify-id-tokens#verify_id_tokens_using_a_third-party_jwt_library
 fn validate_token<E>(token: jwt::TokenData<FirebaseClaims>) -> Result<AuthResult, E> {
@@ -46,6 +49,12 @@ fn validate_token<E>(token: jwt::TokenData<FirebaseClaims>) -> Result<AuthResult
     unimplemented!();
 
     // TODO: iss must be "https://securetoken.google.com/<projectId>", where <projectId> is the same project ID used for aud above.
+    unimplemented!();
+
+    // TODO: sub must be one that we expect
+    unimplemented!();
+
+    // TODO: check that the private key was used to sign
     unimplemented!();
 
     // TODO: exp, iat auto-validated by the lib
