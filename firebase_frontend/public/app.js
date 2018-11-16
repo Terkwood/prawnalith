@@ -1,18 +1,6 @@
-/*
- * Copyright 2018 Terkwood All Rights Reserved.
- * This source was originally provided by Google, Inc and licensed under Apache 2.0.  Thank you.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- * in compliance with the License. You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software distributed under the
- * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Let the ATTRIBUTION be known:
+// This file was developed by Google.
+// See https://github.com/firebase/firebaseui-web
 /**
  * FirebaseUI initialization to be used in a Single Page application context.
  */
@@ -114,6 +102,13 @@ var handleSignedInUser = function(user) {
   } else {
     document.getElementById('photo').style.display = 'none';
   }
+
+
+  var forceRefresh = false;
+  user.getIdTokenResult(forceRefresh).then(
+    function(token) {
+      console.log(JSON.stringify(token, null, 2));}).catch(
+      function(err){console.log("We fail")});
 };
 
 

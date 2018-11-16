@@ -1,0 +1,13 @@
+{
+    "name": "Prawnalith Frontend",
+    "short_name": "PrawnalithFrontend",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#fff",
+    "lang": "en-US",
+    "description": "View prawn tank temp and pH, etc.",
+    "prefer_related_applications": false,
+    "theme_color": "#fff",
+    "scope": "/",
+    "orientation": "portrait-primary"
+}

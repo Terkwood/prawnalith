@@ -1,114 +1,78 @@
-// LET THE ATTRIBUTION BE KNOWN
-// this effort was heavily inspired by the following
-// wasm-bindgen examples:
-// https://github.com/rustwasm/wasm-bindgen/tree/master/examples/fetch
-// https://github.com/rustwasm/wasm-bindgen/tree/master/examples/dom
-
-extern crate futures;
-extern crate js_sys;
-extern crate wasm_bindgen;
-extern crate wasm_bindgen_futures;
-extern crate web_sys;
 #[macro_use]
-extern crate serde_derive;
+extern crate lazy_static;
+extern crate stdweb;
+#[macro_use]
+extern crate yew;
 
-use futures::{future, Future};
-use js_sys::Promise;
-use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
-use wasm_bindgen_futures::future_to_promise;
-use wasm_bindgen_futures::JsFuture;
-use web_sys::{Request, RequestInit, RequestMode, Response};
+use yew::prelude::*;
 
-/// A struct to hold some data from the HTTP request
-/// for temp/ph info.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct TankStatus {
-    pub tank: Tank,
-    pub temp: Temp,
-    pub ph: Ph,
+lazy_static! {
+    static ref song: Vec<&'static str> = vec![
+        "Baby Beluga in the deep blue sea 🌊",
+        "swims so wild and you swim so free 🆓",
+        "the waves roll in and the waves roll out 🌊",
+        "see the water squirt out your spout 🐳",
+        "🐳 BAAAAABY 🐳 BELUUUUUGA 🐳",
+        "🐳 OH 🐳 BAAAABY 🐳 BELUUUUGA 🐳",
+        "is the water warm 🔥",
+        "is your mom home 👩‍👦",
+        "🌈 with you 🌈 so happy 🌈",
+    ];
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Tank {
-    pub id: i32,
-    pub name: String,
+pub struct Beluga {
+    line: usize,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Temp {
-    pub f: f32,
-    pub c: f32,
+impl Beluga {
+    pub fn new() -> Beluga {
+        Beluga { line: 0 }
+    }
+
+    pub fn sing(&self) -> &str {
+        song[self.line]
+    }
+
+    pub fn next(&mut self) {
+        self.line = (self.line + 1) % song.len()
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Ph {
-    pub val: f32,
-    pub mv: f32,
+pub struct Model {
+    baby: Beluga,
 }
 
-#[wasm_bindgen]
-pub fn run() -> Promise {
-    let mut opts = RequestInit::new();
-    opts.method("GET");
-    opts.mode(RequestMode::Cors);
+pub enum Msg {
+    Click,
+}
 
-    let request = Request::new_with_str_and_init("http://localhost:3000", &opts).unwrap();
+impl Component for Model {
+    type Message = Msg;
+    type Properties = ();
 
-    request.headers().set("Accept", "application/json").unwrap();
+    fn create(_: Self::Properties, _: ComponentLink<Self>) -> Self {
+        Model {
+            baby: Beluga::new(),
+        }
+    }
 
-    let window = web_sys::window().unwrap();
-    let request_promise = window.fetch_with_request(&request);
+    fn update(&mut self, msg: Self::Message) -> ShouldRender {
+        match msg {
+            Msg::Click => self.baby.next(),
+        }
+        true
+    }
+}
 
-    let future = JsFuture::from(request_promise)
-        .and_then(|resp_value| {
-            // `resp_value` is a `Response` object.
-            assert!(resp_value.is_instance_of::<Response>());
-            let resp: Response = resp_value.dyn_into().unwrap();
-            resp.json()
-        })
-        .and_then(|p: Promise| {
-            // Convert this other `Promise` into a rust `Future`.
-            JsFuture::from(p)
-        })
-        .and_then(|json| {
-            let w2 = web_sys::window().unwrap();
-            let document = w2.document().expect("expected document");
-            let body = document.body().expect("document should have a body");
-
-            let status_r: Result<Vec<TankStatus>, _> = json.into_serde();
-
-            let fmt_status = match status_r {
-                Ok(statuses) => statuses
-                    .iter()
-                    .map(|status| {
-                        format!(
-                            "Tank {} ({}): {}F, pH {} ({} mv)<br>",
-                            status.tank.id,
-                            status.tank.name,
-                            status.temp.f,
-                            status.ph.val,
-                            status.ph.mv
-                        )
-                    })
-                    .collect(),
-                Err(e) => format!("Error: {}", e),
-            };
-
-            let dom_elem = document.create_element("p").unwrap();
-            dom_elem.set_inner_html(&fmt_status);
-
-            // Manual cast of `val: Element` to `&Node`, to call the
-            // `append_child` method.
-            AsRef::<web_sys::Node>::as_ref(&body)
-                .append_child(dom_elem.as_ref())
-                .unwrap();
-
-            // This doesn't actually get used, but we need
-            // to send something.
-            future::ok(json)
-        });
-
-    // Convert this Rust `Future` back into a JS `Promise`.
-    future_to_promise(future)
+impl Renderable<Model> for Model {
+    fn view(&self) -> Html<Self> {
+        html! {
+            <div>
+                <button class="pure-button pure-button-primary", onclick=|_| Msg::Click,>{ "Click" }</button>
+                <p>
+                { self.baby.sing() }
+                </p>
+            </div>
+        }
+    }
 }
