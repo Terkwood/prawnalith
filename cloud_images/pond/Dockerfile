@@ -27,4 +27,8 @@ RUN apk --no-cache add ca-certificates
 COPY --from=builder \
     /home/rust/src/target/x86_64-unknown-linux-musl/release/pond \
     /usr/local/bin/
+
+# .env, Rocket.toml, etc will be mounted here
+WORKDIR /data
+
 CMD [ "/usr/local/bin/pond" ]
