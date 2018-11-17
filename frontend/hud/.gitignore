@@ -1,0 +1,7 @@
+/target
+**/*.rs.bk
+Cargo.lock
+static/hud.js
+static/config.js
+*.cache
+.firebaserc
