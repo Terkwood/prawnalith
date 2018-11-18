@@ -92,6 +92,12 @@ function getUiConfig() {
    * @param {!firebase.User} user
    */
   var handleSignedInUser = function(user) {
+    user.getIdToken(forceRefresh)
+    .then(function(token) { 
+        current_token = token; 
+        console.log("Side effect hell with " + token);
+    })
+    .catch(function(err){console.log("We fail")});
     document.getElementById('user-signed-in').style.display = 'block';
     document.getElementById('user-signed-out').style.display = 'none';
     document.getElementById('name').textContent = user.displayName;
