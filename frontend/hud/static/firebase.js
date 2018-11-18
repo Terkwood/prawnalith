@@ -26,11 +26,7 @@ function getUiConfig() {
                 authResult.additionalUserInfo.isNewUser ?
                 'New User' : 'Existing User';
           }
-          user.getIdToken(false)
-            .then(function(token) {
-                current_token = token;
-            })
-            .catch(function(err){console.log("Token fetch fail")});
+        
           // Do not redirect.
           return false;
         }
