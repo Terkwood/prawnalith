@@ -80,7 +80,7 @@ impl Renderable<Model> for Model {
     fn view(&self) -> Html<Self> {
         html! {
             <div>
-                <button class="button-xlarge pure-button", onclick=|_| Msg::SignIn,>{ "Sign In" }</button>
+                <button class="button-xlarge pure-button", style="font-size: 300%", onclick=|_| Msg::SignIn,>{ "Sign In" }</button>
                 <br/>
                 <div>{if let Some(_auth_token) = &self.auth_token { "🦐 Ready 🦐" } else { "" }}</div>
             </div>
