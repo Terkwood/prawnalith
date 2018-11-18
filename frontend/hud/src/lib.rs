@@ -54,7 +54,7 @@ impl Component for Model {
     type Properties = ();
 
     fn create(_: Self::Properties, _: ComponentLink<Self>) -> Self {
-        firebase_init();
+
         Model {
             baby: HeadsUpDisplay::new(),
         }
@@ -104,8 +104,3 @@ impl Renderable<Model> for Model {
         }
     }
 }
-
-    fn firebase_init() {
-    
-        //js!{initApp();}
-    }

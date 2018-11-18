@@ -13,7 +13,7 @@ function getUiConfig() {
         // Called when the user has been successfully signed in.
         'signInSuccessWithAuthResult': function(authResult, redirectUrl) {
             if (authResult.user) {
-            handleSignedInUser(authResult.user);
+                handleSignedInUser(authResult.user);
             }
             if (authResult.additionalUserInfo) {
             window.document.getElementById('is-new-user').textContent =
@@ -159,8 +159,8 @@ window.addEventListener('load', initApp);
  * @return {string} The reCAPTCHA rendering mode from the configuration.
  */
 function getRecaptchaMode() {
-// Quick way of checking query params in the fragment. If we add more config
-// we might want to actually parse the fragment as a query string.
-return location.hash.indexOf('recaptcha=invisible') !== -1 ?
-    'invisible' : 'normal';
+    // Quick way of checking query params in the fragment. If we add more config
+    // we might want to actually parse the fragment as a query string.
+    return location.hash.indexOf('recaptcha=invisible') !== -1 ?
+        'invisible' : 'normal';
 }
