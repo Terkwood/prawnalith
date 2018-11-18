@@ -23,35 +23,61 @@ impl HeadsUpDisplay {
     pub fn update(&mut self) {}
 }
 
+#[derive(Default, PartialEq, Eq, Clone)]
 pub struct AuthToken(pub String);
 
 pub struct Model {
     auth_token: Option<AuthToken>,
     baby: HeadsUpDisplay,
+    link: ComponentLink<Model>,
 }
 
 pub enum Msg {
     SignIn,
     ConjureToken,
+    TokenPayload(String),
+}
+
+#[derive(Default, PartialEq, Eq, Clone)]
+pub struct Props {
+    auth_token: Option<AuthToken>,
 }
 
 impl Component for Model {
     type Message = Msg;
-    type Properties = ();
+    type Properties = Props;
 
-    fn create(_: Self::Properties, _: ComponentLink<Self>) -> Self {
+    fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
         Model {
             auth_token: None,
             baby: HeadsUpDisplay::new(),
+            link,
         }
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
-            Msg::SignIn => firebase_login(),
-            Msg::ConjureToken => firebase_conjure_token(),
+            Msg::SignIn => {
+                firebase_login();
+                false
+            }
+            Msg::ConjureToken => {
+                firebase_conjure_token(self.link.send_back(Msg::TokenPayload));
+                false
+            }
+            Msg::TokenPayload(auth_token) => self.change(Self::Properties {
+                auth_token: Some(AuthToken(auth_token)),
+            }),
         }
-        true
+    }
+
+    fn change(&mut self, Self::Properties { auth_token }: Self::Properties) -> ShouldRender {
+        if auth_token == self.auth_token {
+            false
+        } else {
+            self.auth_token = auth_token;
+            true
+        }
     }
 }
 
@@ -64,13 +90,6 @@ impl Renderable<Model> for Model {
             <br/>
             <button class="pure-button", onclick=|_| Msg::ConjureToken,>{ "Conjure Token" }</button>
 
-            
-                /*if let Some(t) = &self.auth_token {
-                    format!("Token: {}", t.0)
-                } else {
-                    "No Token for you!".to_string()
-                }*/
-            
         }
     }
 }
@@ -78,11 +97,18 @@ fn firebase_login() {
     js! { firebase.auth().signInWithRedirect(new firebase.auth.GoogleAuthProvider()) }
 }
 
-fn firebase_conjure_token() {
+fn firebase_conjure_token(token_callback: Callback<String>) {
+    let callback = move |token: String| token_callback.emit(token);
     js! {
         firebase.auth()
             .getRedirectResult()
-            .then(function(result) { if (result.credential) { current_token = result.credential.accessToken; } })
+            .then(function(result) {
+                if (result.credential) {
+                    return result.credential.accessToken;
+                } else {
+                    return "";
+                }
+            })
     }
 }
 
