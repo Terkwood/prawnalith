@@ -23,7 +23,7 @@ impl HeadsUpDisplay {
     pub fn update(&mut self) {}
 }
 
-#[derive(Default, PartialEq, Eq, Clone)]
+#[derive(Default, PartialEq, Eq, Clone, Debug)]
 pub struct AuthToken(pub String);
 
 pub struct Model {
@@ -89,7 +89,7 @@ impl Renderable<Model> for Model {
             <button class="pure-button", onclick=|_| Msg::SignIn,>{ "Sign In" }</button>
             <br/>
             <button class="pure-button", onclick=|_| Msg::ConjureToken,>{ "Conjure Token" }</button>
-
+            <p>{format!("{:?}", self.auth_token)}</p>
         }
     }
 }
@@ -100,13 +100,14 @@ fn firebase_login() {
 fn firebase_conjure_token(token_callback: Callback<String>) {
     let callback = move |token: String| token_callback.emit(token);
     js! {
+        // Yew magic
+        var callback = @{callback};
         firebase.auth()
             .getRedirectResult()
             .then(function(result) {
                 if (result.credential) {
-                    return result.credential.accessToken;
-                } else {
-                    return "";
+                    callback(result.credential.accessToken);
+                    callback.drop();
                 }
             })
     }
