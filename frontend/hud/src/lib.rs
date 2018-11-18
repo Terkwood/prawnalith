@@ -1,11 +1,10 @@
-#![recursion_limit="256"]
+#![recursion_limit = "1024"]
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
 extern crate stdweb;
 #[macro_use]
 extern crate yew;
-
 
 use yew::prelude::*;
 
@@ -54,7 +53,7 @@ impl Component for Model {
     type Properties = ();
 
     fn create(_: Self::Properties, _: ComponentLink<Self>) -> Self {
-
+        firebase_init();
         Model {
             baby: HeadsUpDisplay::new(),
         }
@@ -103,4 +102,7 @@ impl Renderable<Model> for Model {
         </div>
         }
     }
+}
+fn firebase_init() {
+    
 }

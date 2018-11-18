@@ -154,7 +154,7 @@ var ui = new firebaseui.auth.AuthUI(firebase.auth());
 ui.disableAutoSignIn();
 
 window.addEventListener('load', initApp);
-
+console.log('Hello Yes');
 /**
  * @return {string} The reCAPTCHA rendering mode from the configuration.
  */
