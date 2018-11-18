@@ -36,7 +36,7 @@ function getUiConfig() {
         }
       },
       // Opens IDP Providers sign-in flow in a popup.
-      'signInFlow': 'popup',
+      'signInFlow': 'redirect',
       'signInOptions': [
         // TODO(developer): Remove the providers you don't need for your app.
         {
