@@ -100,3 +100,6 @@ fn firebase_retrieve_token() -> Option<String> {
         Some(v)
     }
 }
+
+// TODO next best steps for this frankenstein:
+// https://github.com/DenisKolodin/yew/blob/master/examples/js_callback/src/lib.rs
