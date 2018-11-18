@@ -79,14 +79,15 @@ impl Component for Model {
 impl Renderable<Model> for Model {
     fn view(&self) -> Html<Self> {
         html! {
-            <div>{"Hello"}</div>
-            <br/>
-            <button class="pure-button", onclick=|_| Msg::SignIn,>{ "Sign In" }</button>
-            <br/>
-            <p>{format!("{:?}", self.auth_token)}</p>
+            <div>
+                <button class="pure-button", onclick=|_| Msg::SignIn,>{ "Sign In" }</button>
+                <br/>
+                <div>{if let Some(_auth_token) = &self.auth_token { "🦐 Ready 🦐" } else { "" }}</div>
+            </div>
         }
     }
 }
+
 fn firebase_login() {
     js! { firebase.auth().signInWithRedirect(new firebase.auth.GoogleAuthProvider()) }
 }
