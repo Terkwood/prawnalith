@@ -1,4 +1,5 @@
 // Thanks to Google for providing this under Apache 2
+// This is used by widget.html
 
 /**
  * @return {string} The reCAPTCHA rendering mode from the configuration.
