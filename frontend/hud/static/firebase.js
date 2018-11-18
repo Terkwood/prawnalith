@@ -1,6 +1,11 @@
-// Thanks to Google for making this code available via Apache 2 license.
+// Thanks to Google for making most of this code available via Apache 2 license.
+// See https://github.com/firebase/firebaseui-web/blob/master/demo/public/app.js
 
-  
+var current_token = null;
+var get_current_token = function() {
+    return current_token;
+};
+
 /**
  * FirebaseUI initialization to be used in a Single Page application context.
  */
@@ -21,6 +26,11 @@ function getUiConfig() {
                 authResult.additionalUserInfo.isNewUser ?
                 'New User' : 'Existing User';
           }
+          user.getIdToken(false)
+            .then(function(token) {
+                current_token = token;
+            })
+            .catch(function(err){console.log("Token fetch fail")});
           // Do not redirect.
           return false;
         }
@@ -155,4 +165,5 @@ function getUiConfig() {
   };
   
   window.addEventListener('load', initApp);
+
   
