@@ -6,7 +6,6 @@ extern crate stdweb;
 #[macro_use]
 extern crate yew;
 
-use stdweb::Value;
 use yew::prelude::*;
 
 pub struct HeadsUpDisplay {}
@@ -17,7 +16,7 @@ impl HeadsUpDisplay {
     }
 
     pub fn show(&self) -> &str {
-        "hi"
+        "Tank 1 blah blah Tank 2 blah blah"
     }
 
     pub fn update(&mut self) {}
@@ -28,7 +27,7 @@ pub struct AuthToken(pub String);
 
 pub struct Model {
     auth_token: Option<AuthToken>,
-    baby: HeadsUpDisplay,
+    hud: HeadsUpDisplay,
     link: ComponentLink<Model>,
 }
 
@@ -50,7 +49,7 @@ impl Component for Model {
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
         Model {
             auth_token: None,
-            baby: HeadsUpDisplay::new(),
+            hud: HeadsUpDisplay::new(),
             link,
         }
     }
@@ -110,21 +109,6 @@ fn firebase_conjure_token(token_callback: Callback<String>) {
                     callback.drop();
                 }
             })
-    }
-}
-
-fn firebase_retrieve_token() -> Option<String> {
-    let v: Value = js! {
-        if (current_token === undefined) {
-            current_token = "";
-        }
-        return current_token;
-    };
-    let v: String = stdweb::unstable::TryInto::try_into(v).expect("can't extract token");
-    if v == "" {
-        None
-    } else {
-        Some(v)
     }
 }
 
