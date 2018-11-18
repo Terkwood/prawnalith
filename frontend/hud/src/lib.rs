@@ -33,7 +33,6 @@ pub struct Model {
 
 pub enum Msg {
     SignIn,
-    ConjureToken,
     TokenPayload(String),
 }
 
@@ -47,7 +46,7 @@ impl Component for Model {
     type Properties = Props;
 
     fn create(_: Self::Properties, mut link: ComponentLink<Self>) -> Self {
-        link.send_back(Msg::TokenPayload);
+        firebase_on_auth_state_change(link.send_back(Msg::TokenPayload));
         Model {
             auth_token: None,
             hud: HeadsUpDisplay::new(),
@@ -59,10 +58,6 @@ impl Component for Model {
         match msg {
             Msg::SignIn => {
                 firebase_login();
-                false
-            }
-            Msg::ConjureToken => {
-                firebase_conjure_token(self.link.send_back(Msg::TokenPayload));
                 false
             }
             Msg::TokenPayload(auth_token) => self.change(Self::Properties {
@@ -88,29 +83,12 @@ impl Renderable<Model> for Model {
             <br/>
             <button class="pure-button", onclick=|_| Msg::SignIn,>{ "Sign In" }</button>
             <br/>
-            <button class="pure-button", onclick=|_| Msg::ConjureToken,>{ "Conjure Token" }</button>
             <p>{format!("{:?}", self.auth_token)}</p>
         }
     }
 }
 fn firebase_login() {
     js! { firebase.auth().signInWithRedirect(new firebase.auth.GoogleAuthProvider()) }
-}
-
-fn firebase_conjure_token(token_callback: Callback<String>) {
-    let callback = move |token: String| token_callback.emit(token);
-    js! {
-        // Yew magic
-        var callback = @{callback};
-        firebase.auth()
-            .getRedirectResult()
-            .then(function(result) {
-                if (result.credential) {
-                    callback(result.credential.accessToken);
-                    callback.drop();
-                }
-            })
-    }
 }
 
 fn firebase_on_auth_state_change(token_callback: Callback<String>) {
@@ -120,8 +98,11 @@ fn firebase_on_auth_state_change(token_callback: Callback<String>) {
         var callback = @{callback};
         firebase.auth()
             .onAuthStateChanged(function(user) {
-                user.getIdToken(false).then(function(token){callback(result.credential.accessToken);
-                    callback.drop();});
+                user.getIdToken(false).then(
+                    function(token){
+                        callback(token);
+                        callback.drop();
+                    });
             } );
     }
 }
