@@ -46,7 +46,8 @@ impl Component for Model {
     type Message = Msg;
     type Properties = Props;
 
-    fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
+    fn create(_: Self::Properties, mut link: ComponentLink<Self>) -> Self {
+        link.send_back(Msg::TokenPayload);
         Model {
             auth_token: None,
             hud: HeadsUpDisplay::new(),
@@ -109,6 +110,19 @@ fn firebase_conjure_token(token_callback: Callback<String>) {
                     callback.drop();
                 }
             })
+    }
+}
+
+fn firebase_on_auth_state_change(token_callback: Callback<String>) {
+    let callback = move |token: String| token_callback.emit(token);
+    js! {
+        // Yew magic interpolation
+        var callback = @{callback};
+        firebase.auth()
+            .onAuthStateChanged(function(user) {
+                user.getIdToken(false).then(function(token){callback(result.credential.accessToken);
+                    callback.drop();});
+            } );
     }
 }
 

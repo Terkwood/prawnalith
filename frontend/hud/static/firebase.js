@@ -29,7 +29,6 @@ function getUiConfig() {
       // Opens IDP Providers sign-in flow in a popup.
       'signInFlow': 'redirect',
       'signInOptions': [
-        // TODO(developer): Remove the providers you don't need for your app.
         {
           provider: firebase.auth.GoogleAuthProvider.PROVIDER_ID,
           // Required to enable this provider in One-Tap Sign-up.
