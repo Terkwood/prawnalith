@@ -7,12 +7,43 @@
         <script src="https://www.gstatic.com/firebasejs/5.5.8/firebase-app.js"></script>
         <script src="https://www.gstatic.com/firebasejs/5.5.8/firebase-auth.js"></script>
         <script src="config.js"></script>
+        <script src="common.js"></script>
+        <link href="style.css" rel="stylesheet" type="text/css" media="screen" />
         <script src="https://cdn.firebase.com/libs/firebaseui/3.4.1/firebaseui.js"></script>
         <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/3.4.1/firebaseui.css" /><meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/pure-min.css" integrity="sha384-nn4HPE8lTHyVtfCBi5yW9d20FjT8BJwUXyWZT9InLYax14RDjBj46LmSztkmNP9w" crossorigin="anonymous">
     </head>
     <body>
-        <script src="hud.js"></script>
+    <div id="container">
+            <h3>Prawnalith</h3>
+            <div id="loading">Loading...</div>
+            <div id="loaded" class="hidden">
+                <div id="main">
+                <div id="user-signed-in" class="hidden">
+                    <div id="user-info">
+                    <div id="photo-container">
+                        <img id="photo">
+                    </div>
+                    <div id="name"></div>
+                    <div id="email"></div>
+                    <div id="phone"></div>
+                    <div id="is-new-user"></div>
+                    <div class="clearfix"></div>
+                    </div>
+                    <p>
+                    <button id="sign-out">Sign Out</button>
+                    <button id="delete-account">Delete account</button>
+                    </p>
+                </div>
+                <div id="user-signed-out" class="hidden">
+                    <h4>You are signed out.</h4>
+                    <div id="firebaseui-spa">
+                    <div id="firebaseui-container"></div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>  
         <script src="firebase.js"></script>
     </body>
 </html>
