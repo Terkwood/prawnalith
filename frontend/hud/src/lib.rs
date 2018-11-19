@@ -2,8 +2,6 @@
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
-extern crate serde_derive;
-#[macro_use]
 extern crate stdweb;
 #[macro_use]
 extern crate yew;
@@ -24,7 +22,7 @@ impl HeadsUpDisplay {
     pub fn update(&mut self) {}
 }
 
-#[derive(Default, PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
+#[derive(Default, PartialEq, Eq, Clone, Debug)]
 pub struct AuthToken(pub String);
 
 pub struct Model {
@@ -113,25 +111,6 @@ fn firebase_logout() {
     js! { firebase.auth().signOut(); }
 }
 
-#[derive(Deserialize, Serialize)]
-struct AuthUser {
-    uid: String,
-    display_name: Option<String>,
-    photo_url: Option<String>,
-    email: Option<String>,
-    email_verified: Option<bool>,
-    phone_number: Option<String>,
-    api_key: Option<String>,
-    sts_token_manager: Option<StsTokenManager>,
-}
-
-#[derive(Deserialize, Serialize)]
-struct StsTokenManager {
-    access_token: Option<AuthToken>,
-}
-
-js_serializable!(AuthUser);
-
 // You may not need to trigger an additional fetch, if the Google AuthProvider
 // js data structure already contains a token.
 fn firebase_on_auth_state_change(token_callback: Callback<String>) {
@@ -141,11 +120,17 @@ fn firebase_on_auth_state_change(token_callback: Callback<String>) {
         var callback = @{callback};
         firebase.auth()
             .onAuthStateChanged(function(user) {
-                user.getIdToken(false).then(
-                    function(token){
-                        callback(token);
-                        callback.drop();
-                    });
+                var user_json = user.toJSON();
+                if (user_json.stsTokenManager && user_json.stsTokenManager.accessToken) {
+                    callback(user_json.stsTokenManager.accessToken);
+                    callback.drop();
+                } else {
+                    user.getIdToken(false).then(
+                        function(token){
+                            callback(token);
+                            callback.drop();
+                        });
+                    }
             } );
     }
 }
