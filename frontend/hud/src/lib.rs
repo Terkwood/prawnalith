@@ -2,6 +2,8 @@
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
+extern crate serde_derive;
+#[macro_use]
 extern crate stdweb;
 #[macro_use]
 extern crate yew;
@@ -22,7 +24,7 @@ impl HeadsUpDisplay {
     pub fn update(&mut self) {}
 }
 
-#[derive(Default, PartialEq, Eq, Clone, Debug)]
+#[derive(Default, PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct AuthToken(pub String);
 
 pub struct Model {
@@ -87,25 +89,17 @@ impl Renderable<Model> for Model {
             <div style="font-size: 300%",>
              {
                 if let Some(_auth_token) = &self.auth_token {
-                    html!{ <button class="button-xlarge pure-button",
-                            onclick=|_| Msg::SignOut,>
-                    { "Sign Out" }
-                    </button> }
+                    html! { <div>{ "🦐 Ready 🦐" }</div> }
                 } else {
-                    html!{ <button class="button-xlarge pure-button pure-button-primary",
+                    html! {
+                        <button
+                            class="button-xlarge pure-button pure-button-primary",
                             onclick=|_| Msg::SignIn,>
-                    { "Sign In" }
-                    </button> }
+                        { "Sign In" }
+                        </button>
+                    }
                 }
             }
-            <br/>
-            {
-                if let Some(_auth_token) = &self.auth_token {
-                    "🦐 Ready 🦐"
-                } else {
-                    ""
-                }
-             }
             </div>
         }
     }
@@ -119,6 +113,27 @@ fn firebase_logout() {
     js! { firebase.auth().signOut(); }
 }
 
+#[derive(Deserialize, Serialize)]
+struct AuthUser {
+    uid: String,
+    display_name: Option<String>,
+    photo_url: Option<String>,
+    email: Option<String>,
+    email_verified: Option<bool>,
+    phone_number: Option<String>,
+    api_key: Option<String>,
+    sts_token_manager: Option<StsTokenManager>,
+}
+
+#[derive(Deserialize, Serialize)]
+struct StsTokenManager {
+    access_token: Option<AuthToken>,
+}
+
+js_serializable!(AuthUser);
+
+// You may not need to trigger an additional fetch, if the Google AuthProvider
+// js data structure already contains a token.
 fn firebase_on_auth_state_change(token_callback: Callback<String>) {
     let callback = move |token: String| token_callback.emit(token);
     js! {
