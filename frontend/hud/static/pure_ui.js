@@ -1,3 +1,5 @@
+// Provided by https://purecss.io/js/ui.js under zlib.
+// Thank you!
 (function (window, document) {
 
     var layout   = document.getElementById('layout'),
