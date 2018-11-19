@@ -1,15 +1,8 @@
-html,
-body {
-    font-size: 150%;
+/* center the sign-in/sign-out buttons */
+.centered-menu-item {
+    margin-top: 1em;
+    text-align:center;
 }
-
-.custom-restricted-width {
-    /* To limit the menu width to the content of the menu: */
-    display: inline-block;
-    /* Or set the width explicitly: */
-    /* width: 10em; */
-}
-
 
 /* https://purecss.io/css/layouts/side-menu.css */
 body {

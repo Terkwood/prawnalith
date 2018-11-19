@@ -79,6 +79,9 @@ impl Component for Model {
     }
 }
 
+/// Render an HTML model of our information.
+/// The layout is liberally lifted from https://purecss.io/layouts/side-menu/#
+/// Thanks, PureCSS!
 impl Renderable<Model> for Model {
     fn view(&self) -> Html<Self> {
         html! {
@@ -90,28 +93,27 @@ impl Renderable<Model> for Model {
 
     <div id="menu",>
         <div class="pure-menu",>
-            <a class="pure-menu-heading", href="#",>{ "🦐 Prawnalith 🦐" }</a>
-
             <ul class="pure-menu-list",>
-                <li class="pure-menu-item",>{
-                            if let Some(_auth_token) = &self.auth_token {
-                                html! {
-                                    <button
-                                        class="pure-button",
-                                        onclick=|_| Msg::SignOut,>
-                                    { "Sign Out" }
-                                    </button>
-                                }
-                            } else {
-                                html! {
-                                    <button
-                                        class="pure-button pure-button-primary",
-                                        onclick=|_| Msg::SignIn,>
-                                    { "Sign In" }
-                                    </button>
-                                }
-                            }
+                <li class="pure-menu-item centered-menu-item",>
+                {
+                    if let Some(_auth_token) = &self.auth_token {
+                        html! {
+                            <button
+                                class="pure-button",
+                                onclick=|_| Msg::SignOut,>
+                            { "Sign Out" }
+                            </button>
                         }
+                    } else {
+                        html! {
+                            <button
+                                class="pure-button pure-button-primary",
+                                onclick=|_| Msg::SignIn,>
+                            { "Sign In" }
+                            </button>
+                        }
+                    }
+                }
                 </li>
             </ul>
         </div>
@@ -120,7 +122,7 @@ impl Renderable<Model> for Model {
     <div id="main",>
         <div class="header",>
             <h1>{ "🦐 Prawnalith 🦐" }</h1>
-            <h2>{ "This header isn't necessary" }</h2>
+            <h2>{ "A tank for the ages" }</h2>
         </div>
 
         <div class="content",>
@@ -155,8 +157,7 @@ impl Renderable<Model> for Model {
             </p>
         </div>
     </div>
-</div>
-                
+</div>       
         }
     }
 }
