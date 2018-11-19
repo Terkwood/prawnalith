@@ -85,79 +85,86 @@ impl Component for Model {
 impl Renderable<Model> for Model {
     fn view(&self) -> Html<Self> {
         html! {
-<div id="layout",>
-    // Menu toggle
-    <a href="#menu", id="menuLink", class="menu-link",>
-        <span></span>
-    </a>
+        <div id="layout",>
+            // Menu toggle
+            <a href="#menu", id="menuLink", class="menu-link",>
+                <span></span>
+            </a>
 
-    <div id="menu",>
-        <div class="pure-menu",>
-            <ul class="pure-menu-list",>
-                <li class="pure-menu-item centered-menu-item",>
-                {
-                    if let Some(_auth_token) = &self.auth_token {
-                        html! {
-                            <button
-                                class="pure-button",
-                                onclick=|_| Msg::SignOut,>
-                            { "Sign Out" }
-                            </button>
+            <div id="menu",>
+                <div class="pure-menu",>
+                    <ul class="pure-menu-list",>
+                        <li class="pure-menu-item centered-menu-item",>
+                        {
+                            if let Some(_auth_token) = &self.auth_token {
+                                html! {
+                                    <button
+                                        class="pure-button",
+                                        onclick=|_| Msg::SignOut,>
+                                    { "Sign Out" }
+                                    </button>
+                                }
+                            } else {
+                                html! {
+                                    <button
+                                        class="pure-button pure-button-primary",
+                                        onclick=|_| Msg::SignIn,>
+                                    { "Sign In" }
+                                    </button>
+                                }
+                            }
                         }
-                    } else {
-                        html! {
-                            <button
-                                class="pure-button pure-button-primary",
-                                onclick=|_| Msg::SignIn,>
-                            { "Sign In" }
-                            </button>
-                        }
-                    }
-                }
-                </li>
-            </ul>
-        </div>
-    </div>
-
-    <div id="main",>
-        <div class="header",>
-            <h1>{ "🦐 Prawnalith 🦐" }</h1>
-            <h2>{ "A tank for the ages" }</h2>
-        </div>
-
-        <div class="content",>
-            <h2 class="content-subhead",>{ "Feed and care for your prawns" }</h2>
-            <p>
-                { if let Some(_auth_token) = &self.auth_token { "🦐 Ready 🦐" } else { "" } }
-            </p>
-
-            <h2 class="content-subhead",>{ "There are things which exist" }</h2>
-            <p>
-               { "And some other text" }
-            </p>
-
-            <div class="pure-g",>
-                <div class="pure-u-1-4",>
-                    <img class="pure-img-responsive", src="http://farm3.staticflickr.com/2875/9069037713_1752f5daeb.jpg", alt="Peyto Lake",></img>
-                </div>
-                <div class="pure-u-1-4",>
-                    <img class="pure-img-responsive", src="http://farm3.staticflickr.com/2813/9069585985_80da8db54f.jpg", alt="Train",></img>
-                </div>
-                <div class="pure-u-1-4",>
-                    <img class="pure-img-responsive", src="http://farm6.staticflickr.com/5456/9121446012_c1640e42d0.jpg", alt="T-Shirt Store",></img>
-                </div>
-                <div class="pure-u-1-4",>
-                    <img class="pure-img-responsive", src="http://farm8.staticflickr.com/7357/9086701425_fda3024927.jpg", alt="Mountain",></img>
+                        </li>
+                    </ul>
                 </div>
             </div>
+            <div id="main",>
+                        <div class="header",>
+                            <h1>{ "🦐 Prawnalith 🦐" }</h1>
+                            <h2>{ "A tank for the ages" }</h2>
+                        </div>
+            { if let Some(_auth_token) = &self.auth_token {
+                html! {
+                    <div class="content",>
+                        <h2 class="content-subhead",>{ "Feed and care for your prawns" }</h2>
+                        <p>
+                        { "They're a bit hungry" }
+                        </p>
 
-            <h2 class="content-subhead",>{ "Try Resizing your Browser" }</h2>
-            <p>
-                { "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum." }
-            </p>
+                        <h2 class="content-subhead",>{ "There are things which exist" }</h2>
+                        <p>
+                        { "And some other text" }
+                        </p>
+
+                        <div class="pure-g",>
+                            <div class="pure-u-1-4",>
+                                <img class="pure-img-responsive", src="http://farm3.staticflickr.com/2875/9069037713_1752f5daeb.jpg", alt="Peyto Lake",></img>
+                            </div>
+                            <div class="pure-u-1-4",>
+                                <img class="pure-img-responsive", src="http://farm3.staticflickr.com/2813/9069585985_80da8db54f.jpg", alt="Train",></img>
+                            </div>
+                            <div class="pure-u-1-4",>
+                                <img class="pure-img-responsive", src="http://farm6.staticflickr.com/5456/9121446012_c1640e42d0.jpg", alt="T-Shirt Store",></img>
+                            </div>
+                            <div class="pure-u-1-4",>
+                                <img class="pure-img-responsive", src="http://farm8.staticflickr.com/7357/9086701425_fda3024927.jpg", alt="Mountain",></img>
+                            </div>
+                        </div>
+
+                        <h2 class="content-subhead",>{ "Try Resizing your Browser" }</h2>
+                        <p>
+                            { "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum." }
+                        </p>
+                    </div>
+
+                    }
+                } else {
+                    html!{ <br/> }
+                }
+
+            }
+            </div>
         </div>
-    </div>
-</div>       
         }
     }
 }
