@@ -33,6 +33,7 @@ pub struct Model {
 
 pub enum Msg {
     SignIn,
+    SignOut,
     TokenPayload(String),
 }
 
@@ -60,6 +61,10 @@ impl Component for Model {
                 firebase_login();
                 false
             }
+            Msg::SignOut => {
+                firebase_logout();
+                true
+            }
             Msg::TokenPayload(auth_token) => self.change(Self::Properties {
                 auth_token: Some(AuthToken(auth_token)),
             }),
@@ -79,10 +84,28 @@ impl Component for Model {
 impl Renderable<Model> for Model {
     fn view(&self) -> Html<Self> {
         html! {
-            <div>
-                <button class="button-xlarge pure-button", style="font-size: 300%", onclick=|_| Msg::SignIn,>{ "Sign In" }</button>
-                <br/>
-                <div>{if let Some(_auth_token) = &self.auth_token { "🦐 Ready 🦐" } else { "" }}</div>
+            <div style="font-size: 300%",>
+             {
+                if let Some(_auth_token) = &self.auth_token {
+                    html!{ <button class="button-xlarge pure-button",
+                            onclick=|_| Msg::SignOut,>
+                    { "Sign Out" }
+                    </button> }
+                } else {
+                    html!{ <button class="button-xlarge pure-button pure-button-primary",
+                            onclick=|_| Msg::SignIn,>
+                    { "Sign In" }
+                    </button> }
+                }
+            }
+            <br/>
+            {
+                if let Some(_auth_token) = &self.auth_token {
+                    "🦐 Ready 🦐"
+                } else {
+                    ""
+                }
+             }
             </div>
         }
     }
@@ -90,6 +113,10 @@ impl Renderable<Model> for Model {
 
 fn firebase_login() {
     js! { firebase.auth().signInWithRedirect(new firebase.auth.GoogleAuthProvider()) }
+}
+
+fn firebase_logout() {
+    js! { firebase.auth().signOut(); }
 }
 
 fn firebase_on_auth_state_change(token_callback: Callback<String>) {
