@@ -82,21 +82,36 @@ impl Component for Model {
 impl Renderable<Model> for Model {
     fn view(&self) -> Html<Self> {
         html! {
-            <div style="font-size: 300%",>
-             {
-                if let Some(_auth_token) = &self.auth_token {
-                    html! { <div>{ "🦐 Ready 🦐" }</div> }
-                } else {
-                    html! {
-                        <button
-                            class="button-xlarge pure-button pure-button-primary",
-                            onclick=|_| Msg::SignIn,>
-                        { "Sign In" }
-                        </button>
-                    }
-                }
-            }
-            </div>
+            <div>
+                <div class="pure-menu", width="10em",>
+                    <span class="pure-menu-heading",>{ "🦐 Prawnalith 🦐" }</span>
+                    <ul class="pure-menu-list",>
+                        <li class="pure-menu-item",>
+                        {
+                            if let Some(_auth_token) = &self.auth_token {
+                                html! {
+                                    <button
+                                        class="pure-button",
+                                        onclick=|_| Msg::SignOut,>
+                                    { "Sign Out" }
+                                    </button>
+                                }
+                            } else {
+                                html! {
+                                    <button
+                                        class="pure-button pure-button-primary",
+                                        onclick=|_| Msg::SignIn,>
+                                    { "Sign In" }
+                                    </button>
+                                }
+                            }
+                        }
+                        </li>
+                    </ul>
+                </div>
+                <br/>
+                <div>{ if let Some(_auth_token) = &self.auth_token { "🦐 Ready 🦐" } else { "" } }</div>
+                </div>
         }
     }
 }
@@ -132,6 +147,3 @@ fn firebase_on_auth_state_change(token_callback: Callback<String>) {
             } );
     }
 }
-
-// TODO next best steps for this frankenstein:
-// https://github.com/DenisKolodin/yew/blob/master/examples/js_callback/src/lib.rs
