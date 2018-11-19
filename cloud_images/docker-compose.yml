@@ -1,8 +1,14 @@
 version: '3'
 services:
-  redis:
-    image: "redis" 
+  pond:
+    image: "prawnalith/pond:latest"
     ports:
-      - "63797:6379"
+      - "443:8000"
+    volumes:
+      - "/var/volumes/pond:/data"
+    depends_on:
+      - "redis"
+  redis:
+    image: "redis"
     volumes:
       - "/var/volumes/redis:/data"

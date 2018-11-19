@@ -3,7 +3,7 @@
     "rules": "database.rules.json"
   },
   "hosting": {
-    "public": "public",
+    "public": "static", // use "static" dir for our files
     "rewrites": [
       {
         "source": "/widget",

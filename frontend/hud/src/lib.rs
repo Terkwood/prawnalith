@@ -1,114 +1,201 @@
-// LET THE ATTRIBUTION BE KNOWN
-// this effort was heavily inspired by the following
-// wasm-bindgen examples:
-// https://github.com/rustwasm/wasm-bindgen/tree/master/examples/fetch
-// https://github.com/rustwasm/wasm-bindgen/tree/master/examples/dom
-
-extern crate futures;
-extern crate js_sys;
-extern crate wasm_bindgen;
-extern crate wasm_bindgen_futures;
-extern crate web_sys;
+#![recursion_limit = "256"]
 #[macro_use]
-extern crate serde_derive;
+extern crate stdweb;
+#[macro_use]
+extern crate yew;
 
-use futures::{future, Future};
-use js_sys::Promise;
-use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
-use wasm_bindgen_futures::future_to_promise;
-use wasm_bindgen_futures::JsFuture;
-use web_sys::{Request, RequestInit, RequestMode, Response};
+use yew::prelude::*;
 
-/// A struct to hold some data from the HTTP request
-/// for temp/ph info.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct TankStatus {
-    pub tank: Tank,
-    pub temp: Temp,
-    pub ph: Ph,
+pub struct HeadsUpDisplay {}
+
+impl HeadsUpDisplay {
+    pub fn new() -> HeadsUpDisplay {
+        HeadsUpDisplay {}
+    }
+
+    pub fn show(&self) -> &str {
+        "They're a bit hungry"
+    }
+
+    pub fn update(&mut self) {}
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Tank {
-    pub id: i32,
-    pub name: String,
+#[derive(Default, PartialEq, Eq, Clone, Debug)]
+pub struct AuthToken(pub String);
+
+pub struct Model {
+    auth_token: Option<AuthToken>,
+    hud: HeadsUpDisplay,
+    link: ComponentLink<Model>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Temp {
-    pub f: f32,
-    pub c: f32,
+pub enum Msg {
+    SignIn,
+    SignOut,
+    TokenPayload(String),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Ph {
-    pub val: f32,
-    pub mv: f32,
+#[derive(Default, PartialEq, Eq, Clone)]
+pub struct Props {
+    auth_token: Option<AuthToken>,
 }
 
-#[wasm_bindgen]
-pub fn run() -> Promise {
-    let mut opts = RequestInit::new();
-    opts.method("GET");
-    opts.mode(RequestMode::Cors);
+impl Component for Model {
+    type Message = Msg;
+    type Properties = Props;
 
-    let request = Request::new_with_str_and_init("http://localhost:3000", &opts).unwrap();
+    fn create(_: Self::Properties, mut link: ComponentLink<Self>) -> Self {
+        firebase_on_auth_state_change(link.send_back(Msg::TokenPayload));
+        Model {
+            auth_token: None,
+            hud: HeadsUpDisplay::new(),
+            link,
+        }
+    }
 
-    request.headers().set("Accept", "application/json").unwrap();
+    fn update(&mut self, msg: Self::Message) -> ShouldRender {
+        match msg {
+            Msg::SignIn => {
+                firebase_login();
+                false
+            }
+            Msg::SignOut => {
+                firebase_logout();
+                true
+            }
+            Msg::TokenPayload(auth_token) => self.change(Self::Properties {
+                auth_token: Some(AuthToken(auth_token)),
+            }),
+        }
+    }
 
-    let window = web_sys::window().unwrap();
-    let request_promise = window.fetch_with_request(&request);
+    fn change(&mut self, Self::Properties { auth_token }: Self::Properties) -> ShouldRender {
+        if auth_token == self.auth_token {
+            false
+        } else {
+            self.auth_token = auth_token;
+            true
+        }
+    }
+}
 
-    let future = JsFuture::from(request_promise)
-        .and_then(|resp_value| {
-            // `resp_value` is a `Response` object.
-            assert!(resp_value.is_instance_of::<Response>());
-            let resp: Response = resp_value.dyn_into().unwrap();
-            resp.json()
-        })
-        .and_then(|p: Promise| {
-            // Convert this other `Promise` into a rust `Future`.
-            JsFuture::from(p)
-        })
-        .and_then(|json| {
-            let w2 = web_sys::window().unwrap();
-            let document = w2.document().expect("expected document");
-            let body = document.body().expect("document should have a body");
+/// Render an HTML model of our information.
+/// The layout is liberally lifted from https://purecss.io/layouts/side-menu/#
+/// Thanks, PureCSS!
+impl Renderable<Model> for Model {
+    fn view(&self) -> Html<Self> {
+        html! {
+        <div id="layout",>
+            // Menu toggle
+            <a href="#menu", id="menuLink", class="menu-link",>
+                <span></span>
+            </a>
 
-            let status_r: Result<Vec<TankStatus>, _> = json.into_serde();
+            <div id="menu",>
+                <div class="pure-menu",>
+                    <ul class="pure-menu-list",>
+                        <li class="pure-menu-item centered-menu-item",>
+                        {
+                            if let Some(_auth_token) = &self.auth_token {
+                                html! {
+                                    <button
+                                        class="pure-button",
+                                        onclick=|_| Msg::SignOut,>
+                                    { "Sign Out" }
+                                    </button>
+                                }
+                            } else {
+                                html! {
+                                    <button
+                                        class="pure-button pure-button-primary",
+                                        onclick=|_| Msg::SignIn,>
+                                    { "Sign In" }
+                                    </button>
+                                }
+                            }
+                        }
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div id="main",>
+                        <div class="header",>
+                            <h1>{ "🦐 Prawnalith 🦐" }</h1>
+                            <h2>{ "A tank for the ages" }</h2>
+                        </div>
+            { if let Some(_auth_token) = &self.auth_token {
+                html! {
+                    <div class="content",>
+                        <h2 class="content-subhead",>{ "Let's check on the status of the prawns" }</h2>
+                        <p>
+                        { self.hud.show() }
+                        </p>
 
-            let fmt_status = match status_r {
-                Ok(statuses) => statuses
-                    .iter()
-                    .map(|status| {
-                        format!(
-                            "Tank {} ({}): {}F, pH {} ({} mv)<br>",
-                            status.tank.id,
-                            status.tank.name,
-                            status.temp.f,
-                            status.ph.val,
-                            status.ph.mv
-                        )
-                    })
-                    .collect(),
-                Err(e) => format!("Error: {}", e),
-            };
+                        <h2 class="content-subhead",>{ "There are things which exist" }</h2>
+                        <p>
+                        { "And some other text" }
+                        </p>
 
-            let dom_elem = document.create_element("p").unwrap();
-            dom_elem.set_inner_html(&fmt_status);
+                        <div class="pure-g",>
+                            <div class="pure-u-1-4",>
+                                <img class="pure-img-responsive", src="http://farm3.staticflickr.com/2875/9069037713_1752f5daeb.jpg", alt="Peyto Lake",></img>
+                            </div>
+                            <div class="pure-u-1-4",>
+                                <img class="pure-img-responsive", src="http://farm3.staticflickr.com/2813/9069585985_80da8db54f.jpg", alt="Train",></img>
+                            </div>
+                            <div class="pure-u-1-4",>
+                                <img class="pure-img-responsive", src="http://farm6.staticflickr.com/5456/9121446012_c1640e42d0.jpg", alt="T-Shirt Store",></img>
+                            </div>
+                            <div class="pure-u-1-4",>
+                                <img class="pure-img-responsive", src="http://farm8.staticflickr.com/7357/9086701425_fda3024927.jpg", alt="Mountain",></img>
+                            </div>
+                        </div>
 
-            // Manual cast of `val: Element` to `&Node`, to call the
-            // `append_child` method.
-            AsRef::<web_sys::Node>::as_ref(&body)
-                .append_child(dom_elem.as_ref())
-                .unwrap();
+                        <h2 class="content-subhead",>{ "Try Resizing your Browser" }</h2>
+                        <p>
+                            { "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum." }
+                        </p>
+                    </div>
+                    }
+                } else {
+                    html!{ <br/> }
+                }
 
-            // This doesn't actually get used, but we need
-            // to send something.
-            future::ok(json)
-        });
+            }
+            </div>
+        </div>
+        }
+    }
+}
 
-    // Convert this Rust `Future` back into a JS `Promise`.
-    future_to_promise(future)
+fn firebase_login() {
+    js! { firebase.auth().signInWithRedirect(new firebase.auth.GoogleAuthProvider()) }
+}
+
+fn firebase_logout() {
+    js! { firebase.auth().signOut(); }
+}
+
+// You may not need to trigger an additional fetch, if the Google AuthProvider
+// js data structure already contains a token.
+fn firebase_on_auth_state_change(token_callback: Callback<String>) {
+    let callback = move |token: String| token_callback.emit(token);
+    js! {
+        // Yew magic interpolation
+        var callback = @{callback};
+        firebase.auth()
+            .onAuthStateChanged(function(user) {
+                var user_json = user.toJSON();
+                if (user_json.stsTokenManager && user_json.stsTokenManager.accessToken) {
+                    callback(user_json.stsTokenManager.accessToken);
+                    callback.drop();
+                } else {
+                    user.getIdToken(false).then(
+                        function(token){
+                            callback(token);
+                            callback.drop();
+                        });
+                    }
+            } );
+    }
 }
