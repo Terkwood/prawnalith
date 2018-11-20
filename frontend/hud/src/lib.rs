@@ -14,11 +14,28 @@ use std::time::Duration;
 use yew::prelude::*;
 use yew::services::{ConsoleService, IntervalService, Task};
 
-pub struct HeadsUpDisplay {}
+/// A struct to hold data returned by the HTTP request
+/// for tanks' temp & ph info.
+#[derive(Debug, Deserialize)]
+pub struct Tank {
+    pub id: u16,
+    pub name: Option<String>,
+    pub temp_f: Option<f32>,
+    pub temp_c: Option<f32>,
+    pub temp_update_time: Option<u64>,
+    pub temp_update_count: Option<u32>,
 
-impl HeadsUpDisplay {
-    pub fn new() -> HeadsUpDisplay {
-        HeadsUpDisplay {}
+    pub ph: Option<f32>,
+    pub ph_mv: Option<f32>,
+    pub ph_update_time: Option<u64>,
+    pub ph_update_count: Option<u32>,
+}
+
+pub struct Tanks(pub Vec<Tank>);
+
+impl Tanks {
+    pub fn new() -> Tanks {
+        Tanks(vec![])
     }
 
     pub fn show(&self) -> &str {
@@ -33,7 +50,7 @@ pub struct AuthToken(pub String);
 
 pub struct Model {
     auth_token: Option<AuthToken>,
-    hud: HeadsUpDisplay,
+    tanks: Tanks,
     link: ComponentLink<Model>,
     interval: IntervalService,
     callback_tick: Callback<()>,
@@ -66,7 +83,7 @@ impl Component for Model {
 
         Model {
             auth_token: None,
-            hud: HeadsUpDisplay::new(),
+            tanks: Tanks::new(),
             link,
             interval,
             callback_tick,
@@ -154,7 +171,7 @@ impl Renderable<Model> for Model {
                     <div class="content",>
                         <h2 class="content-subhead",>{ "Let's check on the status of the prawns" }</h2>
                         <p>
-                        { self.hud.show() }
+                        { self.tanks.show() }
                         </p>
 
                         <h2 class="content-subhead",>{ "There are things which exist" }</h2>
