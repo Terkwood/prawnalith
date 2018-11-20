@@ -38,8 +38,12 @@ impl Tanks {
         Tanks(vec![])
     }
 
-    pub fn show(&self) -> &str {
-        "They're a bit hungry"
+    pub fn show(&self) -> String {
+        let mut r = String::new();
+        for tank in &self.0 {
+            r.push_str(&format!("{:?}", tank))
+        }
+        r
     }
 
     pub fn update(&mut self) {}
@@ -54,6 +58,7 @@ pub struct Model {
     link: ComponentLink<Model>,
     interval: IntervalService,
     callback_tick: Callback<()>,
+    interval_job: Option<Box<Task>>,
     fetch_job: Option<Box<Task>>,
     console: ConsoleService,
 }
@@ -79,7 +84,7 @@ impl Component for Model {
 
         let mut interval = IntervalService::new();
         let callback_tick = link.send_back(|_| Msg::Tick);
-        interval.spawn(Duration::from_secs(10), callback_tick.clone().into());
+        let handle = interval.spawn(Duration::from_secs(10), callback_tick.clone().into());
 
         Model {
             auth_token: None,
@@ -87,6 +92,7 @@ impl Component for Model {
             link,
             interval,
             callback_tick,
+            interval_job: Some(Box::new(handle)),
             fetch_job: None,
             console: ConsoleService::new(),
         }
@@ -165,6 +171,7 @@ impl Renderable<Model> for Model {
                         <div class="header",>
                             <h1>{ "🦐 Prawnalith 🦐" }</h1>
                             <h2>{ "A tank for the ages" }</h2>
+                            <p>{ self.tanks.show() }</p> /* TODO REMOVE AFTER YOU'RE DONE TESTING TODO */
                         </div>
             { if let Some(_auth_token) = &self.auth_token {
                 html! {
