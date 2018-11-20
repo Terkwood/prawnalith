@@ -1,3 +1,4 @@
+use failure::Error;
 use yew::callback::Callback;
 use yew::format::{Json, Nothing};
 use yew::services::fetch::{FetchService, FetchTask, Request, Response};
@@ -15,6 +16,14 @@ impl PondService {
         Self {
             web: FetchService::new(),
         }
+    }
+
+    pub fn tanks(&mut self, callback: Callback<Result<Vec<Tank>, Error>>) -> FetchTask {
+        let host = "localhost";
+        let url = format!("https://{}/tanks", host);
+        let handler = move |response: Response<Json<Result<Vec<Tank>, Error>>>| unimplemented!();
+        let request = Request::get(url.as_str()).body(Nothing).unwrap();
+        self.web.fetch(request, handler.into())
     }
 }
 
