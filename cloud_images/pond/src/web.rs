@@ -3,15 +3,23 @@ use crate::authorization::authorize;
 use crate::config::Config;
 use crate::key_pairs;
 use crate::redis_conn::*;
+use crate::tanks;
 use rocket::http::Status;
 use rocket::request::{self, FromRequest, Request};
 use rocket::{Outcome, State};
+use rocket_contrib::json::Json;
 
 /// This route requires that you authenticate using
 /// a Firebase-signed JWT.
+/// If redis blows up, the error will be logged using Debug,
+/// and an opaque 500 status message will be returned to the caller.
 #[get("/tanks")]
-pub fn tanks(_user: AuthorizedUser) -> &'static str {
-    "🏖 Welcome, authorized user! 🦐"
+pub fn tanks(
+    _user: AuthorizedUser,
+    conn: RedisDbConn,
+    config: State<Config>,
+) -> Result<Json<Vec<tanks::Tank>>, redis::RedisError> {
+    Ok(Json(tanks::fetch_all(conn, &config.redis_namespace)?))
 }
 
 #[derive(Debug)]
