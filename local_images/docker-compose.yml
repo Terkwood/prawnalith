@@ -3,7 +3,7 @@ services:
   redis_aggregator:
     build: redis_aggregator/.
     volumes:
-      - "$PWD/redis_aggregator_volume:/data"
+      - "/var/volumes/redis_aggregator_volume:/data"
     depends_on:
       - "redis"
     command: ["./wait-for-it.sh", "redis:36379", "--", "redis_aggregator"]
@@ -12,14 +12,14 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - "$PWD/grafana_volume/etc/grafana:/etc/grafana"
-      - "$PWD/grafana_volume/var/lib/grafana:/var/lib/grafana"
+      - "/var/volumes/grafana_volume/etc/grafana:/etc/grafana"
+      - "/var/volumes/grafana_volume/var/lib/grafana:/var/lib/grafana"
   redis:
     image: "arm32v7/redis" 
     ports:
       - "36379:6379"
     volumes:
-      - "$PWD/redis_volume:/data"
+      - "/var/volumes/redis_volume:/data"
   mosquitto:
     build: mosquitto/.
     ports:
@@ -28,11 +28,11 @@ services:
   telegraf:  
     image: "telegraf:1.6"
     volumes:
-      - "$PWD/telegraf_volume/telegraf.conf:/etc/telegraf/telegraf.conf:ro"
+      - "/var/volumes/telegraf_volume/telegraf.conf:/etc/telegraf/telegraf.conf:ro"
   influxdb:
     image: "influxdb:latest"
     ports:
       - "8086:8086"
     volumes:
-      - "$PWD/influxdb_volume:/var/lib/influxdb"
+      - "/var/volumes/influxdb_volume:/var/lib/influxdb"
 
