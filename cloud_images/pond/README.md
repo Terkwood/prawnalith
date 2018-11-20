@@ -9,6 +9,37 @@ It is capable of authenticating and authorizing OAuth2-compliant Json Web Tokens
 (JWT)s provided by Google Firebase.  It requires that a list of authorized
 user IDs be kept in a Redis database.
 
+## Example
+
+```
+curl -k -H "Authorization: Bearer $FIREBASE_JWT" https://$FIREBASE_HOST/tanks | python -m json.tool
+```  
+
+```
+[
+    {
+        "id": 1,
+        "name": "The Mothership",
+        "ph": 7.72,
+        "ph_mv": 461.05,
+        "ph_update_count": 2454127,
+        "ph_update_time": 1542744006,
+        "temp_c": 27.56,
+        "temp_f": 81.61,
+        "temp_update_count": 2535781,
+        "temp_update_time": 1542744006
+    },
+    {
+        "id": 2,
+        "name": "The Pond",
+        "temp_c": 24.62,
+        "temp_f": 76.32,
+        "temp_update_count": 191511,
+        "temp_update_time": 1542744003
+    }
+]
+```
+
 ## Authorization via Firebase
 
 We follow Firebase reccomendations to validate Json Web Tokens (JWTs)
