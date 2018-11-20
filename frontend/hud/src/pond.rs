@@ -21,7 +21,18 @@ impl PondService {
     pub fn tanks(&mut self, callback: Callback<Result<Vec<Tank>, Error>>) -> FetchTask {
         let host = "localhost";
         let url = format!("https://{}/tanks", host);
-        let handler = move |response: Response<Json<Result<Vec<Tank>, Error>>>| unimplemented!();
+        let handler = move |response: Response<Json<Result<Vec<Tank>, Error>>>| {
+            let (meta, Json(data)) = response.into_parts();
+            if meta.status.is_success() {
+                callback.emit(data)
+            } else {
+                // format_err! is a macro in crate `failure`
+                callback.emit(Err(format_err!(
+                    "{}: error fetching tank status",
+                    meta.status
+                )))
+            }
+        };
         let request = Request::get(url.as_str()).body(Nothing).unwrap();
         self.web.fetch(request, handler.into())
     }
