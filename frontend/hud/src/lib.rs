@@ -31,7 +31,7 @@ pub struct Model {
     link: ComponentLink<Model>,
     interval: IntervalService,
     callback_tick: Callback<()>,
-    job: Option<Box<Task>>,
+    fetch_job: Option<Box<Task>>,
     console: ConsoleService,
 }
 
@@ -56,7 +56,7 @@ impl Component for Model {
 
         let mut interval = IntervalService::new();
         let callback_tick = link.send_back(|_| Msg::Tick);
-        let handle = interval.spawn(Duration::from_secs(10), callback_tick.clone().into());
+        interval.spawn(Duration::from_secs(10), callback_tick.clone().into());
 
         Model {
             auth_token: None,
@@ -64,7 +64,7 @@ impl Component for Model {
             link,
             interval,
             callback_tick,
-            job: Some(Box::new(handle)),
+            fetch_job: None,
             console: ConsoleService::new(),
         }
     }
