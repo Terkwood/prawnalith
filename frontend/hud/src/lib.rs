@@ -1,8 +1,12 @@
 #![recursion_limit = "256"]
 #[macro_use]
+extern crate serde_derive;
+#[macro_use]
 extern crate stdweb;
 #[macro_use]
 extern crate yew;
+
+mod pond;
 
 use std::time::Duration;
 use yew::prelude::*;

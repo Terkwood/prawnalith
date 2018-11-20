@@ -1,12 +1,22 @@
+use yew::callback::Callback;
+use yew::format::{Json, Nothing};
+use yew::services::fetch::{FetchService, FetchTask, Request, Response};
+
+// Thanks to https://github.com/DenisKolodin/yew/blob/master/examples/npm_and_rest/src/gravatar.rs
+
+#[derive(Default)]
+pub struct PondService {
+    web: FetchService,
+}
+
 /// Fetch from the "pond" service, which will return our tank data
 impl PondService {
-     pub fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             web: FetchService::new(),
         }
+    }
 }
-}
-
 
 /// A struct to hold data returned by the HTTP request
 /// for tanks' temp & ph info.
