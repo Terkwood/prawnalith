@@ -4,7 +4,9 @@ extern crate stdweb;
 #[macro_use]
 extern crate yew;
 
+use std::time::Duration;
 use yew::prelude::*;
+use yew::services::{ConsoleService, IntervalService, Task};
 
 pub struct HeadsUpDisplay {}
 
@@ -27,12 +29,17 @@ pub struct Model {
     auth_token: Option<AuthToken>,
     hud: HeadsUpDisplay,
     link: ComponentLink<Model>,
+    interval: IntervalService,
+    callback_tick: Callback<()>,
+    job: Option<Box<Task>>,
+    console: ConsoleService,
 }
 
 pub enum Msg {
     SignIn,
     SignOut,
     TokenPayload(String),
+    Tick,
 }
 
 #[derive(Default, PartialEq, Eq, Clone)]
@@ -46,10 +53,19 @@ impl Component for Model {
 
     fn create(_: Self::Properties, mut link: ComponentLink<Self>) -> Self {
         firebase_on_auth_state_change(link.send_back(Msg::TokenPayload));
+
+        let mut interval = IntervalService::new();
+        let callback_tick = link.send_back(|_| Msg::Tick);
+        let handle = interval.spawn(Duration::from_secs(10), callback_tick.clone().into());
+
         Model {
             auth_token: None,
             hud: HeadsUpDisplay::new(),
             link,
+            interval,
+            callback_tick,
+            job: Some(Box::new(handle)),
+            console: ConsoleService::new(),
         }
     }
 
@@ -66,6 +82,10 @@ impl Component for Model {
             Msg::TokenPayload(auth_token) => self.change(Self::Properties {
                 auth_token: Some(AuthToken(auth_token)),
             }),
+            Msg::Tick => {
+                self.console.count_named("Tick");
+                false
+            }
         }
     }
 
