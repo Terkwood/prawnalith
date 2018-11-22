@@ -13,6 +13,8 @@ mod pond;
 use crate::pond::PondService;
 use failure::Error;
 use std::time::Duration;
+use stdweb::unstable::TryInto;
+use stdweb::Value;
 use yew::prelude::*;
 use yew::services::{ConsoleService, IntervalService, Task};
 
@@ -62,12 +64,12 @@ pub struct AuthToken(pub String);
 pub struct Model {
     auth_token: Option<AuthToken>,
     tanks: Tanks,
-    link: ComponentLink<Model>,
+    _link: ComponentLink<Model>,
     pond: PondService,
     callback_tanks: Callback<Result<Vec<Tank>, Error>>,
-    interval: IntervalService,
-    callback_tick: Callback<()>,
-    interval_job: Option<Box<Task>>,
+    _interval: IntervalService,
+    _callback_tick: Callback<()>,
+    _interval_job: Option<Box<Task>>,
     fetch_job: Option<Box<Task>>,
     console: ConsoleService,
 }
@@ -92,21 +94,21 @@ impl Component for Model {
     fn create(_: Self::Properties, mut link: ComponentLink<Self>) -> Self {
         firebase_on_auth_state_change(link.send_back(Msg::TokenPayload));
 
-        let mut interval = IntervalService::new();
-        let callback_tick = link.send_back(|_| Msg::Tick);
-        let handle = interval.spawn(Duration::from_secs(10), callback_tick.clone().into());
+        let mut _interval = IntervalService::new();
+        let _callback_tick = link.send_back(|_| Msg::Tick);
+        let handle = _interval.spawn(Duration::from_secs(10), _callback_tick.clone().into());
 
         let callback_tanks = link.send_back(Msg::TanksFetched);
 
         Model {
             auth_token: None,
             tanks: Tanks::new(),
-            link,
-            pond: PondService::new(unimplemented!()),
+            _link: link,
+            pond: PondService::new(&js_pond_host()),
             callback_tanks,
-            interval,
-            callback_tick,
-            interval_job: Some(Box::new(handle)),
+            _interval,
+            _callback_tick,
+            _interval_job: Some(Box::new(handle)),
             fetch_job: None,
             console: ConsoleService::new(),
         }
@@ -128,6 +130,7 @@ impl Component for Model {
             // Fetch the tanks
             Msg::Tick => {
                 let task = self.pond.tanks(self.callback_tanks.clone());
+                self.fetch_job = Some(Box::new(task));
                 self.console.count_named("Tick");
                 false
             }
@@ -135,7 +138,7 @@ impl Component for Model {
                 self.tanks = Tanks(tanks);
                 true
             }
-            Msg::TanksFetched(Err(e)) => {
+            Msg::TanksFetched(Err(_e)) => {
                 self.console.error("Failed to fetch data");
                 false
             }
@@ -195,7 +198,6 @@ impl Renderable<Model> for Model {
                         <div class="header",>
                             <h1>{ "🦐 Prawnalith 🦐" }</h1>
                             <h2>{ "A tank for the ages" }</h2>
-                            <p>{ self.tanks.show() }</p> /* TODO REMOVE AFTER YOU'RE DONE TESTING TODO */
                         </div>
             { if let Some(_auth_token) = &self.auth_token {
                 html! {
@@ -272,4 +274,14 @@ fn firebase_on_auth_state_change(token_callback: Callback<String>) {
                     }
             } );
     }
+}
+
+/// Get the hostname for the data broker that we're going to talk to.
+/// It's stored magically inside javascript!  Enjoy!
+fn js_pond_host() -> String {
+    let v: Value = js! {
+            return pond_host;
+    };
+    let v: String = v.try_into().expect("can't extract data host");
+    v
 }
