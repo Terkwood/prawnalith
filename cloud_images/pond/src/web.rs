@@ -4,6 +4,7 @@ use crate::config::Config;
 use crate::key_pairs;
 use crate::redis_conn::*;
 use crate::tanks;
+use rocket::http::hyper::header::AccessControlAllowOrigin;
 use rocket::http::Status;
 use rocket::request::{self, FromRequest, Request};
 use rocket::{Outcome, State};
@@ -18,8 +19,22 @@ pub fn tanks(
     _user: AuthorizedUser,
     conn: RedisDbConn,
     config: State<Config>,
-) -> Result<Json<Vec<tanks::Tank>>, redis::RedisError> {
-    Ok(Json(tanks::fetch_all(conn, &config.redis_namespace)?))
+) -> Result<CorsResponder, redis::RedisError> {
+    Ok(CorsResponder {
+        inner: Json(tanks::fetch_all(conn, &config.redis_namespace)?),
+        header: config
+            .cors_allow_origin
+            .clone()
+            .map(|allow_origin| AccessControlAllowOrigin::Value(allow_origin))
+            .unwrap_or(AccessControlAllowOrigin::Any),
+    })
+}
+
+#[derive(Responder)]
+#[response(content_type = "json")]
+pub struct CorsResponder {
+    inner: Json<Vec<tanks::Tank>>,
+    header: AccessControlAllowOrigin,
 }
 
 #[derive(Debug)]
