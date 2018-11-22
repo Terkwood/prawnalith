@@ -3,5 +3,6 @@
 Cargo.lock
 static/hud.js
 static/config.js
+static/*.wasm
 *.cache
 .firebaserc
