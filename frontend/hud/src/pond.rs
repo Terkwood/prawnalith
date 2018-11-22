@@ -9,19 +9,20 @@ use yew::services::fetch::{FetchService, FetchTask, Request, Response};
 #[derive(Default)]
 pub struct PondService {
     web: FetchService,
+    host: String,
 }
 
 /// Fetch from the "pond" service, which will return our tank data
 impl PondService {
-    pub fn new() -> Self {
+    pub fn new(host: &str) -> Self {
         Self {
             web: FetchService::new(),
+            host: host.to_string(),
         }
     }
 
     pub fn tanks(&mut self, callback: Callback<Result<Vec<Tank>, Error>>) -> FetchTask {
-        let host = "localhost";
-        let url = format!("https://{}/tanks", host);
+        let url = format!("https://{}/tanks", self.host);
         let handler = move |response: Response<Json<Result<Vec<Tank>, Error>>>| {
             let (meta, Json(data)) = response.into_parts();
             if meta.status.is_success() {

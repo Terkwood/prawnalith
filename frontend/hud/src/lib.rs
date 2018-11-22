@@ -10,6 +10,8 @@ extern crate yew;
 
 mod pond;
 
+use crate::pond::PondService;
+use failure::Error;
 use std::time::Duration;
 use yew::prelude::*;
 use yew::services::{ConsoleService, IntervalService, Task};
@@ -52,10 +54,17 @@ impl Tanks {
 #[derive(Default, PartialEq, Eq, Clone, Debug)]
 pub struct AuthToken(pub String);
 
+/// `auth_token` lets us know whom we're dealing with
+/// `tanks` is the current set of temp & ph data for all tanks in the system, the payload we're interested in showing to the end user
+/// `link` is used by the javascript.  rust compiler will tell you that you can get rid of it.  DON'T BELIEVE ITS LIES.
+/// `callback_tanks` is invoked when the HTTP request to get recent data is completed
+/// `interval` sends a Tick message every so often, triggering an HTTP fetch of the tank data
 pub struct Model {
     auth_token: Option<AuthToken>,
     tanks: Tanks,
     link: ComponentLink<Model>,
+    pond: PondService,
+    callback_tanks: Callback<Result<Vec<Tank>, Error>>,
     interval: IntervalService,
     callback_tick: Callback<()>,
     interval_job: Option<Box<Task>>,
@@ -68,6 +77,7 @@ pub enum Msg {
     SignOut,
     TokenPayload(String),
     Tick,
+    TanksFetched(Result<Vec<Tank>, Error>),
 }
 
 #[derive(Default, PartialEq, Eq, Clone)]
@@ -86,10 +96,14 @@ impl Component for Model {
         let callback_tick = link.send_back(|_| Msg::Tick);
         let handle = interval.spawn(Duration::from_secs(10), callback_tick.clone().into());
 
+        let callback_tanks = link.send_back(Msg::TanksFetched);
+
         Model {
             auth_token: None,
             tanks: Tanks::new(),
             link,
+            pond: PondService::new(unimplemented!()),
+            callback_tanks,
             interval,
             callback_tick,
             interval_job: Some(Box::new(handle)),
@@ -111,8 +125,18 @@ impl Component for Model {
             Msg::TokenPayload(auth_token) => self.change(Self::Properties {
                 auth_token: Some(AuthToken(auth_token)),
             }),
+            // Fetch the tanks
             Msg::Tick => {
+                let task = self.pond.tanks(self.callback_tanks.clone());
                 self.console.count_named("Tick");
+                false
+            }
+            Msg::TanksFetched(Ok(tanks)) => {
+                self.tanks = Tanks(tanks);
+                true
+            }
+            Msg::TanksFetched(Err(e)) => {
+                self.console.error("Failed to fetch data");
                 false
             }
         }
