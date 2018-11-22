@@ -14,6 +14,8 @@ use rocket_contrib::json::Json;
 /// a Firebase-signed JWT.
 /// If redis blows up, the error will be logged using Debug,
 /// and an opaque 500 status message will be returned to the caller.
+/// This route will respond with the application origin whitelisted
+/// using our `Config` struct's `cors_allowed_origin` property.
 #[get("/tanks")]
 pub fn tanks(
     _user: AuthorizedUser,
