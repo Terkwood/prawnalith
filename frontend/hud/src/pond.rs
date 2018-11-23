@@ -49,6 +49,7 @@ impl PondService {
 
         let request = Request::get(url.as_str())
             .header("Authorization", token_header)
+            .header("Origin", "prawn.farm")
             .header("Accept", "application/json")
             .body(Nothing)
             .unwrap();
