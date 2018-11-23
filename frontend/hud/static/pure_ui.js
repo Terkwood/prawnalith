@@ -36,7 +36,6 @@ var menu_setup = function (window, document) {
     }
 
     menuLink.onclick = function (e) {
-        console.log("Menu link clicked");
         toggleAll(e);
     };
 
@@ -51,10 +50,8 @@ var try_menu_link = function() {
     var elementExists = this.document.getElementById("menuLink");
 
     if (!elementExists) {
-      console.log("Menu link not found");
       this.window.requestAnimationFrame(try_menu_link);
     } else {
-       console.log("Menu link now exists");
        menu_setup(this, this.document);
      }
   };
