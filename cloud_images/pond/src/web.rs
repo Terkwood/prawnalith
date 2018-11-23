@@ -45,12 +45,13 @@ const ONE_DAY: u32 = 86400;
 pub fn tanks_options(config: State<Config>) -> PreflightOptionsResponder {
     PreflightOptionsResponder {
         inner: (),
-        origin: config
+        allow_origin: config
             .cors_allow_origin
             .clone()
             .map(|allow_origin| AccessControlAllowOrigin::Value(allow_origin))
             .unwrap_or(AccessControlAllowOrigin::Any),
-        methods: rocket::http::Header::new("AccessControlAllowMethods", "GET"),
+        allow_methods: rocket::http::Header::new("Access-Control-Allow-Methods", "GET"),
+        allow_headers: rocket::http::Header::new("Access-Control-Allow-Headers", "Authorization"),
         max_age: AccessControlMaxAge(ONE_DAY),
     }
 }
@@ -58,8 +59,9 @@ pub fn tanks_options(config: State<Config>) -> PreflightOptionsResponder {
 #[derive(Responder)]
 pub struct PreflightOptionsResponder {
     inner: (),
-    origin: AccessControlAllowOrigin,
-    methods: rocket::http::Header<'static>,
+    allow_origin: AccessControlAllowOrigin,
+    allow_methods: rocket::http::Header<'static>,
+    allow_headers: rocket::http::Header<'static>,
     max_age: AccessControlMaxAge,
 }
 
