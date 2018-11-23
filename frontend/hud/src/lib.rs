@@ -203,8 +203,8 @@ impl Renderable<Model> for Model {
             </div>
             <div id="main",>
                         <div class="header",>
-                            <h1>{ "🦐 Prawnalith 🦐" }</h1>
-                            <h2>{ "A tank for the ages" }</h2>
+                            <h1>{ "Prawnalith" }</h1>
+                            <h2>{ "🦐 A tank for the ages 🦐" }</h2>
                         </div>
             { if let Some(_auth_token) = &self.auth_token {
                 html! {
@@ -233,7 +233,6 @@ impl Renderable<Model> for Model {
                 } else {
                     html!{ <br/> }
                 }
-
             }
             </div>
         </div>
@@ -274,7 +273,7 @@ fn firebase_on_auth_state_change(token_callback: Callback<String>) {
 }
 
 /// Get the hostname for the data broker that we're going to talk to.
-/// It's stored magically inside javascript!  Enjoy!
+/// It's stored inside config.js, in the static dir.  Enjoy!
 fn js_pond_host() -> String {
     let v: Value = js! {
             return pond_host;

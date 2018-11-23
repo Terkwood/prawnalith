@@ -1,6 +1,6 @@
 // Provided by https://purecss.io/js/ui.js under zlib.
 // Thank you!
-(function (window, document) {
+var menu_setup = function (window, document) {
 
     var layout   = document.getElementById('layout'),
         menu     = document.getElementById('menu'),
@@ -13,10 +13,10 @@
             i = 0;
 
         for(; i < length; i++) {
-          if (classes[i] === className) {
+            if (classes[i] === className) {
             classes.splice(i, 1);
             break;
-          }
+            }
         }
         // The className is not found
         if (length === classes.length) {
@@ -44,5 +44,16 @@
             toggleAll(e);
         }
     };
+};
 
-}(this, this.document));
+var try_menu_link = function() {
+    var elementExists = this.document.getElementById("menuLink");
+
+    if (!elementExists) {
+      this.window.requestAnimationFrame(try_menu_link);
+    } else {
+       menu_setup(this, this.document);
+     }
+  };
+
+try_menu_link();
