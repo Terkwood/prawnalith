@@ -104,7 +104,7 @@ impl Component for Model {
             auth_token: None,
             tanks: Tanks::new(),
             _link: link,
-            pond: PondService::new(&js_pond_host()),
+            pond: PondService::new(&js_pond_host(), ConsoleService::new()),
             callback_tanks,
             _interval,
             _callback_tick,
