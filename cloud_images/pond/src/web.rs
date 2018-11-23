@@ -39,6 +39,8 @@ pub struct CorsResponder {
     header: AccessControlAllowOrigin,
 }
 
+const ONE_DAY: u32 = 86400;
+
 #[options("/tanks")]
 pub fn tanks_options(config: State<Config>) -> PreflightOptionsResponder {
     PreflightOptionsResponder {
@@ -49,7 +51,7 @@ pub fn tanks_options(config: State<Config>) -> PreflightOptionsResponder {
             .map(|allow_origin| AccessControlAllowOrigin::Value(allow_origin))
             .unwrap_or(AccessControlAllowOrigin::Any),
         methods: rocket::http::Header::new("AccessControlAllowMethods", "GET"),
-        max_age: AccessControlMaxAge(86400),
+        max_age: AccessControlMaxAge(ONE_DAY),
     }
 }
 
