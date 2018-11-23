@@ -132,7 +132,6 @@ impl Component for Model {
                 if let Some(token) = &self.auth_token {
                     let task = self.pond.tanks(token.clone(), self.callback_tanks.clone());
                     self.fetch_job = Some(Box::new(task));
-                    self.console.count_named("Tick");
                 }
                 false
             }
