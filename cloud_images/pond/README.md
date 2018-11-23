@@ -11,11 +11,11 @@ user IDs be kept in a Redis database.
 
 ## Example
 
-```
+```sh
 curl -k -H "Authorization: Bearer $FIREBASE_JWT" https://$FIREBASE_HOST/tanks | python -m json.tool
 ```  
 
-```
+```json
 [
     {
         "id": 1,
@@ -53,11 +53,6 @@ Authorized firebase UIDs are stored as a Redis SET at the key `{namespace}/pond/
 
 Google public RSA signing keys are stored as a Redis HASH at the key `{namespace}/pond/firebase/public_signing_keys`
 
-### Test with cURL
-
-```sh
-FIREBASE_JWT=ey... curl -k -H "Authorization: Bearer $FIREBASE_JWT" https://localhost:8000/tanks
-```
 
 ### Tiny docker image
 
