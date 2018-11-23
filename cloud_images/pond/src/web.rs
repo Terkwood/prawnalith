@@ -43,29 +43,22 @@ pub struct CorsResponder {
 pub fn tanks_options(config: State<Config>) -> PreflightOptionsResponder {
     PreflightOptionsResponder {
         inner: (),
-        h0: config
+        origin: config
             .cors_allow_origin
             .clone()
             .map(|allow_origin| AccessControlAllowOrigin::Value(allow_origin))
             .unwrap_or(AccessControlAllowOrigin::Any),
-        h1: AccessControlAllowMethods("GET"),
-        h2: AccessControlMaxAge(86400),
-    }
-}
-
-pub struct AccessControlAllowMethods(&'static str);
-impl From<AccessControlAllowMethods> for rocket::http::Header<'static> {
-    fn from(method: AccessControlAllowMethods) -> rocket::http::Header<'static> {
-        unimplemented!()
+        methods: rocket::http::Header::new("AccessControlAllowMethods", "GET"),
+        max_age: AccessControlMaxAge(86400),
     }
 }
 
 #[derive(Responder)]
 pub struct PreflightOptionsResponder {
     inner: (),
-    h0: AccessControlAllowOrigin,
-    h1: AccessControlAllowMethods,
-    h2: AccessControlMaxAge,
+    origin: AccessControlAllowOrigin,
+    methods: rocket::http::Header<'static>,
+    max_age: AccessControlMaxAge,
 }
 
 #[derive(Debug)]
