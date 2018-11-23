@@ -104,7 +104,7 @@ impl Component for Model {
             auth_token: None,
             tanks: Tanks::new(),
             _link: link,
-            pond: PondService::new(&js_pond_host(), ConsoleService::new()),
+            pond: PondService::new(&js_pond_host()),
             callback_tanks,
             _interval,
             _callback_tick,
@@ -280,6 +280,5 @@ fn js_pond_host() -> String {
     let v: Value = js! {
             return pond_host;
     };
-    let v: String = v.try_into().expect("can't extract data host");
-    v
+    v.try_into().expect("can't extract data host")
 }

@@ -3,7 +3,6 @@ use failure::Error;
 use yew::callback::Callback;
 use yew::format::{Json, Nothing};
 use yew::services::fetch::{FetchService, FetchTask, Request, Response};
-use yew::services::ConsoleService;
 
 // Thanks to https://github.com/DenisKolodin/yew/blob/master/examples/npm_and_rest/src/gravatar.rs
 
@@ -11,16 +10,14 @@ use yew::services::ConsoleService;
 pub struct PondService {
     web: FetchService,
     host: String,
-    console: ConsoleService,
 }
 
 /// Fetch from the "pond" service, which will return our tank data
 impl PondService {
-    pub fn new(host: &str, console: ConsoleService) -> Self {
+    pub fn new(host: &str) -> Self {
         Self {
             web: FetchService::new(),
             host: host.to_string(),
-            console,
         }
     }
 
@@ -30,7 +27,7 @@ impl PondService {
         callback: Callback<Result<Vec<Tank>, Error>>,
     ) -> FetchTask {
         let url = format!("https://{}/tanks", self.host);
-        self.console.log(&format!("Fetch URL: {}", url));
+
         let handler = move |response: Response<Json<Result<Vec<Tank>, Error>>>| {
             let (meta, Json(data)) = response.into_parts();
             if meta.status.is_success() {
@@ -45,8 +42,8 @@ impl PondService {
         };
 
         let token_header = format!("Bearer {}", token.0);
-        self.console.log(&format!("Authorization {}", token_header));
 
+        // Origin header required for CORS
         let request = Request::get(url.as_str())
             .header("Authorization", token_header)
             .header("Origin", "prawn.farm")
