@@ -51,7 +51,7 @@ var menu_setup = function() {
 var try_menu_link = function() {
     var elementExists = document.getElementById("#menuLink");
 
-    if (elementExists) {
+    if (!elementExists) {
       this.window.requestAnimationFrame(try_menu_link);
     } else {
        menu_setup();
