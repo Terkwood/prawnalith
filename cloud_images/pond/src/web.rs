@@ -4,6 +4,7 @@ use crate::config::Config;
 use crate::key_pairs;
 use crate::redis_conn::*;
 use crate::tanks;
+use rocket::http::hyper::header::{AccessControlAllowOrigin, AccessControlMaxAge};
 use rocket::http::Status;
 use rocket::request::{self, FromRequest, Request};
 use rocket::{Outcome, State};
@@ -13,13 +14,55 @@ use rocket_contrib::json::Json;
 /// a Firebase-signed JWT.
 /// If redis blows up, the error will be logged using Debug,
 /// and an opaque 500 status message will be returned to the caller.
+/// This route will respond with the application origin whitelisted
+/// using our `Config` struct's `cors_allowed_origin` property.
 #[get("/tanks")]
 pub fn tanks(
     _user: AuthorizedUser,
     conn: RedisDbConn,
     config: State<Config>,
-) -> Result<Json<Vec<tanks::Tank>>, redis::RedisError> {
-    Ok(Json(tanks::fetch_all(conn, &config.redis_namespace)?))
+) -> Result<CorsResponder, redis::RedisError> {
+    Ok(CorsResponder {
+        inner: Json(tanks::fetch_all(conn, &config.redis_namespace)?),
+        header: config
+            .cors_allow_origin
+            .clone()
+            .map(|allow_origin| AccessControlAllowOrigin::Value(allow_origin))
+            .unwrap_or(AccessControlAllowOrigin::Any),
+    })
+}
+
+#[derive(Responder)]
+#[response(content_type = "json")]
+pub struct CorsResponder {
+    inner: Json<Vec<tanks::Tank>>,
+    header: AccessControlAllowOrigin,
+}
+
+const ONE_DAY: u32 = 86400;
+
+#[options("/tanks")]
+pub fn tanks_options(config: State<Config>) -> PreflightOptionsResponder {
+    PreflightOptionsResponder {
+        inner: (),
+        allow_origin: config
+            .cors_allow_origin
+            .clone()
+            .map(|allow_origin| AccessControlAllowOrigin::Value(allow_origin))
+            .unwrap_or(AccessControlAllowOrigin::Any),
+        allow_methods: rocket::http::Header::new("Access-Control-Allow-Methods", "GET"),
+        allow_headers: rocket::http::Header::new("Access-Control-Allow-Headers", "Authorization"),
+        max_age: AccessControlMaxAge(ONE_DAY),
+    }
+}
+
+#[derive(Responder)]
+pub struct PreflightOptionsResponder {
+    inner: (),
+    allow_origin: AccessControlAllowOrigin,
+    allow_methods: rocket::http::Header<'static>,
+    allow_headers: rocket::http::Header<'static>,
+    max_age: AccessControlMaxAge,
 }
 
 #[derive(Debug)]
@@ -90,7 +133,7 @@ pub fn startup(config: Config) {
     rocket::ignite()
         .manage(config)
         .attach(RedisDbConn::fairing())
-        .mount("/", routes![tanks])
+        .mount("/", routes![tanks, tanks_options])
         .launch();
 }
 

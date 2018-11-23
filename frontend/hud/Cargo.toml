@@ -1,9 +1,13 @@
 [package]
 name = "hud"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Terkwood <metaterkhorn@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+failure = "0.1"
+serde = "1"
+serde_derive = "1"
+serde_json = "1"
 stdweb = "0.4.7"
 yew = { git = "https://github.com/DenisKolodin/yew", features = ["toml", "yaml", "msgpack", "cbor"] }

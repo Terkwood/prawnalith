@@ -7,6 +7,7 @@ pub struct Config {
     pub firebase_project_id: String,
     pub redis_namespace: String,
     rocket_databases: String,
+    pub cors_allow_origin: Option<String>,
 }
 
 impl Config {

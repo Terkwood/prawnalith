@@ -1,20 +1,53 @@
 #![recursion_limit = "256"]
 #[macro_use]
+extern crate failure;
+#[macro_use]
+extern crate serde_derive;
+#[macro_use]
 extern crate stdweb;
 #[macro_use]
 extern crate yew;
 
+mod pond;
+
+use crate::pond::PondService;
+use failure::Error;
+use std::time::Duration;
+use stdweb::unstable::TryInto;
+use stdweb::Value;
 use yew::prelude::*;
+use yew::services::{ConsoleService, IntervalService, Task};
 
-pub struct HeadsUpDisplay {}
+/// A struct to hold data returned by the HTTP request
+/// for tanks' temp & ph info.
+#[derive(Debug, Deserialize)]
+pub struct Tank {
+    pub id: u16,
+    pub name: Option<String>,
+    pub temp_f: Option<f32>,
+    pub temp_c: Option<f32>,
+    pub temp_update_time: Option<u64>,
+    pub temp_update_count: Option<u32>,
 
-impl HeadsUpDisplay {
-    pub fn new() -> HeadsUpDisplay {
-        HeadsUpDisplay {}
+    pub ph: Option<f32>,
+    pub ph_mv: Option<f32>,
+    pub ph_update_time: Option<u64>,
+    pub ph_update_count: Option<u32>,
+}
+
+pub struct Tanks(pub Vec<Tank>);
+
+impl Tanks {
+    pub fn new() -> Tanks {
+        Tanks(vec![])
     }
 
-    pub fn show(&self) -> &str {
-        "They're a bit hungry"
+    pub fn show(&self) -> String {
+        let mut r = String::new();
+        for tank in &self.0 {
+            r.push_str(&format!("{:?}", tank))
+        }
+        r
     }
 
     pub fn update(&mut self) {}
@@ -23,16 +56,30 @@ impl HeadsUpDisplay {
 #[derive(Default, PartialEq, Eq, Clone, Debug)]
 pub struct AuthToken(pub String);
 
+/// `auth_token` lets us know whom we're dealing with
+/// `tanks` is the current set of temp & ph data for all tanks in the system, the payload we're interested in showing to the end user
+/// `link` is used by the javascript.  rust compiler will tell you that you can get rid of it.  DON'T BELIEVE ITS LIES.
+/// `callback_tanks` is invoked when the HTTP request to get recent data is completed
+/// `interval` sends a Tick message every so often, triggering an HTTP fetch of the tank data
 pub struct Model {
     auth_token: Option<AuthToken>,
-    hud: HeadsUpDisplay,
-    link: ComponentLink<Model>,
+    tanks: Tanks,
+    _link: ComponentLink<Model>,
+    pond: PondService,
+    callback_tanks: Callback<Result<Vec<Tank>, Error>>,
+    _interval: IntervalService,
+    _callback_tick: Callback<()>,
+    _interval_job: Option<Box<Task>>,
+    fetch_job: Option<Box<Task>>,
+    console: ConsoleService,
 }
 
 pub enum Msg {
     SignIn,
     SignOut,
     TokenPayload(String),
+    Tick,
+    TanksFetched(Result<Vec<Tank>, Error>),
 }
 
 #[derive(Default, PartialEq, Eq, Clone)]
@@ -46,10 +93,24 @@ impl Component for Model {
 
     fn create(_: Self::Properties, mut link: ComponentLink<Self>) -> Self {
         firebase_on_auth_state_change(link.send_back(Msg::TokenPayload));
+
+        let mut _interval = IntervalService::new();
+        let _callback_tick = link.send_back(|_| Msg::Tick);
+        let handle = _interval.spawn(Duration::from_secs(10), _callback_tick.clone().into());
+
+        let callback_tanks = link.send_back(Msg::TanksFetched);
+
         Model {
             auth_token: None,
-            hud: HeadsUpDisplay::new(),
-            link,
+            tanks: Tanks::new(),
+            _link: link,
+            pond: PondService::new(&js_pond_host()),
+            callback_tanks,
+            _interval,
+            _callback_tick,
+            _interval_job: Some(Box::new(handle)),
+            fetch_job: None,
+            console: ConsoleService::new(),
         }
     }
 
@@ -66,6 +127,22 @@ impl Component for Model {
             Msg::TokenPayload(auth_token) => self.change(Self::Properties {
                 auth_token: Some(AuthToken(auth_token)),
             }),
+            // Fetch the tanks
+            Msg::Tick => {
+                if let Some(token) = &self.auth_token {
+                    let task = self.pond.tanks(token.clone(), self.callback_tanks.clone());
+                    self.fetch_job = Some(Box::new(task));
+                }
+                false
+            }
+            Msg::TanksFetched(Ok(tanks)) => {
+                self.tanks = Tanks(tanks);
+                true
+            }
+            Msg::TanksFetched(Err(_e)) => {
+                self.console.error("Failed to fetch data");
+                false
+            }
         }
     }
 
@@ -74,6 +151,12 @@ impl Component for Model {
             false
         } else {
             self.auth_token = auth_token;
+            if let Some(token) = &self.auth_token {
+                // Immediately fetch, so that the user isn't waiting around for
+                // the next tick from IntervalService
+                let task = self.pond.tanks(token.clone(), self.callback_tanks.clone());
+                self.fetch_job = Some(Box::new(task));
+            }
             true
         }
     }
@@ -128,12 +211,7 @@ impl Renderable<Model> for Model {
                     <div class="content",>
                         <h2 class="content-subhead",>{ "Let's check on the status of the prawns" }</h2>
                         <p>
-                        { self.hud.show() }
-                        </p>
-
-                        <h2 class="content-subhead",>{ "There are things which exist" }</h2>
-                        <p>
-                        { "And some other text" }
+                        { self.tanks.show() }
                         </p>
 
                         <div class="pure-g",>
@@ -150,11 +228,6 @@ impl Renderable<Model> for Model {
                                 <img class="pure-img-responsive", src="http://farm8.staticflickr.com/7357/9086701425_fda3024927.jpg", alt="Mountain",></img>
                             </div>
                         </div>
-
-                        <h2 class="content-subhead",>{ "Try Resizing your Browser" }</h2>
-                        <p>
-                            { "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum." }
-                        </p>
                     </div>
                     }
                 } else {
@@ -198,4 +271,13 @@ fn firebase_on_auth_state_change(token_callback: Callback<String>) {
                     }
             } );
     }
+}
+
+/// Get the hostname for the data broker that we're going to talk to.
+/// It's stored magically inside javascript!  Enjoy!
+fn js_pond_host() -> String {
+    let v: Value = js! {
+            return pond_host;
+    };
+    v.try_into().expect("can't extract data host")
 }
