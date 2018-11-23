@@ -1,60 +1,61 @@
 // Provided by https://purecss.io/js/ui.js under zlib.
 // Thank you!
-var menu_setup = function() {
-    (function (window, document) {
+var menu_setup = function (window, document) {
 
-        var layout   = document.getElementById('layout'),
-            menu     = document.getElementById('menu'),
-            menuLink = document.getElementById('menuLink'),
-            content  = document.getElementById('main');
-    
-        function toggleClass(element, className) {
-            var classes = element.className.split(/\s+/),
-                length = classes.length,
-                i = 0;
-    
-            for(; i < length; i++) {
-              if (classes[i] === className) {
-                classes.splice(i, 1);
-                break;
-              }
+    var layout   = document.getElementById('layout'),
+        menu     = document.getElementById('menu'),
+        menuLink = document.getElementById('menuLink'),
+        content  = document.getElementById('main');
+
+    function toggleClass(element, className) {
+        var classes = element.className.split(/\s+/),
+            length = classes.length,
+            i = 0;
+
+        for(; i < length; i++) {
+            if (classes[i] === className) {
+            classes.splice(i, 1);
+            break;
             }
-            // The className is not found
-            if (length === classes.length) {
-                classes.push(className);
-            }
-    
-            element.className = classes.join(' ');
         }
-    
-        function toggleAll(e) {
-            var active = 'active';
-    
-            e.preventDefault();
-            toggleClass(layout, active);
-            toggleClass(menu, active);
-            toggleClass(menuLink, active);
+        // The className is not found
+        if (length === classes.length) {
+            classes.push(className);
         }
-    
-        menuLink.onclick = function (e) {
+
+        element.className = classes.join(' ');
+    }
+
+    function toggleAll(e) {
+        var active = 'active';
+
+        e.preventDefault();
+        toggleClass(layout, active);
+        toggleClass(menu, active);
+        toggleClass(menuLink, active);
+    }
+
+    menuLink.onclick = function (e) {
+        console.log("Menu link clicked");
+        toggleAll(e);
+    };
+
+    content.onclick = function(e) {
+        if (menu.className.indexOf('active') !== -1) {
             toggleAll(e);
-        };
-    
-        content.onclick = function(e) {
-            if (menu.className.indexOf('active') !== -1) {
-                toggleAll(e);
-            }
-        };
-    })(this, this.document);
+        }
+    };
 };
 
 var try_menu_link = function() {
-    var elementExists = document.getElementById("#menuLink");
+    var elementExists = this.document.getElementById("menuLink");
 
     if (!elementExists) {
+      console.log("Menu link not found");
       this.window.requestAnimationFrame(try_menu_link);
     } else {
-       menu_setup();
+       console.log("Menu link now exists");
+       menu_setup(this, this.document);
      }
   };
 
