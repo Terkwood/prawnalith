@@ -21,7 +21,11 @@ impl PondService {
         }
     }
 
-    pub fn tanks(&mut self, callback: Callback<Result<Vec<Tank>, Error>>) -> FetchTask {
+    pub fn tanks(
+        &mut self,
+        token: crate::AuthToken,
+        callback: Callback<Result<Vec<Tank>, Error>>,
+    ) -> FetchTask {
         let url = format!("https://{}/tanks", self.host);
         let handler = move |response: Response<Json<Result<Vec<Tank>, Error>>>| {
             let (meta, Json(data)) = response.into_parts();
@@ -35,10 +39,11 @@ impl PondService {
                 )))
             }
         };
-        // TODO// TODO// TODO// TODO// TODO// TODO
-        let WE_NEED_A_TOKEN = unimplemented!();
-        // TODO// TODO// TODO// TODO// TODO// TODO
-        let request = Request::get(url.as_str()).body(Nothing).unwrap();
+
+        let request = Request::get(url.as_str())
+            .header("Authorization", format!("Bearer {}", token.0))
+            .body(Nothing)
+            .unwrap();
         self.web.fetch(request, handler.into())
     }
 }
