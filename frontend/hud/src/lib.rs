@@ -152,6 +152,12 @@ impl Component for Model {
             false
         } else {
             self.auth_token = auth_token;
+            if let Some(token) = &self.auth_token {
+                // Immediately fetch, so that the user isn't waiting around for
+                // the next tick from IntervalService
+                let task = self.pond.tanks(token.clone(), self.callback_tanks.clone());
+                self.fetch_job = Some(Box::new(task));
+            }
             true
         }
     }
