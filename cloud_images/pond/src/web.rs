@@ -129,7 +129,7 @@ pub fn startup(config: Config) {
     rocket::ignite()
         .manage(config)
         .attach(RedisDbConn::fairing())
-        .mount("/", routes![tanks])
+        .mount("/", routes![tanks, tanks_options])
         .launch();
 }
 
