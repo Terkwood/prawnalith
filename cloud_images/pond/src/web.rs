@@ -4,7 +4,7 @@ use crate::config::Config;
 use crate::key_pairs;
 use crate::redis_conn::*;
 use crate::tanks;
-use rocket::http::hyper::header::AccessControlAllowOrigin;
+use rocket::http::hyper::header::{AccessControlAllowOrigin, AccessControlMaxAge};
 use rocket::http::Status;
 use rocket::request::{self, FromRequest, Request};
 use rocket::{Outcome, State};
@@ -37,6 +37,35 @@ pub fn tanks(
 pub struct CorsResponder {
     inner: Json<Vec<tanks::Tank>>,
     header: AccessControlAllowOrigin,
+}
+
+#[options("/tanks")]
+pub fn tanks_options(config: State<Config>) -> PreflightOptionsResponder {
+    PreflightOptionsResponder {
+        inner: (),
+        h0: config
+            .cors_allow_origin
+            .clone()
+            .map(|allow_origin| AccessControlAllowOrigin::Value(allow_origin))
+            .unwrap_or(AccessControlAllowOrigin::Any),
+        h1: AccessControlAllowMethods("GET"),
+        h2: AccessControlMaxAge(86400),
+    }
+}
+
+pub struct AccessControlAllowMethods(&'static str);
+impl From<AccessControlAllowMethods> for rocket::http::Header<'static> {
+    fn from(method: AccessControlAllowMethods) -> rocket::http::Header<'static> {
+        unimplemented!()
+    }
+}
+
+#[derive(Responder)]
+pub struct PreflightOptionsResponder {
+    inner: (),
+    h0: AccessControlAllowOrigin,
+    h1: AccessControlAllowMethods,
+    h2: AccessControlMaxAge,
 }
 
 #[derive(Debug)]
