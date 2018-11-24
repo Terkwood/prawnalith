@@ -267,10 +267,12 @@ fn push(data: Vec<RDelta>, pubsub_ctx: &PubSubContext) -> Result<(), google_pubs
     let mut messages: Vec<google_pubsub1::PubsubMessage> = vec![];
 
     for delta in data {
+        let json = serde_json::to_string(&delta).unwrap();
+        println!("    message: {}",json);
         messages.push(google_pubsub1::PubsubMessage {
             // This must be base64 encoded!
             data: Some(base64::encode(
-                serde_json::to_string(&delta).unwrap().as_bytes(),
+                json.as_bytes(),
             )),
             ..Default::default()
         })
@@ -280,7 +282,7 @@ fn push(data: Vec<RDelta>, pubsub_ctx: &PubSubContext) -> Result<(), google_pubs
         messages: Some(messages),
     };
 
-    println!("Sending pubsub request: {:?}", req);
+    println!("Sending pubsub request with {} messages", req.messages.clone().map(|ms|ms.len()).unwrap_or(0));
 
     pubsub_ctx
         .client
