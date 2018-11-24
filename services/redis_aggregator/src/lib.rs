@@ -262,17 +262,25 @@ fn fetch_hash_delta(
 }
 
 fn push(data: Vec<RDelta>, pubsub_ctx: &PubSubContext) -> Result<(), google_pubsub1::Error> {
-    let message = google_pubsub1::PubsubMessage {
-        // This must be base64 encoded!
-        data: Some(base64::encode(
-            serde_json::to_string(&data).unwrap().as_bytes(),
-        )),
-        ..Default::default()
-    };
+    // each redis delta will be a separate "message" within a single
+    // google cloud platform "request"
+    let mut messages: Vec<google_pubsub1::PubsubMessage> = vec![];
+
+    for delta in data {
+        messages.push(google_pubsub1::PubsubMessage {
+            // This must be base64 encoded!
+            data: Some(base64::encode(
+                serde_json::to_string(&delta).unwrap().as_bytes(),
+            )),
+            ..Default::default()
+        })
+    }
 
     let req = google_pubsub1::PublishRequest {
-        messages: Some(vec![message]),
+        messages: Some(messages),
     };
+
+    println!("Sending pubsub request: {:?}", req);
 
     pubsub_ctx
         .client
