@@ -41,16 +41,6 @@ impl Tanks {
     pub fn new() -> Tanks {
         Tanks(vec![])
     }
-
-    pub fn show(&self) -> String {
-        let mut r = String::new();
-        for tank in &self.0 {
-            r.push_str(&format!("{:?}", tank))
-        }
-        r
-    }
-
-    pub fn update(&mut self) {}
 }
 
 #[derive(Default, PartialEq, Eq, Clone, Debug)]
@@ -72,6 +62,23 @@ pub struct Model {
     _interval_job: Option<Box<Task>>,
     fetch_job: Option<Box<Task>>,
     console: ConsoleService,
+}
+
+impl Model {
+    fn view_tanks(&self) -> Html<Self> {
+        let render = |tank: &Tank| {
+            html! {
+                <tr>
+                    <td>{ tank.id }</td>
+                    <td>{ tank.name.clone().unwrap_or("".to_owned()) }</td>
+                    <td>{ tank.temp_f.map(|t| format!("{}℉", t)).unwrap_or("".to_owned()) }</td>
+                    <td>{ tank.ph.map(|ph| format!("{}",ph)).unwrap_or("".to_owned()) }</td>
+                </tr>
+            }
+        };
+
+        html! {  { for self.tanks.0.iter().map(render) } }
+    }
 }
 
 pub enum Msg {
@@ -209,25 +216,20 @@ impl Renderable<Model> for Model {
             { if let Some(_auth_token) = &self.auth_token {
                 html! {
                     <div class="content",>
-                        <h2 class="content-subhead",>{ "Let's check on the status of the prawns" }</h2>
-                        <p>
-                        { self.tanks.show() }
-                        </p>
-
-                        <div class="pure-g",>
-                            <div class="pure-u-1-4",>
-                                <img class="pure-img-responsive", src="http://farm3.staticflickr.com/2875/9069037713_1752f5daeb.jpg", alt="Peyto Lake",></img>
-                            </div>
-                            <div class="pure-u-1-4",>
-                                <img class="pure-img-responsive", src="http://farm3.staticflickr.com/2813/9069585985_80da8db54f.jpg", alt="Train",></img>
-                            </div>
-                            <div class="pure-u-1-4",>
-                                <img class="pure-img-responsive", src="http://farm6.staticflickr.com/5456/9121446012_c1640e42d0.jpg", alt="T-Shirt Store",></img>
-                            </div>
-                            <div class="pure-u-1-4",>
-                                <img class="pure-img-responsive", src="http://farm8.staticflickr.com/7357/9086701425_fda3024927.jpg", alt="Mountain",></img>
-                            </div>
-                        </div>
+                        <h2 class="content-subhead",>{ "Tank Status" }</h2>
+                        <table class="pure-table pure-table-horizontal",>
+                            <thead>
+                                <tr>
+                                    <th>{"#"}</th>
+                                    <th>{"Name"}</th>
+                                    <th>{"Temp"}</th>
+                                    <th>{"pH"}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            { self.view_tanks() }
+                            </tbody>
+                        </table>
                     </div>
                     }
                 } else {
