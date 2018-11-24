@@ -2,9 +2,11 @@ use crate::authentication::{authenticate, AuthenticationResult};
 use crate::authorization::authorize;
 use crate::config::Config;
 use crate::key_pairs;
+use crate::push::{PushData, PushDataError};
 use crate::redis_conn::*;
 use crate::tanks;
 use rocket::http::hyper::header::{AccessControlAllowOrigin, AccessControlMaxAge};
+use rocket::http::RawStr;
 use rocket::http::Status;
 use rocket::request::{self, FromRequest, Request};
 use rocket::{Outcome, State};
@@ -129,11 +131,51 @@ fn token_from_bearer_string(bearer_string: &str) -> Result<String, ()> {
     }
 }
 
+/// An endpoint which receives push messages from Google pub/sub platform.
+/// These messages summarize changes to the Redis database hosted in
+/// in local proximity to the temp & ph sensors.
+/// See https://cloud.google.com/pubsub/docs/push
+///
+/// Here is an example of sending a base64 encoded payload to the endpoint.
+///
+/// ```sh
+/// curl -k -d '{ "message": { "attributes": { "key": "value"  }, "data": "eyJ1cGRhdGVfaGFzaCI6eyJrZXkiOiJwcmF3bmJhYnkvc2Vuc29ycy90ZW1wL2FhYWFhYWFhLWVlZWUtYWFhYS1hYWFhLWFhYWFhYWFhYWFhYSIsImZpZWxkcyI6W3sibmFtZSI6InRlbXBfdXBkYXRlX2NvdW50IiwidmFsIjoiNDEwOTY2In0seyJuYW1lIjoidGVtcF91cGRhdGVfdGltZSIsInZhbCI6IjE1NDI3NTI3MTAifSx7Im5hbWUiOiJ0ZW1wX2MiLCJ2YWwiOiIyNC42MiJ9LHsibmFtZSI6InRlbXBfZiIsInZhbCI6Ijc2LjMyIn1dLCJ0aW1lIjoxNTQyNzUyNzE1fX0=", "message_id": "136969346945" },"subscription": "projects/myproject/subscriptions/mysubscription"}' -H "Content-Type: application/json" -X POST https://localhost:8000/push_redis\?token\=fancy_shared_sekrit
+/// ```
+///
+/// In this case, the base64 "data" attribute decodes as follows:
+/// ```json
+/// {"update_hash":{"key":"prawnbaby/sensors/temp/aaaaaaaa-eeee-aaaa-aaaa-aaaaaaaaaaaa","fields":[{"name":"temp_update_count","val":"410966"},{"name":"temp_update_time","val":"1542752710"},{"name":"temp_c","val":"24.62"},{"name":"temp_f","val":"76.32"}],"time":1542752715}}
+/// ```
+#[post(
+    "/push_redis?<token>",
+    format = "application/json",
+    data = "<data>"
+)]
+pub fn push_redis(
+    data: Json<PushData>,
+    token: &RawStr,
+    conn: RedisDbConn,
+    config: State<Config>,
+) -> Status {
+    let push_secret: String = config.push_secret.to_string();
+    // This can be improved.
+    // See https://github.com/Terkwood/prawnalith/issues/60
+    if token.as_str() == push_secret {
+        match data.ingest(conn) {
+            Ok(_) => Status::NoContent,
+            Err(PushDataError::Redis) => Status::InternalServerError,
+            Err(_) => Status::UnprocessableEntity,
+        }
+    } else {
+        Status::Unauthorized
+    }
+}
+
 pub fn startup(config: Config) {
     rocket::ignite()
         .manage(config)
         .attach(RedisDbConn::fairing())
-        .mount("/", routes![tanks, tanks_options])
+        .mount("/", routes![tanks, tanks_options, push_redis])
         .launch();
 }
 

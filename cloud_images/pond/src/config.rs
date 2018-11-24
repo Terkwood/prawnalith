@@ -8,6 +8,7 @@ pub struct Config {
     pub redis_namespace: String,
     rocket_databases: String,
     pub cors_allow_origin: Option<String>,
+    pub push_secret: String,
 }
 
 impl Config {
