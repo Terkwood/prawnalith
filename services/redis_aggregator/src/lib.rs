@@ -51,13 +51,13 @@ pub fn clone_the_world(config: &config::PubSubConfig) -> Result<(), AggErr> {
 
     let all_ids: Vec<REvent> = instantiate_all_ids(redis_ctx)?;
 
-    push_recent(redis_ctx, pubsub_ctx, all_ids)
+    Ok(push_recent(redis_ctx, pubsub_ctx, all_ids)?)
 }
 
 #[derive(Debug)]
 pub enum AggErr {
     Redis(redis::RedisError),
-    PubSub,
+    PubSub(google_pubsub1::Error),
 }
 
 impl From<redis::RedisError> for AggErr {
@@ -66,17 +66,17 @@ impl From<redis::RedisError> for AggErr {
     }
 }
 impl From<google_pubsub1::Error> for AggErr {
-    fn from(_error: google_pubsub1::Error) -> Self {
-        AggErr::PubSub
+    fn from(error: google_pubsub1::Error) -> Self {
+        AggErr::PubSub(error)
     }
 }
 
 fn instantiate_all_ids(redis_ctx: &RedisContext) -> Result<Vec<REvent>, redis::RedisError> {
     let mut result: Vec<REvent> = vec![];
 
-    let ns = redis_delta::Namespace(&redis_ctx.namespace);
+    let ns = redis_delta::Namespace(redis_ctx.namespace.to_owned());
 
-    let all_tanks_key = Key::AllTanks { ns }.to_string();
+    let all_tanks_key = Key::AllTanks { ns: ns.clone() }.to_string();
 
     let maybe_num_tanks: Option<u16> = redis_ctx.conn.get(&all_tanks_key)?;
 
@@ -97,7 +97,7 @@ fn instantiate_all_ids(redis_ctx: &RedisContext) -> Result<Vec<REvent>, redis::R
         }
     }
 
-    let sensor_types_key = Key::AllSensorTypes { ns }.to_string();
+    let sensor_types_key = Key::AllSensorTypes { ns: ns.clone() }.to_string();
     let sensor_type_members: Vec<String> = redis_ctx.conn.smembers(&sensor_types_key)?;
     if sensor_type_members.is_empty() {
         result.push(REvent::SetUpdated {
@@ -106,10 +106,15 @@ fn instantiate_all_ids(redis_ctx: &RedisContext) -> Result<Vec<REvent>, redis::R
     }
 
     for sensor_type in sensor_type_members {
-        let st = redis_delta::SensorType(&sensor_type);
+        let st = redis_delta::SensorType(sensor_type);
 
         // look up each "all temp sensors", "all ph sensors" set
-        let all_sensors_key = Key::AllSensors { ns, st }.to_string();
+        let all_sensors_key = Key::AllSensors {
+            ns: ns.clone(),
+            st: st.clone(),
+        }
+        .to_string();
+
         let all_sensors_members: Vec<String> = redis_ctx.conn.smembers(&all_sensors_key)?;
         if all_sensors_members.len() > 0 {
             result.push(REvent::SetUpdated {
@@ -118,7 +123,7 @@ fn instantiate_all_ids(redis_ctx: &RedisContext) -> Result<Vec<REvent>, redis::R
         }
 
         // deal with each individual sensor hash
-        for e in sensor_hash_events(st, all_sensors_members, redis_ctx)? {
+        for e in sensor_hash_events(&st, all_sensors_members, redis_ctx)? {
             result.push(e)
         }
     }
@@ -127,15 +132,15 @@ fn instantiate_all_ids(redis_ctx: &RedisContext) -> Result<Vec<REvent>, redis::R
 }
 
 fn sensor_hash_events(
-    st: redis_delta::SensorType,
+    st: &redis_delta::SensorType,
     ids: Vec<String>,
     redis_ctx: &RedisContext,
 ) -> Result<Vec<REvent>, redis::RedisError> {
     let mut r: Vec<REvent> = vec![];
     for id in ids {
         let key = Key::Sensor {
-            ns: redis_delta::Namespace(&redis_ctx.namespace),
-            st,
+            ns: redis_delta::Namespace(redis_ctx.namespace.to_owned()),
+            st: st.clone(),
             id: Uuid::parse_str(&id).unwrap(),
         }
         .to_string();
@@ -153,7 +158,7 @@ fn tank_hash_events(
     let mut r: Vec<REvent> = vec![];
     for id in 1..=num_tanks {
         let key = Key::Tank {
-            ns: redis_delta::Namespace(&redis_ctx.namespace),
+            ns: redis_delta::Namespace(redis_ctx.namespace.to_owned()),
             id,
         }
         .to_string();
@@ -186,73 +191,57 @@ fn hash_event(key: &str, redis_ctx: &RedisContext) -> Result<Option<REvent>, red
 ///   entire set, or the string itself.
 /// - For hash field updates, we only retrieve the fields
 ///   which have been updated.
-pub fn push_recent<'a, 'b, 'c>(
-    redis_ctx: &'a RedisContext,
-    pubsub_ctx: &'b PubSubContext,
+pub fn push_recent(
+    redis_ctx: &RedisContext,
+    pubsub_ctx: &PubSubContext,
     redis_events: Vec<REvent>,
-) -> Result<(), AggErr> {
-    let them: Vec<Result<(), google_pubsub1::Error>> = redis_events
-        .iter()
-        .map(|revent| {
-            let fetched = fetch(revent, redis_ctx);
-            fetched.map(|found| found.map(|f| push(&f, pubsub_ctx)))
-        })
-        .flatten()
-        .filter(|maybe| maybe.is_some())
-        .map(|some| some.unwrap())
-        .collect();
-
-    if them.iter().any(|i| i.is_err()) {
-        Err(AggErr::PubSub)
-    } else {
-        Ok(())
+) -> Result<(), google_pubsub1::Error> {
+    let mut deltas: Vec<RDelta> = vec![];
+    for revent in redis_events {
+        let fetched = fetch(revent, redis_ctx).ok().and_then(|r| r);
+        if let Some(f) = fetched {
+            deltas.push(f)
+        }
     }
+
+    push(deltas, pubsub_ctx)
 }
 
-fn fetch<'a>(
-    event: &'a REvent,
-    ctx: &RedisContext,
-) -> Result<Option<RDelta<'a>>, redis::RedisError> {
+fn fetch(event: REvent, ctx: &RedisContext) -> Result<Option<RDelta>, redis::RedisError> {
     match event {
         REvent::HashUpdated { key, fields } => {
-            fetch_hash_delta(key, fields.to_vec(), ctx).map(|r| Some(r))
+            fetch_hash_delta(key.to_owned(), fields.to_vec(), ctx).map(|r| Some(r))
         }
-        REvent::StringUpdated { key } => fetch_string_delta(key, ctx),
-        REvent::SetUpdated { key } => fetch_set_delta(key, ctx),
+        REvent::StringUpdated { key } => fetch_string_delta(&key, ctx),
+        REvent::SetUpdated { key } => fetch_set_delta(&key, ctx),
     }
 }
 
-fn fetch_string_delta<'a>(
-    key: &'a str,
-    ctx: &RedisContext,
-) -> Result<Option<RDelta<'a>>, redis::RedisError> {
+fn fetch_string_delta(key: &str, ctx: &RedisContext) -> Result<Option<RDelta>, redis::RedisError> {
     let found: Option<String> = ctx.conn.get(key)?;
     Ok(found.map(|f| RDelta::UpdateString {
-        key,
+        key: key.to_owned(),
         val: f,
         time: epoch_secs(),
     }))
 }
 
-fn fetch_set_delta<'a>(
-    key: &'a str,
-    ctx: &RedisContext,
-) -> Result<Option<RDelta<'a>>, redis::RedisError> {
+fn fetch_set_delta(key: &str, ctx: &RedisContext) -> Result<Option<RDelta>, redis::RedisError> {
     let found: Option<Vec<String>> = ctx.conn.smembers(key)?;
     Ok(found.map(|f| RDelta::UpdateSet {
-        key,
+        key: key.to_owned(),
         vals: f,
         time: epoch_secs(),
     }))
 }
 
-fn fetch_hash_delta<'a>(
-    key: &'a str,
+fn fetch_hash_delta(
+    key: String,
     fields: Vec<String>,
     ctx: &RedisContext,
-) -> Result<RDelta<'a>, redis::RedisError> {
+) -> Result<RDelta, redis::RedisError> {
     let fields_forever = fields.clone();
-    let found: Vec<Option<String>> = ctx.conn.hget(key, fields)?;
+    let found: Vec<Option<String>> = ctx.conn.hget(&key, fields)?;
     let zipped = fields_forever.iter().zip(found);
     let rfields: Vec<RField> = zipped
         .map(|(f, maybe_v)| {
@@ -272,18 +261,28 @@ fn fetch_hash_delta<'a>(
     })
 }
 
-fn push(data: &RDelta, pubsub_ctx: &PubSubContext) -> Result<(), google_pubsub1::Error> {
-    let message = google_pubsub1::PubsubMessage {
-        // This must be base64 encoded!
-        data: Some(base64::encode(
-            serde_json::to_string(data).unwrap().as_bytes(),
-        )),
-        ..Default::default()
-    };
+fn push(data: Vec<RDelta>, pubsub_ctx: &PubSubContext) -> Result<(), google_pubsub1::Error> {
+    // each redis delta will be a separate "message" within a single
+    // google cloud platform "request"
+    let mut messages: Vec<google_pubsub1::PubsubMessage> = vec![];
+
+    for delta in data {
+        let json = serde_json::to_string(&delta).unwrap();
+        println!("    message: {}",json);
+        messages.push(google_pubsub1::PubsubMessage {
+            // This must be base64 encoded!
+            data: Some(base64::encode(
+                json.as_bytes(),
+            )),
+            ..Default::default()
+        })
+    }
 
     let req = google_pubsub1::PublishRequest {
-        messages: Some(vec![message]),
+        messages: Some(messages),
     };
+
+    println!("Sending pubsub request with {} messages", req.messages.clone().map(|ms|ms.len()).unwrap_or(0));
 
     pubsub_ctx
         .client

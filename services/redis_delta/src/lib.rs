@@ -10,48 +10,52 @@ use uuid::Uuid;
 /// parameter `ns`, which indicates a common "root"
 /// shared by all data for this particular prawn grow.
 #[derive(Serialize, Deserialize)]
-pub enum Key<'a, 'b> {
+pub enum Key {
     Tank {
-        #[serde(borrow)]
-        ns: Namespace<'a>,
+        ns: Namespace,
         id: u16,
     },
     Sensor {
-        ns: Namespace<'a>,
-        #[serde(borrow)]
-        st: SensorType<'b>,
+        ns: Namespace,
+        st: SensorType,
         id: Uuid,
     },
     AllTanks {
-        ns: Namespace<'a>,
+        ns: Namespace,
     },
     AllSensorTypes {
-        ns: Namespace<'a>,
+        ns: Namespace,
     },
     AllSensors {
-        ns: Namespace<'a>,
-        st: SensorType<'b>,
+        ns: Namespace,
+        st: SensorType,
     },
 }
 
 /// Namespace precedes the rest of a key, e.g.
 /// `prawnspace/tanks`
-#[derive(Copy, Clone, Serialize, Deserialize)]
-pub struct Namespace<'a>(pub &'a str);
+#[derive(Clone, Serialize, Deserialize)]
+pub struct Namespace(pub String);
 
 /// A type of sensor.  ph, temp, ...
-#[derive(Copy, Clone, Serialize, Deserialize)]
-pub struct SensorType<'a>(pub &'a str);
+#[derive(Clone, Serialize, Deserialize)]
+pub struct SensorType(pub String);
 
 /// Yields the key which allows you to access a specific
 /// record in redis.
-impl<'a, 'b> Key<'a, 'b> {
+impl Key {
     pub fn to_string(&self) -> String {
         match self {
-            Key::Tank { ns, id } => format!("{}/{}", Key::AllTanks { ns: *ns }.to_string(), id),
+            Key::Tank { ns, id } => {
+                format!("{}/{}", Key::AllTanks { ns: ns.clone() }.to_string(), id)
+            }
             Key::Sensor { ns, st, id } => format!(
                 "{}/{}",
-                Key::AllSensors { ns: *ns, st: *st }.to_string(),
+                Key::AllSensors {
+                    ns: ns.clone(),
+                    st: st.clone()
+                }
+                .to_string(),
                 id
             ),
             Key::AllTanks { ns: Namespace(n) } => format!("{}/tanks", n),
@@ -59,7 +63,11 @@ impl<'a, 'b> Key<'a, 'b> {
             Key::AllSensors {
                 ns,
                 st: SensorType(st),
-            } => format!("{}/{}", Key::AllSensorTypes { ns: *ns }.to_string(), st),
+            } => format!(
+                "{}/{}",
+                Key::AllSensorTypes { ns: ns.clone() }.to_string(),
+                st
+            ),
         }
     }
 }
@@ -71,20 +79,19 @@ impl<'a, 'b> Key<'a, 'b> {
 /// for when this record was retrieved.
 #[derive(Serialize, Deserialize, Debug, Hash, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-pub enum RDelta<'a> {
+pub enum RDelta {
     UpdateSet {
-        #[serde(borrow)]
-        key: &'a str,
+        key: String,
         vals: Vec<String>,
         time: u64,
     },
     UpdateHash {
-        key: &'a str,
+        key: String,
         fields: Vec<RField>,
         time: u64,
     },
     UpdateString {
-        key: &'a str,
+        key: String,
         val: String,
         time: u64,
     },
@@ -114,8 +121,8 @@ mod key_test {
     use super::*;
     use uuid::Uuid;
 
-    fn prawnspace() -> Namespace<'static> {
-        Namespace("prawnspace")
+    fn prawnspace() -> Namespace {
+        Namespace("prawnspace".to_owned())
     }
 
     #[test]
@@ -137,7 +144,7 @@ mod key_test {
     fn test_all_sensors() {
         let all_sensors = Key::AllSensors {
             ns: prawnspace(),
-            st: SensorType("ph"),
+            st: SensorType("ph".to_owned()),
         };
         assert_eq!(all_sensors.to_string(), format!("prawnspace/sensors/ph"));
     }
@@ -147,7 +154,7 @@ mod key_test {
         let temp_id = Uuid::new_v4();
         let temp_sensor = Key::Sensor {
             ns: prawnspace(),
-            st: SensorType("temp"),
+            st: SensorType("temp".to_owned()),
             id: temp_id,
         };
         assert_eq!(
@@ -160,8 +167,8 @@ mod key_test {
     fn test_ph_sensor() {
         let ph_id = Uuid::new_v4();
         let ph_sensor = Key::Sensor {
-            ns: Namespace("prawnspace"),
-            st: SensorType("ph"),
+            ns: Namespace("prawnspace".to_owned()),
+            st: SensorType("ph".to_owned()),
             id: ph_id,
         };
         assert_eq!(
@@ -178,8 +185,8 @@ mod rdelta_test {
     use serde_json;
     use uuid::Uuid;
 
-    fn ns() -> Namespace<'static> {
-        Namespace("prawnspace")
+    fn ns() -> Namespace {
+        Namespace("prawnspace".to_owned())
     }
 
     fn id_str() -> String {
@@ -199,7 +206,7 @@ mod rdelta_test {
     #[test]
     fn update_set_ser() {
         let set_friend = &RDelta::UpdateSet {
-            key: &Key::AllSensorTypes { ns: ns() }.to_string(),
+            key: Key::AllSensorTypes { ns: ns() }.to_string(),
             vals: vec![id_str()],
             time: 0,
         };
@@ -214,9 +221,9 @@ mod rdelta_test {
             val: "82.31".to_string(),
         }];
         let new_potatoes = &RDelta::UpdateHash {
-            key: &Key::Sensor {
+            key: Key::Sensor {
                 ns: ns(),
-                st: SensorType("temp"),
+                st: SensorType("temp".to_owned()),
                 id: id(),
             }
             .to_string(),
@@ -233,7 +240,7 @@ mod rdelta_test {
         let uk = &Key::AllTanks { ns: ns() }.to_string();
         let uv = "2";
         let update = &RDelta::UpdateString {
-            key: uk,
+            key: uk.to_string(),
             val: uv.to_string(),
             time: 0,
         };
