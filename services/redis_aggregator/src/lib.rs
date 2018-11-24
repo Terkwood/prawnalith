@@ -74,9 +74,9 @@ impl From<google_pubsub1::Error> for AggErr {
 fn instantiate_all_ids(redis_ctx: &RedisContext) -> Result<Vec<REvent>, redis::RedisError> {
     let mut result: Vec<REvent> = vec![];
 
-    let ns = redis_delta::Namespace(&redis_ctx.namespace);
+    let ns = redis_delta::Namespace(redis_ctx.namespace.to_owned());
 
-    let all_tanks_key = Key::AllTanks { ns }.to_string();
+    let all_tanks_key = Key::AllTanks { ns: ns.clone() }.to_string();
 
     let maybe_num_tanks: Option<u16> = redis_ctx.conn.get(&all_tanks_key)?;
 
@@ -97,7 +97,7 @@ fn instantiate_all_ids(redis_ctx: &RedisContext) -> Result<Vec<REvent>, redis::R
         }
     }
 
-    let sensor_types_key = Key::AllSensorTypes { ns }.to_string();
+    let sensor_types_key = Key::AllSensorTypes { ns: ns.clone() }.to_string();
     let sensor_type_members: Vec<String> = redis_ctx.conn.smembers(&sensor_types_key)?;
     if sensor_type_members.is_empty() {
         result.push(REvent::SetUpdated {
@@ -106,10 +106,15 @@ fn instantiate_all_ids(redis_ctx: &RedisContext) -> Result<Vec<REvent>, redis::R
     }
 
     for sensor_type in sensor_type_members {
-        let st = redis_delta::SensorType(&sensor_type);
+        let st = redis_delta::SensorType(sensor_type);
 
         // look up each "all temp sensors", "all ph sensors" set
-        let all_sensors_key = Key::AllSensors { ns, st }.to_string();
+        let all_sensors_key = Key::AllSensors {
+            ns: ns.clone(),
+            st: st.clone(),
+        }
+        .to_string();
+
         let all_sensors_members: Vec<String> = redis_ctx.conn.smembers(&all_sensors_key)?;
         if all_sensors_members.len() > 0 {
             result.push(REvent::SetUpdated {
@@ -118,7 +123,7 @@ fn instantiate_all_ids(redis_ctx: &RedisContext) -> Result<Vec<REvent>, redis::R
         }
 
         // deal with each individual sensor hash
-        for e in sensor_hash_events(st, all_sensors_members, redis_ctx)? {
+        for e in sensor_hash_events(&st, all_sensors_members, redis_ctx)? {
             result.push(e)
         }
     }
@@ -127,15 +132,15 @@ fn instantiate_all_ids(redis_ctx: &RedisContext) -> Result<Vec<REvent>, redis::R
 }
 
 fn sensor_hash_events(
-    st: redis_delta::SensorType,
+    st: &redis_delta::SensorType,
     ids: Vec<String>,
     redis_ctx: &RedisContext,
 ) -> Result<Vec<REvent>, redis::RedisError> {
     let mut r: Vec<REvent> = vec![];
     for id in ids {
         let key = Key::Sensor {
-            ns: redis_delta::Namespace(&redis_ctx.namespace),
-            st,
+            ns: redis_delta::Namespace(redis_ctx.namespace.to_owned()),
+            st: st.clone(),
             id: Uuid::parse_str(&id).unwrap(),
         }
         .to_string();
@@ -153,7 +158,7 @@ fn tank_hash_events(
     let mut r: Vec<REvent> = vec![];
     for id in 1..=num_tanks {
         let key = Key::Tank {
-            ns: redis_delta::Namespace(&redis_ctx.namespace),
+            ns: redis_delta::Namespace(redis_ctx.namespace.to_owned()),
             id,
         }
         .to_string();
@@ -186,14 +191,14 @@ fn hash_event(key: &str, redis_ctx: &RedisContext) -> Result<Option<REvent>, red
 ///   entire set, or the string itself.
 /// - For hash field updates, we only retrieve the fields
 ///   which have been updated.
-pub fn push_recent<'a, 'b, 'c>(
-    redis_ctx: &'a RedisContext,
-    pubsub_ctx: &'b PubSubContext,
+pub fn push_recent(
+    redis_ctx: &RedisContext,
+    pubsub_ctx: &PubSubContext,
     redis_events: Vec<REvent>,
 ) -> Result<(), google_pubsub1::Error> {
     let mut deltas: Vec<RDelta> = vec![];
     for revent in redis_events {
-        let fetched = fetch(revent, redis_ctx).ok().and_then(|r|r);
+        let fetched = fetch(revent, redis_ctx).ok().and_then(|r| r);
         if let Some(f) = fetched {
             deltas.push(f)
         }
@@ -202,10 +207,7 @@ pub fn push_recent<'a, 'b, 'c>(
     push(deltas, pubsub_ctx)
 }
 
-fn fetch<'a>(
-    event: REvent,
-    ctx: &RedisContext,
-) -> Result<Option<RDelta<'a>>, redis::RedisError> {
+fn fetch(event: REvent, ctx: &RedisContext) -> Result<Option<RDelta>, redis::RedisError> {
     match event {
         REvent::HashUpdated { key, fields } => {
             fetch_hash_delta(key.to_owned(), fields.to_vec(), ctx).map(|r| Some(r))
@@ -215,35 +217,29 @@ fn fetch<'a>(
     }
 }
 
-fn fetch_string_delta<'a>(
-    key: &'a str,
-    ctx: &RedisContext,
-) -> Result<Option<RDelta<'a>>, redis::RedisError> {
+fn fetch_string_delta(key: &str, ctx: &RedisContext) -> Result<Option<RDelta>, redis::RedisError> {
     let found: Option<String> = ctx.conn.get(key)?;
     Ok(found.map(|f| RDelta::UpdateString {
-        key,
+        key: key.to_owned(),
         val: f,
         time: epoch_secs(),
     }))
 }
 
-fn fetch_set_delta<'a>(
-    key: &'a str,
-    ctx: &RedisContext,
-) -> Result<Option<RDelta<'a>>, redis::RedisError> {
+fn fetch_set_delta(key: &str, ctx: &RedisContext) -> Result<Option<RDelta>, redis::RedisError> {
     let found: Option<Vec<String>> = ctx.conn.smembers(key)?;
     Ok(found.map(|f| RDelta::UpdateSet {
-        key,
+        key: key.to_owned(),
         vals: f,
         time: epoch_secs(),
     }))
 }
 
-fn fetch_hash_delta<'a>(
+fn fetch_hash_delta(
     key: String,
     fields: Vec<String>,
     ctx: &RedisContext,
-) -> Result<RDelta<'a>, redis::RedisError> {
+) -> Result<RDelta, redis::RedisError> {
     let fields_forever = fields.clone();
     let found: Vec<Option<String>> = ctx.conn.hget(&key, fields)?;
     let zipped = fields_forever.iter().zip(found);
@@ -259,7 +255,7 @@ fn fetch_hash_delta<'a>(
         .collect();
 
     Ok(RDelta::UpdateHash {
-        key: &key,
+        key,
         fields: rfields,
         time: epoch_secs(),
     })
