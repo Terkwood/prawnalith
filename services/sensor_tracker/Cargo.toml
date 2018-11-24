@@ -1,6 +1,6 @@
 [package]
 name = "sensor_tracker"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Terkwood <metaterkhorn@gmail.com>"]
 edition = "2018"
 
@@ -9,7 +9,7 @@ dotenv = "0.13"
 envy = "0.3"
 paho-mqtt = { git = "https://github.com/Terkwood/paho.mqtt.rust.git", rev = "1b72f84" }
 redis = "0.9"
-redis_context = { path = "../redis_context" }
+redis_context = { git = "https://github.com/Terkwood/prawnalith/", branch = "unstable" }
 redis_delta = { path = "../redis_delta" }
 serde = "1.0"
 serde_derive = "1.0"
