@@ -2,6 +2,8 @@
 
 It's a small view of statuses for all the tanks.
 
+![screen shot 2018-11-23 at 8 12 56 pm](https://user-images.githubusercontent.com/38859656/48963225-34ffa900-ef5c-11e8-85f1-d6191e4bfaef.png)
+
 ## Overview
 
 We use [yew framework](https://github.com/DenisKolodin/yew) to create a simple frontend which polls
