@@ -51,13 +51,13 @@ pub fn clone_the_world(config: &config::PubSubConfig) -> Result<(), AggErr> {
 
     let all_ids: Vec<REvent> = instantiate_all_ids(redis_ctx)?;
 
-    push_recent(redis_ctx, pubsub_ctx, all_ids)
+    Ok(push_recent(redis_ctx, pubsub_ctx, all_ids)?)
 }
 
 #[derive(Debug)]
 pub enum AggErr {
     Redis(redis::RedisError),
-    PubSub,
+    PubSub(google_pubsub1::Error),
 }
 
 impl From<redis::RedisError> for AggErr {
@@ -66,8 +66,8 @@ impl From<redis::RedisError> for AggErr {
     }
 }
 impl From<google_pubsub1::Error> for AggErr {
-    fn from(_error: google_pubsub1::Error) -> Self {
-        AggErr::PubSub
+    fn from(error: google_pubsub1::Error) -> Self {
+        AggErr::PubSub(error)
     }
 }
 
@@ -190,35 +190,28 @@ pub fn push_recent<'a, 'b, 'c>(
     redis_ctx: &'a RedisContext,
     pubsub_ctx: &'b PubSubContext,
     redis_events: Vec<REvent>,
-) -> Result<(), AggErr> {
-    let them: Vec<Result<(), google_pubsub1::Error>> = redis_events
-        .iter()
-        .map(|revent| {
-            let fetched = fetch(revent, redis_ctx);
-            fetched.map(|found| found.map(|f| push(&f, pubsub_ctx)))
-        })
-        .flatten()
-        .filter(|maybe| maybe.is_some())
-        .map(|some| some.unwrap())
-        .collect();
-
-    if them.iter().any(|i| i.is_err()) {
-        Err(AggErr::PubSub)
-    } else {
-        Ok(())
+) -> Result<(), google_pubsub1::Error> {
+    let mut deltas: Vec<RDelta> = vec![];
+    for revent in redis_events {
+        let fetched = fetch(revent, redis_ctx).ok().and_then(|r|r);
+        if let Some(f) = fetched {
+            deltas.push(f)
+        }
     }
+
+    push(deltas, pubsub_ctx)
 }
 
 fn fetch<'a>(
-    event: &'a REvent,
+    event: REvent,
     ctx: &RedisContext,
 ) -> Result<Option<RDelta<'a>>, redis::RedisError> {
     match event {
         REvent::HashUpdated { key, fields } => {
-            fetch_hash_delta(key, fields.to_vec(), ctx).map(|r| Some(r))
+            fetch_hash_delta(key.to_owned(), fields.to_vec(), ctx).map(|r| Some(r))
         }
-        REvent::StringUpdated { key } => fetch_string_delta(key, ctx),
-        REvent::SetUpdated { key } => fetch_set_delta(key, ctx),
+        REvent::StringUpdated { key } => fetch_string_delta(&key, ctx),
+        REvent::SetUpdated { key } => fetch_set_delta(&key, ctx),
     }
 }
 
@@ -247,12 +240,12 @@ fn fetch_set_delta<'a>(
 }
 
 fn fetch_hash_delta<'a>(
-    key: &'a str,
+    key: String,
     fields: Vec<String>,
     ctx: &RedisContext,
 ) -> Result<RDelta<'a>, redis::RedisError> {
     let fields_forever = fields.clone();
-    let found: Vec<Option<String>> = ctx.conn.hget(key, fields)?;
+    let found: Vec<Option<String>> = ctx.conn.hget(&key, fields)?;
     let zipped = fields_forever.iter().zip(found);
     let rfields: Vec<RField> = zipped
         .map(|(f, maybe_v)| {
@@ -266,17 +259,17 @@ fn fetch_hash_delta<'a>(
         .collect();
 
     Ok(RDelta::UpdateHash {
-        key,
+        key: &key,
         fields: rfields,
         time: epoch_secs(),
     })
 }
 
-fn push(data: &RDelta, pubsub_ctx: &PubSubContext) -> Result<(), google_pubsub1::Error> {
+fn push(data: Vec<RDelta>, pubsub_ctx: &PubSubContext) -> Result<(), google_pubsub1::Error> {
     let message = google_pubsub1::PubsubMessage {
         // This must be base64 encoded!
         data: Some(base64::encode(
-            serde_json::to_string(data).unwrap().as_bytes(),
+            serde_json::to_string(&data).unwrap().as_bytes(),
         )),
         ..Default::default()
     };
