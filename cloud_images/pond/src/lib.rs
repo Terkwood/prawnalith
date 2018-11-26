@@ -19,6 +19,7 @@ mod authorization;
 pub mod claims;
 pub mod config;
 pub mod key_pairs;
+mod push;
 mod redis_conn;
 mod tanks;
 pub mod web;

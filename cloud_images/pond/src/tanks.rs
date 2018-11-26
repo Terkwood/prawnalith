@@ -74,7 +74,7 @@ pub fn fetch_all(conn: RedisDbConn, namespace: &str) -> Result<Vec<Tank>, redis:
 
 fn fetch_num_tanks(conn: &RedisDbConn, namespace: &str) -> Result<u16, redis::RedisError> {
     let key = Key::AllTanks {
-        ns: Namespace(namespace),
+        ns: Namespace(namespace.to_owned()),
     }
     .to_string();
     conn.0.get(key)
@@ -98,7 +98,7 @@ fn fetch_tank_status(
     namespace: &str,
 ) -> Result<Option<Tank>, redis::RedisError> {
     let key = Key::Tank {
-        ns: Namespace(namespace),
+        ns: Namespace(namespace.to_owned()),
         id,
     }
     .to_string();
