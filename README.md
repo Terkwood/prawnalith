@@ -8,6 +8,32 @@ We currently support the display of temperature and pH readings onto small LED m
 
 Temperature and pH levels are read continuously from the prawns' tank using a DS18B20 submersible temperature sensor, and a SEN 0169 pH meter.
 
+## Very long description
+
+Implements a gated frontend in Rust/webassembly which renders temp & pH levels of tanks.  
+
+Provides support for continuous sensing of pH levels using a SEN0169 pH sensor linked to an ESP8266 microcontroller.
+
+Provides basic temperature readings for a given aquarium, using a DS18B20 temp sensor hooked to an ESP8266 microcontroller. 
+
+Displays temp and pH readings on remotely networked LED arrays.
+
+Provides a "pH Reference Calibration" webservice which allows pH sensors to query their high & low pH calibration values in millivolts when coming online.
+
+Includes several docker images and config which can be hosted on a Raspberry Pi 3 B+. These include:
+
+- ph & temp sensor tracker (listens for temp & pH updates provided by ESP8266 over MQTT and writes them to database)
+- led status helper (polls database for the temp & pH of individual tanks, and pushes a formatted message to MQTT; this can be read by LED microcontroller units)
+- redis update aggregator (pushes temp & pH level updates to google cloud/pub sub)
+- grafana setup in docker compose
+- mosquitto setup in docker compose
+- influx setup on docker compose (stores data queried by grafana)
+- redis setup in docker compose (stores miscellaneous data, including tank status for LED display)
+
+Includes basic examples of pH meter readings using an Arduino, and serial communication between an Arduino wired to an ESP8266.
+
+Includes configuration for a google container OS instance.  Runs a small Rocket.rs webserver which can broker temp & pH data requests for the frontend and receive updates to these levels from google cloud pub/sub push mechanism.
+
 ## Resources 
 
 - Background: https://twitter.com/Terkwood/status/1044992354178994178?s=19
@@ -38,7 +64,7 @@ at your option.
 
 ### Contribution
 
-
+Thank you for your interest!
 
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
