@@ -8,7 +8,7 @@ We currently support the display of temperature and pH readings onto small LED m
 
 Temperature and pH levels are read continuously from the prawns' tank using a DS18B20 submersible temperature sensor, and a SEN 0169 pH meter.
 
-## Very long description
+## Features 
 
 Implements a gated frontend in Rust/webassembly which renders temp & pH levels of tanks.  
 
