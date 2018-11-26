@@ -5,7 +5,7 @@ use yup_oauth2::GetToken;
 use crate::pubsub::{PubSubClient, PubSubContext};
 use hyper_native_tls::NativeTlsClient;
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct PubSubConfig {
     pub pubsub_publish_interval_secs: Option<u64>,
     pub pubsub_project_id: Option<String>,
@@ -16,6 +16,7 @@ pub struct PubSubConfig {
     pub redis_port: Option<u16>,
     pub redis_namespace: Option<String>,
     pub redis_source_topic_name: String,
+    pub signing_secret: String,
 }
 
 impl PubSubConfig {
@@ -81,6 +82,11 @@ impl PubSubConfig {
         let topic_name = self.pubsub_dest_topic_name.clone();
         let fq_topic = format!("projects/{}/topics/{}", project_id, topic_name);
         let client = self.to_pubsub_client();
-        PubSubContext { fq_topic, client }
+        let signing_secret = self.signing_secret.as_bytes().to_owned();
+        PubSubContext {
+            fq_topic,
+            client,
+            signing_secret,
+        }
     }
 }

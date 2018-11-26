@@ -8,6 +8,7 @@
 #![feature(custom_attribute)]
 #[macro_use]
 extern crate crossbeam_channel as crossbeam;
+extern crate crypto;
 extern crate google_pubsub1;
 extern crate hashbrown;
 extern crate hyper;
@@ -27,6 +28,9 @@ use redis_context::RedisContext;
 use redis_delta::{Key, RDelta, REvent, RField};
 
 use self::pubsub::PubSubContext;
+use crypto::hmac::Hmac;
+use crypto::mac::Mac;
+use crypto::sha3::Sha3;
 use std::default::Default;
 use std::time::{Duration, SystemTime};
 use uuid::Uuid;
@@ -51,7 +55,7 @@ pub fn clone_the_world(config: &config::PubSubConfig) -> Result<(), AggErr> {
 
     let all_ids: Vec<REvent> = instantiate_all_ids(redis_ctx)?;
 
-    Ok(push_recent(redis_ctx, pubsub_ctx, all_ids)?)
+    Ok(publish_recent(redis_ctx, pubsub_ctx, all_ids)?)
 }
 
 #[derive(Debug)]
@@ -191,7 +195,7 @@ fn hash_event(key: &str, redis_ctx: &RedisContext) -> Result<Option<REvent>, red
 ///   entire set, or the string itself.
 /// - For hash field updates, we only retrieve the fields
 ///   which have been updated.
-pub fn push_recent(
+pub fn publish_recent(
     redis_ctx: &RedisContext,
     pubsub_ctx: &PubSubContext,
     redis_events: Vec<REvent>,
@@ -204,7 +208,7 @@ pub fn push_recent(
         }
     }
 
-    push(deltas, pubsub_ctx)
+    publish(deltas, pubsub_ctx)
 }
 
 fn fetch(event: REvent, ctx: &RedisContext) -> Result<Option<RDelta>, redis::RedisError> {
@@ -261,19 +265,33 @@ fn fetch_hash_delta(
     })
 }
 
-fn push(data: Vec<RDelta>, pubsub_ctx: &PubSubContext) -> Result<(), google_pubsub1::Error> {
+/// Publish a message to google cloud pub/sub system.
+/// They are signed using HS256 and a shared secret
+/// in order to establish authenticity of the sender.
+/// These messages are assumed to be unique since they
+/// are sent every few seconds, and include a timestamp.
+fn publish(data: Vec<RDelta>, pubsub_ctx: &PubSubContext) -> Result<(), google_pubsub1::Error> {
     // each redis delta will be a separate "message" within a single
     // google cloud platform "request"
     let mut messages: Vec<google_pubsub1::PubsubMessage> = vec![];
 
     for delta in data {
         let json = serde_json::to_string(&delta).unwrap();
-        println!("    message: {}",json);
+
+        println!("    message: {}", json);
+
+        let message_base64 = base64::encode(json.as_bytes());
+
+        let mut attrs: std::collections::HashMap<String, String> = std::collections::HashMap::new();
+        attrs.insert(
+            "sig".to_owned(),
+            sign(&message_base64, &pubsub_ctx.signing_secret),
+        );
+
         messages.push(google_pubsub1::PubsubMessage {
+            attributes: Some(attrs),
             // This must be base64 encoded!
-            data: Some(base64::encode(
-                json.as_bytes(),
-            )),
+            data: Some(message_base64),
             ..Default::default()
         })
     }
@@ -282,7 +300,10 @@ fn push(data: Vec<RDelta>, pubsub_ctx: &PubSubContext) -> Result<(), google_pubs
         messages: Some(messages),
     };
 
-    println!("Sending pubsub request with {} messages", req.messages.clone().map(|ms|ms.len()).unwrap_or(0));
+    println!(
+        "Sending pubsub request with {} messages",
+        req.messages.clone().map(|ms| ms.len()).unwrap_or(0)
+    );
 
     pubsub_ctx
         .client
@@ -290,6 +311,17 @@ fn push(data: Vec<RDelta>, pubsub_ctx: &PubSubContext) -> Result<(), google_pubs
         .topics_publish(req, &pubsub_ctx.fq_topic)
         .doit()
         .map(|_r| ())
+}
+
+/// Provides a base64-encoded hmac signature for the base64
+/// message being sent.
+fn sign(message_base64: &str, secret: &[u8]) -> String {
+    // create a SHA3-256 object
+    let mut hmac = Hmac::new(Sha3::sha3_256(), secret);
+
+    hmac.input(message_base64.as_bytes());
+
+    base64::encode(hmac.result().code())
 }
 
 fn epoch_secs() -> u64 {
@@ -351,7 +383,7 @@ pub fn handle_revents(rx: crossbeam_channel::Receiver<REvent>, config: &config::
                 events.push(REvent::HashUpdated { key, fields });
             }
 
-            if let Err(e) = push_recent(&redis_ctx, &pubsub_ctx, events) {
+            if let Err(e) = publish_recent(&redis_ctx, &pubsub_ctx, events) {
                 eprintln!("Push error: {:?}", e);
             }
             last_push = SystemTime::now()
