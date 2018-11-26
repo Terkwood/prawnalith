@@ -10,7 +10,7 @@ Temperature and pH levels are read continuously from the prawns' tank using a DS
 
 ## Features 
 
-Implements a gated frontend in Rust/webassembly which renders temp & pH levels of tanks.  
+Implements a gated frontend in Rust/webassembly which renders temp & pH levels of tanks.  This can be used to monitor tank levels from afar. 
 
 Provides support for continuous sensing of pH levels using a SEN0169 pH sensor linked to an ESP8266 microcontroller.
 
