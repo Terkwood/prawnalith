@@ -63,6 +63,11 @@ impl Message {
         let json_r: Result<RDelta, _> = serde_json::from_slice(&self.data.decode()?[..]);
         Ok(json_r?)
     }
+
+    /// Verify that this message payload is sent by our redis aggregator.
+    pub fn verify_signature(&self, secret: &[u8]) -> bool {
+        unimplemented!()
+    }
 }
 
 #[derive(Debug, Deserialize)]
