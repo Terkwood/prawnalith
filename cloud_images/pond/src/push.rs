@@ -19,7 +19,7 @@ pub struct PushData {
 }
 
 impl PushData {
-    // FIXME deal with out-of-order messaging
+    // Note that we aren't checking the order of messages.
     pub fn ingest(&self, conn: RedisDbConn) -> Result<(), PushDataError> {
         let rdelta = self.message.deserialize()?;
         let result = match rdelta {
@@ -34,16 +34,7 @@ impl PushData {
                 }
                 Ok(conn.0.hset_multiple(key, &name_vals)?)
             }
-            RDelta::UpdateSet { key, vals, time: _ } =>
-            // FIXME this method can leave some members in place
-            // FIXME who no longer exist in the source database
-            // FIXME instead of using SADD, we should... ?
-            // FIXME ...pop everything atomically and re-insert?
-            // FIXME ...or only signal the addition of members from the source?
-            // FIXME ...or maybe this is decent behavior after all?
-            {
-                Ok(conn.0.sadd(key, vals)?)
-            }
+            RDelta::UpdateSet { key, vals, time: _ } => Ok(conn.0.sadd(key, vals)?),
             RDelta::UpdateString { key, val, time: _ } => Ok(conn.0.set(key, val)?),
         };
 

@@ -138,7 +138,7 @@ fn token_from_bearer_string(bearer_string: &str) -> Result<String, ()> {
 /// Here is an example of sending a base64 encoded payload to the endpoint.
 ///
 /// ```sh
-/// curl -k -d '{ "message": { "attributes": { "key": "value"  }, "data": "eyJ1cGRhdGVfaGFzaCI6eyJrZXkiOiJwcmF3bmJhYnkvc2Vuc29ycy90ZW1wL2FhYWFhYWFhLWVlZWUtYWFhYS1hYWFhLWFhYWFhYWFhYWFhYSIsImZpZWxkcyI6W3sibmFtZSI6InRlbXBfdXBkYXRlX2NvdW50IiwidmFsIjoiNDEwOTY2In0seyJuYW1lIjoidGVtcF91cGRhdGVfdGltZSIsInZhbCI6IjE1NDI3NTI3MTAifSx7Im5hbWUiOiJ0ZW1wX2MiLCJ2YWwiOiIyNC42MiJ9LHsibmFtZSI6InRlbXBfZiIsInZhbCI6Ijc2LjMyIn1dLCJ0aW1lIjoxNTQyNzUyNzE1fX0=", "message_id": "136969346945" },"subscription": "projects/myproject/subscriptions/mysubscription"}' -H "Content-Type: application/json" -X POST https://localhost:8000/push_redis\?token\=fancy_shared_sekrit
+/// curl -k -d '{ "message": { "attributes": { "sig": "AA=="  }, "data": "eyJ1cGRhdGVfaGFzaCI6eyJrZXkiOiJwcmF3bmJhYnkvc2Vuc29ycy90ZW1wL2FhYWFhYWFhLWVlZWUtYWFhYS1hYWFhLWFhYWFhYWFhYWFhYSIsImZpZWxkcyI6W3sibmFtZSI6InRlbXBfdXBkYXRlX2NvdW50IiwidmFsIjoiNDEwOTY2In0seyJuYW1lIjoidGVtcF91cGRhdGVfdGltZSIsInZhbCI6IjE1NDI3NTI3MTAifSx7Im5hbWUiOiJ0ZW1wX2MiLCJ2YWwiOiIyNC42MiJ9LHsibmFtZSI6InRlbXBfZiIsInZhbCI6Ijc2LjMyIn1dLCJ0aW1lIjoxNTQyNzUyNzE1fX0=", "message_id": "136969346945" },"subscription": "projects/myproject/subscriptions/mysubscription"}' -H "Content-Type: application/json" -X POST https://localhost:8000/push_redis
 /// ```
 ///
 /// In this case, the base64 "data" attribute decodes as follows:
@@ -147,8 +147,8 @@ fn token_from_bearer_string(bearer_string: &str) -> Result<String, ()> {
 /// ```
 ///
 /// The attributes included in the push data should include a signature
-/// generated using HMAC SHA 256 and a shared secret.  This is sent by redis_aggregator
-/// service.
+/// generated using HMAC SHA 256 and a shared secret.  This is sent by
+/// redis_aggregator service.
 #[post("/push_redis", format = "application/json", data = "<data>")]
 pub fn push_redis(data: Json<PushData>, conn: RedisDbConn, config: State<Config>) -> Status {
     if data
