@@ -1,5 +1,8 @@
 use base64;
 use crate::redis_conn::RedisDbConn;
+use crypto::hmac::Hmac;
+use crypto::mac::{Mac, MacResult};
+use crypto::sha3::Sha3;
 use redis_delta::RDelta;
 use rocket_contrib::databases::redis::Commands;
 use std::collections::HashMap;
@@ -66,8 +69,28 @@ impl Message {
 
     /// Verify that this message payload is sent by our redis aggregator.
     pub fn verify_signature(&self, secret: &[u8]) -> bool {
-        unimplemented!()
+        if let Some(attrs) = &self.attributes {
+            if let Some(mac) = attrs.get("sig") {
+                if let Ok(sig_bytes) = base64::decode(mac) {
+                    // comparison using MacResult should be quick
+                    return sign(&self.data.0, secret) == MacResult::new(&sig_bytes);
+                }
+            }
+        }
+
+        false
     }
+}
+
+/// Provides a base64-encoded hmac signature for the base64
+/// message being sent.
+fn sign(message_base64: &str, secret: &[u8]) -> MacResult {
+    // create a SHA3-256 object
+    let mut hmac = Hmac::new(Sha3::sha3_256(), secret);
+
+    hmac.input(message_base64.as_bytes());
+
+    hmac.result()
 }
 
 #[derive(Debug, Deserialize)]

@@ -6,7 +6,6 @@ use crate::push::{PushData, PushDataError};
 use crate::redis_conn::*;
 use crate::tanks;
 use rocket::http::hyper::header::{AccessControlAllowOrigin, AccessControlMaxAge};
-use rocket::http::RawStr;
 use rocket::http::Status;
 use rocket::request::{self, FromRequest, Request};
 use rocket::{Outcome, State};

@@ -11,6 +11,7 @@ extern crate rocket;
 extern crate rocket_contrib;
 #[macro_use]
 extern crate serde_derive;
+extern crate crypto;
 extern crate regex;
 extern crate serde_json;
 
@@ -19,7 +20,7 @@ mod authorization;
 pub mod claims;
 pub mod config;
 pub mod key_pairs;
-mod push;
+pub mod push;
 mod redis_conn;
 mod tanks;
 pub mod web;

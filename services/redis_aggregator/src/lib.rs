@@ -415,3 +415,13 @@ pub fn handle_revents(rx: crossbeam_channel::Receiver<REvent>, config: &config::
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    #[test]
+    fn test_signing () {
+        let signed = sign("AA==", "sekrit".to_owned().as_bytes());
+        assert_eq!(signed, "M7HSodfA0G0vHcvaoAsdoFCZk9hj0Dqo9JFX6C1YXjI=".to_owned())
+    }
+}
