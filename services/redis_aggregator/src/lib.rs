@@ -278,8 +278,6 @@ fn publish(data: Vec<RDelta>, pubsub_ctx: &PubSubContext) -> Result<(), google_p
     for delta in data {
         let json = serde_json::to_string(&delta).unwrap();
 
-        println!("    message: {}", json);
-
         let message_base64 = base64::encode(json.as_bytes());
 
         let mut attrs: std::collections::HashMap<String, String> = std::collections::HashMap::new();

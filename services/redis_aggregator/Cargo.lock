@@ -730,7 +730,7 @@ dependencies = [
  "hyper-native-tls 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "redis 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "redis_context 0.1.0 (git+https://github.com/Terkwood/prawnalith/?branch=unstable)",
- "redis_delta 0.2.0",
+ "redis_delta 0.1.2",
  "rust-crypto 0.2.36 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -750,7 +750,7 @@ dependencies = [
 
 [[package]]
 name = "redis_delta"
-version = "0.2.0"
+version = "0.1.2"
 dependencies = [
  "serde 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
