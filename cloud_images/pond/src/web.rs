@@ -6,7 +6,6 @@ use crate::push::{PushData, PushDataError};
 use crate::redis_conn::*;
 use crate::tanks;
 use rocket::http::hyper::header::{AccessControlAllowOrigin, AccessControlMaxAge};
-use rocket::http::RawStr;
 use rocket::http::Status;
 use rocket::request::{self, FromRequest, Request};
 use rocket::{Outcome, State};
@@ -146,21 +145,16 @@ fn token_from_bearer_string(bearer_string: &str) -> Result<String, ()> {
 /// ```json
 /// {"update_hash":{"key":"prawnbaby/sensors/temp/aaaaaaaa-eeee-aaaa-aaaa-aaaaaaaaaaaa","fields":[{"name":"temp_update_count","val":"410966"},{"name":"temp_update_time","val":"1542752710"},{"name":"temp_c","val":"24.62"},{"name":"temp_f","val":"76.32"}],"time":1542752715}}
 /// ```
-#[post(
-    "/push_redis?<token>",
-    format = "application/json",
-    data = "<data>"
-)]
-pub fn push_redis(
-    data: Json<PushData>,
-    token: &RawStr,
-    conn: RedisDbConn,
-    config: State<Config>,
-) -> Status {
-    let push_secret: String = config.push_secret.to_string();
-    // This can be improved.
-    // See https://github.com/Terkwood/prawnalith/issues/60
-    if token.as_str() == push_secret {
+///
+/// The attributes included in the push data should include a signature
+/// generated using HMAC SHA 256 and a shared secret.  This is sent by redis_aggregator
+/// service.
+#[post("/push_redis", format = "application/json", data = "<data>")]
+pub fn push_redis(data: Json<PushData>, conn: RedisDbConn, config: State<Config>) -> Status {
+    if data
+        .message
+        .verify_signature(config.signing_secret.as_bytes())
+    {
         match data.ingest(conn) {
             Ok(_) => Status::NoContent,
             Err(PushDataError::Redis) => Status::InternalServerError,

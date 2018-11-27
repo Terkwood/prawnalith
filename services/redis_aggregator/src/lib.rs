@@ -266,10 +266,15 @@ fn fetch_hash_delta(
 }
 
 /// Publish a message to google cloud pub/sub system.
+/// 
 /// They are signed using HS256 and a shared secret
 /// in order to establish authenticity of the sender.
+/// 
 /// These messages are assumed to be unique since they
 /// are sent every few seconds, and include a timestamp.
+/// 
+/// These messages are consumed by the pond cloud image
+/// "push_redis" route.
 fn publish(data: Vec<RDelta>, pubsub_ctx: &PubSubContext) -> Result<(), google_pubsub1::Error> {
     // each redis delta will be a separate "message" within a single
     // google cloud platform "request"
@@ -413,5 +418,15 @@ pub fn handle_revents(rx: crossbeam_channel::Receiver<REvent>, config: &config::
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    #[test]
+    fn test_signing () {
+        let signed = sign("AA==", "sekrit".to_owned().as_bytes());
+        assert_eq!(signed, "M7HSodfA0G0vHcvaoAsdoFCZk9hj0Dqo9JFX6C1YXjI=".to_owned())
     }
 }

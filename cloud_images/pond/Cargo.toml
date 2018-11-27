@@ -1,6 +1,6 @@
 [package]
 name = "pond"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Terkwood <metaterkhorn@gmail.com>"]
 edition = "2018"
 
@@ -17,6 +17,7 @@ redis_delta = { git = "https://github.com/Terkwood/prawnalith/", branch = "unsta
 regex = "1"
 reqwest = "0.9"
 rocket = { version = "0.4.0-rc.1", features = [ "tls" ] }
+rust-crypto = "^0.2"
 serde = "1"
 serde_derive = "1"
 serde_json = "1"
