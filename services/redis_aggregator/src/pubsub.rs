@@ -2,6 +2,7 @@
 pub struct PubSubContext {
     pub fq_topic: String,
     pub client: PubSubClient,
+    pub signing_secret: Vec<u8>,
 }
 
 /// Note that this pub sub client specifically uses the

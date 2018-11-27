@@ -6,7 +6,7 @@ extern crate redis_context;
 extern crate uuid;
 
 use redis_aggregator::config::PubSubConfig;
-use redis_aggregator::push_recent;
+use redis_aggregator::publish_recent;
 use redis_delta::REvent;
 
 fn main() {
@@ -17,7 +17,7 @@ fn main() {
     let redis_ctx = &config.to_redis_context();
     let pubsub_ctx = &config.to_pubsub_context();
 
-    push_recent(
+    publish_recent(
         redis_ctx,
         pubsub_ctx,
         vec![REvent::StringUpdated {
@@ -26,7 +26,7 @@ fn main() {
     )
     .unwrap();
 
-    push_recent(
+    publish_recent(
         redis_ctx,
         pubsub_ctx,
         vec![REvent::HashUpdated {

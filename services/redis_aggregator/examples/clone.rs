@@ -14,10 +14,7 @@ fn main() {
 
     let config = PubSubConfig::new();
 
-    let redis_ctx = &config.to_redis_context();
-    let pubsub_ctx = &config.to_pubsub_context();
-
     println!("Wherein We Clone the World");
 
-    clone_the_world(redis_ctx, pubsub_ctx).unwrap();
+    clone_the_world(&config);
 }
