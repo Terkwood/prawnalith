@@ -266,10 +266,15 @@ fn fetch_hash_delta(
 }
 
 /// Publish a message to google cloud pub/sub system.
+/// 
 /// They are signed using HS256 and a shared secret
 /// in order to establish authenticity of the sender.
+/// 
 /// These messages are assumed to be unique since they
 /// are sent every few seconds, and include a timestamp.
+/// 
+/// These messages are consumed by the pond cloud image
+/// "push_redis" route.
 fn publish(data: Vec<RDelta>, pubsub_ctx: &PubSubContext) -> Result<(), google_pubsub1::Error> {
     // each redis delta will be a separate "message" within a single
     // google cloud platform "request"
