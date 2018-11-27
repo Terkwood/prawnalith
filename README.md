@@ -8,7 +8,7 @@ We currently support the display of temperature and pH readings onto small LED m
 
 Temperature and pH levels are read continuously from the prawns' tank using a DS18B20 submersible temperature sensor, and a SEN 0169 pH meter.
 
-## Features 
+## Features
 
 Implements a gated frontend in Rust/webassembly which renders temp & pH levels of tanks.  This can be used to monitor tank levels from afar. 
 
@@ -43,15 +43,6 @@ Includes configuration for a google container OS instance.  Runs a small Rocket.
 - Cross compiling rust for armv7 from MacOSX using vagrant: https://medium.com/@wizofe/cross-compiling-rust-for-arm-e-g-raspberry-pi-using-any-os-11711ebfc52b
 - Cross compiling OpenSSL: https://assil.me/2017/09/30/cross-compile-openssl-arm-zynq.html
 
-## InfluxDB query examples
-
-### Create continuous query to average out 10-minute data
-
-10-min average of all data
-
-```
-CREATE CONTINUOUS QUERY mean_all_10m ON schema BEGIN SELECT mean(*) INTO schema.unlimited.mean_all_10m FROM schema.autogen.mqtt_consumer GROUP BY time(10m) END
-```
 
 ## License
 
