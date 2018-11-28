@@ -209,10 +209,14 @@ impl Renderable<Model> for Model {
                 </div>
             </div>
             <div id="main",>
-                        <div class="header",>
-                            <h1>{ "Prawnalith" }</h1>
-                            <h2>{ "🦐 A tank for the ages 🦐" }</h2>
-                        </div>
+                <div class="header",>
+                    <h1>{ "Prawnalith" }</h1>
+                    <h2>{ "🦐 A tank for the ages 🦐" }</h2>
+                    <div>
+                        <input class="tgl tgl-friend", id="temp-units", type="checkbox",/>
+                        <label class="tgl-btn", data-tg-off="℃", data-tg-on="℉", for="temp-units",></label>
+                    </div>
+                </div>
             { if let Some(_auth_token) = &self.auth_token {
                 html! {
                     <div class="content",>
