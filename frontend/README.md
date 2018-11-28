@@ -12,3 +12,5 @@ the [pond service](/cloud_images/pond) for temp & pH data for all of the prawn t
 ### Acknowledgements
 
 We really appreciate the help from [this article, which shows how to properly wait on DOM elements coming into existence](https://swizec.com/blog/how-to-properly-wait-for-dom-elements-to-show-up-in-modern-browsers/swizec/6663).
+
+The [fancy checkbox](https://codepen.io/mallendeo/pen/eLIiG) we use for temperature units was provided by [@mallendeo](https://twitter.com/mallendeo). Thank you!

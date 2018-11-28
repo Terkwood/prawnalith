@@ -62,6 +62,7 @@ pub struct Model {
     _interval_job: Option<Box<Task>>,
     fetch_job: Option<Box<Task>>,
     console: ConsoleService,
+    use_fahrenheit: bool,
 }
 
 impl Model {
@@ -71,7 +72,15 @@ impl Model {
                 <tr>
                     <td>{ tank.id }</td>
                     <td>{ tank.name.clone().unwrap_or("".to_owned()) }</td>
-                    <td>{ tank.temp_f.map(|t| format!("{}℉", t)).unwrap_or("".to_owned()) }</td>
+                    <td>
+                    {
+                      if self.use_fahrenheit {
+                        tank.temp_f.map(|t| format!("{}℉", t))
+                      } else {
+                        tank.temp_c.map(|t| format!("{}℃", t))
+                      }.unwrap_or("".to_owned())
+                    }
+                    </td>
                     <td>{ tank.ph.map(|ph| format!("{}",ph)).unwrap_or("".to_owned()) }</td>
                 </tr>
             }
@@ -87,6 +96,7 @@ pub enum Msg {
     TokenPayload(String),
     Tick,
     TanksFetched(Result<Vec<Tank>, Error>),
+    ToggleTempUnits,
 }
 
 #[derive(Default, PartialEq, Eq, Clone)]
@@ -118,6 +128,7 @@ impl Component for Model {
             _interval_job: Some(Box::new(handle)),
             fetch_job: None,
             console: ConsoleService::new(),
+            use_fahrenheit: true,
         }
     }
 
@@ -149,6 +160,10 @@ impl Component for Model {
             Msg::TanksFetched(Err(_e)) => {
                 self.console.error("Failed to fetch data");
                 false
+            }
+            Msg::ToggleTempUnits => {
+                self.use_fahrenheit = !self.use_fahrenheit;
+                true
             }
         }
     }
@@ -209,10 +224,10 @@ impl Renderable<Model> for Model {
                 </div>
             </div>
             <div id="main",>
-                        <div class="header",>
-                            <h1>{ "Prawnalith" }</h1>
-                            <h2>{ "🦐 A tank for the ages 🦐" }</h2>
-                        </div>
+                <div class="header",>
+                    <h1>{ "Prawnalith" }</h1>
+                    <h2>{ "🦐 A tank for the ages 🦐" }</h2>
+                </div>
             { if let Some(_auth_token) = &self.auth_token {
                 html! {
                     <div class="content",>
@@ -230,6 +245,11 @@ impl Renderable<Model> for Model {
                             { self.view_tanks() }
                             </tbody>
                         </table>
+                        <br/>
+                        <div>
+                            <input class="tgl tgl-friend", id="temp-units", type="checkbox", checked=self.use_fahrenheit, onclick=|_| Msg::ToggleTempUnits,/>
+                            <label class="tgl-btn", data-tg-off="Temp ℃", data-tg-on="Temp ℉", for="temp-units",></label>
+                         </div>
                     </div>
                     }
                 } else {
