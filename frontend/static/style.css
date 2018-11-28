@@ -255,6 +255,7 @@ Hides the menu at `48em`, but modify this based on your app's needs.
 
 
 /* fancy toggle provided by @mallendeo
+ * thank you!
  * https://codepen.io/mallendeo/pen/eLIiG */
 .tgl {
     display: none;
@@ -331,7 +332,7 @@ Hides the menu at `48em`, but modify this based on your app's needs.
     left: -10%;
   }
   .tgl-friend:checked + .tgl-btn {
-    background: #99c2ff;
+    background: #0078e7;
   }
   .tgl-friend:checked + .tgl-btn:before {
     left: -100%;
