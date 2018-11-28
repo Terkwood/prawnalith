@@ -272,7 +272,7 @@ Hides the menu at `48em`, but modify this based on your app's needs.
   .tgl + .tgl-btn {
     outline: 0;
     display: block;
-    width: 2em;
+    width: 6em;
     height: 1.8em;
     position: relative;
     cursor: pointer;
@@ -304,7 +304,7 @@ Hides the menu at `48em`, but modify this based on your app's needs.
             backface-visibility: hidden;
     transition: all .2s ease;
     font-family: sans-serif;
-    background: #aaa;
+    background: #e0e0e0;
   }
   .tgl-friend + .tgl-btn:after, .tgl-friend + .tgl-btn:before {
     display: inline-block;
@@ -313,20 +313,20 @@ Hides the menu at `48em`, but modify this based on your app's needs.
     text-align: center;
     position: absolute;
     line-height: 2em;
-    font-weight: bold;
-    color: #fff;
     text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
   }
   .tgl-friend + .tgl-btn:after {
+    color: #fff;
     left: 100%;
     content: attr(data-tg-on);
   }
   .tgl-friend + .tgl-btn:before {
+    color: #878787;
     left: 0;
     content: attr(data-tg-off);
   }
   .tgl-friend + .tgl-btn:active {
-    background: #aaa;
+    background: #e0e0e0;
   }
   .tgl-friend + .tgl-btn:active:before {
     left: -10%;

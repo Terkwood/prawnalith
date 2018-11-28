@@ -212,10 +212,6 @@ impl Renderable<Model> for Model {
                 <div class="header",>
                     <h1>{ "Prawnalith" }</h1>
                     <h2>{ "🦐 A tank for the ages 🦐" }</h2>
-                    <div>
-                        <input class="tgl tgl-friend", id="temp-units", type="checkbox",/>
-                        <label class="tgl-btn", data-tg-off="℃", data-tg-on="℉", for="temp-units",></label>
-                    </div>
                 </div>
             { if let Some(_auth_token) = &self.auth_token {
                 html! {
@@ -234,6 +230,11 @@ impl Renderable<Model> for Model {
                             { self.view_tanks() }
                             </tbody>
                         </table>
+                        <br/>
+                        <div>
+                            <input class="tgl tgl-friend", id="temp-units", type="checkbox",/>
+                            <label class="tgl-btn", data-tg-off="Temp ℃", data-tg-on="Temp ℉", for="temp-units",></label>
+                         </div>
                     </div>
                     }
                 } else {
