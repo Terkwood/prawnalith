@@ -1,5 +1,8 @@
 version: '3'
 services:
+  stream:
+    image: "prawnalith/video:init"
+    build: "gstreamer/."
   pond:
     image: "prawnalith/pond:latest"
     ports:
