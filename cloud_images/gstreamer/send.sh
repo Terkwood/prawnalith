@@ -12,6 +12,6 @@ PORT=8888
 # note that you can vary the framerate and width/height to easy
 # success.
 
-gst-launch-1.0 -v rpicamsrc  
+gst-launch-1.0 -v rpicamsrc \
 	! x264enc ! rtph264pay \
 	! tcpclientsink host=$TARGET_IP port=$PORT
