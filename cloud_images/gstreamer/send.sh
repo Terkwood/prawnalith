@@ -14,4 +14,5 @@ PORT=8888
 
 gst-launch-1.0 -v rpicamsrc  ! videoconvert ! videoscale ! \
         video/x-raw,format=I420,width=320,height=240,framerate=15/1 ! \
-        x264enc tune="zerolatency" threads=1 ! tcpclientsink host=$TARGET_IP port=$PORT
+        x264enc tune="zerolatency" threads=1 ! h264parse ! rtph264pay ! \ 
+        tcpclientsink host=$TARGET_IP port=$PORT
