@@ -13,5 +13,5 @@ PORT=8888
 # success.
 
 gst-launch-1.0 -v rpicamsrc \
-	! x264enc ! rtph264pay \
+	! x264enc ! video/x-h264,stream-format=byte-stream \
 	! tcpclientsink host=$TARGET_IP port=$PORT
