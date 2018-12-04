@@ -8,6 +8,6 @@ RUN apt-get install -y gstreamer1.0-plugins-ugly
 RUN apt-get install -y git vim
 RUN git clone https://github.com/Terkwood/prawnalith
 WORKDIR "/prawnalith"
-RUN git checkout feature/video_init
+RUN git checkout EXPERIMENTAL_MAGIC
 WORKDIR "/prawnalith/cloud_images/gstreamer"
 ENTRYPOINT ["sh", "recv.sh"]

@@ -3,6 +3,8 @@ services:
   stream:
     image: "prawnalith/video:init"
     build: "gstreamer/."
+    ports:
+      - "8888:5001"
   pond:
     image: "prawnalith/pond:latest"
     ports:
