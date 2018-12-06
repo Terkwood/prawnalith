@@ -13,7 +13,7 @@ PORT=8888
 # success.
 
 gst-launch-1.0 -v rpicamsrc \
-	! videoconvert ! videoscale \
-        ! video/x-raw,format=I420,width=320,height=240,framerate=15/1 \
-	! x264enc ! video/x-h264,stream-format=byte-stream \
+	! queue ! videoconvert ! queue ! videoscale \
+        ! queue ! video/x-raw,format=I420,width=320,height=240,framerate=15/1 \
+	! queue ! x264enc ! queue ! video/x-h264,stream-format=byte-stream \
 	! tcpclientsink host=$TARGET_IP port=$PORT
