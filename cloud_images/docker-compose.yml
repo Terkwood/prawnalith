@@ -5,6 +5,7 @@ services:
     build: "gstreamer/."
     ports:
       - "8888:5001"
+      - "8000:8000" # test
   pond:
     image: "prawnalith/pond:latest"
     ports:
