@@ -6,6 +6,7 @@ extern crate envy;
 extern crate redis;
 
 use std::slice::SliceConcatExt;
+use std::time;
 
 use redis::Commands;
 use rumqtt::{MqttClient, MqttOptions, QoS};
@@ -23,6 +24,8 @@ struct Config {
     mqtt_topic: String,
     temp_unit: Option<char>,
     wait_secs: Option<u64>,
+    warning: Option<String>,
+    seconds_until_stale: Option<u32>,
 }
 
 fn generate_mq_client_id() -> String {
@@ -36,6 +39,36 @@ fn get_num_tanks(conn: &redis::Connection, namespace: &str) -> Result<i64, redis
 struct Temp {
     f: f64,
     c: f64,
+    update_time: Option<u64>,
+}
+
+struct PH {
+    val: f64,
+    update_time: Option<u64>,
+}
+
+struct Staleness {
+    warning: String,
+    deadline_seconds: u32,
+}
+impl Staleness {
+    fn text(&self, maybe_time: Option<u64>) -> String {
+        match maybe_time {
+            Some(update_time) if self.is_stale(update_time) => self.warning.to_owned(),
+            _ => "".to_owned(),
+        }
+    }
+
+    fn is_stale(&self, epoch_time_utc: u64) -> bool {
+        epoch_secs() - epoch_time_utc > self.deadline_seconds as u64
+    }
+}
+
+fn epoch_secs() -> u64 {
+    time::SystemTime::now()
+        .duration_since(time::SystemTime::UNIX_EPOCH)
+        .unwrap()
+        .as_secs()
 }
 
 fn f_to_c(temp_f: f64) -> f64 {
@@ -50,31 +83,62 @@ fn get_temp_ph(
     conn: &redis::Connection,
     tank: i64,
     namespace: &str,
-) -> Result<(Option<Temp>, Option<f64>), redis::RedisError> {
+) -> Result<(Option<Temp>, Option<PH>), redis::RedisError> {
     let numbers: Vec<Option<f64>> = conn.hget(
         format!("{}/tanks/{}", namespace, tank),
         vec!["temp_f", "temp_c", "ph"],
     )?;
+    let update_times: Vec<Option<u64>> = conn.hget(
+        format!("{}/tanks/{}", namespace, tank),
+        vec!["temp_update_time", "ph_update_time"],
+    )?;
     let (temp_f, temp_c) = (numbers.get(0), numbers.get(1));
+    let (temp_update_time, ph_update_time) = (
+        unnest_ref(update_times.get(0)),
+        unnest_ref(update_times.get(1)),
+    );
     let temp = match (temp_f, temp_c) {
-        (Some(&Some(f)), Some(&Some(c))) => Some(Temp { f, c }),
-        (_, Some(&Some(c))) => Some(Temp { f: c_to_f(c), c }),
-        (Some(&Some(f)), _) => Some(Temp { f, c: f_to_c(f) }),
+        (Some(&Some(f)), Some(&Some(c))) => Some(Temp {
+            f,
+            c,
+            update_time: temp_update_time,
+        }),
+        (_, Some(&Some(c))) => Some(Temp {
+            f: c_to_f(c),
+            c,
+            update_time: temp_update_time,
+        }),
+        (Some(&Some(f)), _) => Some(Temp {
+            f,
+            c: f_to_c(f),
+            update_time: temp_update_time,
+        }),
         _ => None,
     };
-    let ph = match numbers.get(2) {
-        Some(&Some(level)) => Some(level),
-        Some(&None) => None,
-        None => None,
-    };
+    let ph = unnest_ref(numbers.get(2)).map(|val| PH {
+        val,
+        update_time: ph_update_time,
+    });
 
     Ok((temp, ph))
+}
+
+fn unnest_ref<A>(a: Option<&Option<A>>) -> Option<A>
+where
+    A: Copy,
+{
+    match a {
+        Some(&Some(thing)) => Some(thing),
+        Some(&None) => None,
+        None => None,
+    }
 }
 
 fn generate_status(
     conn: &redis::Connection,
     temp_unit: &char,
     namespace: &str,
+    staleness: &Staleness,
 ) -> Result<String, redis::RedisError> {
     let num_tanks = get_num_tanks(&conn, namespace)?;
 
@@ -87,14 +151,26 @@ fn generate_status(
 
                 let tank_string = format!("#{}:", tank);
                 let temp_string = maybe_temp
-                    .map(move |t| match temp_unit {
-                        'c' | 'C' => t.c,
-                        _ => t.f,
+                    .map(move |t| {
+                        (
+                            match temp_unit {
+                                'c' | 'C' => t.c,
+                                _ => t.f,
+                            },
+                            t.update_time,
+                        )
                     })
-                    .map(|t| format!(" {}°{}", t, temp_unit.to_ascii_uppercase()))
+                    .map(|(t, update_time)| {
+                        format!(
+                            " {}°{}{}",
+                            t,
+                            temp_unit.to_ascii_uppercase(),
+                            staleness.text(update_time)
+                        )
+                    })
                     .unwrap_or("".to_string());
                 let ph_string: String = maybe_ph
-                    .map(move |level| format!(" pH {}", level))
+                    .map(move |ph| format!(" pH {}{}", ph.val, staleness.text(ph.update_time)))
                     .unwrap_or("".to_string());
 
                 let message = tank_string + &temp_string + &ph_string;
@@ -160,11 +236,21 @@ fn main() {
 
     let wait_secs = config.wait_secs.unwrap_or(10);
 
+    let staleness = {
+        let warning = &config.warning.unwrap_or("[!]".to_owned());
+        let deadline_seconds = &config.seconds_until_stale.unwrap_or(30);
+        Staleness {
+            warning: warning.to_string(),
+            deadline_seconds: *deadline_seconds,
+        }
+    };
+
     loop {
         let status = generate_status(
             &redis_conn,
             &config.temp_unit.unwrap_or('F'),
-            &config.redis_namespace.clone().unwrap_or("".to_string()),
+            &config.redis_namespace.clone().unwrap_or("".to_owned()),
+            &staleness,
         );
         mq_cli
             .publish(
