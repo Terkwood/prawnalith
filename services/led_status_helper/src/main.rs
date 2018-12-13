@@ -36,6 +36,12 @@ fn get_num_tanks(conn: &redis::Connection, namespace: &str) -> Result<i64, redis
 struct Temp {
     f: f64,
     c: f64,
+    update_time: Option<u64>,
+}
+
+struct PH {
+    val: f64,
+    update_time: Option<u64>,
 }
 
 fn f_to_c(temp_f: f64) -> f64 {
@@ -50,25 +56,55 @@ fn get_temp_ph(
     conn: &redis::Connection,
     tank: i64,
     namespace: &str,
-) -> Result<(Option<Temp>, Option<f64>), redis::RedisError> {
+) -> Result<(Option<Temp>, Option<PH>), redis::RedisError> {
     let numbers: Vec<Option<f64>> = conn.hget(
         format!("{}/tanks/{}", namespace, tank),
         vec!["temp_f", "temp_c", "ph"],
     )?;
+    let update_times: Vec<Option<u64>> = conn.hget(
+        format!("{}/tanks/{}", namespace, tank),
+        vec!["temp_update_time", "ph_update_time"],
+    )?;
     let (temp_f, temp_c) = (numbers.get(0), numbers.get(1));
+    let (temp_update_time, ph_update_time) = (
+        unnest_ref(update_times.get(0)),
+        unnest_ref(update_times.get(1)),
+    );
     let temp = match (temp_f, temp_c) {
-        (Some(&Some(f)), Some(&Some(c))) => Some(Temp { f, c }),
-        (_, Some(&Some(c))) => Some(Temp { f: c_to_f(c), c }),
-        (Some(&Some(f)), _) => Some(Temp { f, c: f_to_c(f) }),
+        (Some(&Some(f)), Some(&Some(c))) => Some(Temp {
+            f,
+            c,
+            update_time: temp_update_time,
+        }),
+        (_, Some(&Some(c))) => Some(Temp {
+            f: c_to_f(c),
+            c,
+            update_time: temp_update_time,
+        }),
+        (Some(&Some(f)), _) => Some(Temp {
+            f,
+            c: f_to_c(f),
+            update_time: temp_update_time,
+        }),
         _ => None,
     };
-    let ph = match numbers.get(2) {
-        Some(&Some(level)) => Some(level),
-        Some(&None) => None,
-        None => None,
-    };
+    let ph = unnest_ref(numbers.get(2)).map(|val| PH {
+        val,
+        update_time: ph_update_time,
+    });
 
     Ok((temp, ph))
+}
+
+fn unnest_ref<A>(a: Option<&Option<A>>) -> Option<A>
+where
+    A: Copy,
+{
+    match a {
+        Some(&Some(thing)) => Some(thing),
+        Some(&None) => None,
+        None => None,
+    }
 }
 
 fn generate_status(
@@ -94,7 +130,7 @@ fn generate_status(
                     .map(|t| format!(" {}°{}", t, temp_unit.to_ascii_uppercase()))
                     .unwrap_or("".to_string());
                 let ph_string: String = maybe_ph
-                    .map(move |level| format!(" pH {}", level))
+                    .map(move |level| format!(" pH {}", level.val))
                     .unwrap_or("".to_string());
 
                 let message = tank_string + &temp_string + &ph_string;
