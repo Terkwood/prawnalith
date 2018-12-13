@@ -50,6 +50,18 @@ struct Staleness {
     warning: String,
     deadline_seconds: u32,
 }
+impl Staleness {
+    fn text(&self, maybe_time: Option<u64>) -> String {
+        match maybe_time {
+            Some(update_time) if self.is_stale(update_time) => self.warning.to_owned(),
+            _ => "".to_owned(),
+        }
+    }
+
+    fn is_stale(&self, epoch_time_utc: u64) -> bool {
+        unimplemented!()
+    }
+}
 
 fn f_to_c(temp_f: f64) -> f64 {
     (temp_f - 32.0) * 5.0 / 9.0
@@ -145,12 +157,12 @@ fn generate_status(
                             " {}°{}{}",
                             t,
                             temp_unit.to_ascii_uppercase(),
-                            warn_text(update_time, &staleness.warning)
+                            staleness.text(update_time)
                         )
                     })
                     .unwrap_or("".to_string());
                 let ph_string: String = maybe_ph
-                    .map(move |ph| format!(" pH {}", ph.val))
+                    .map(move |ph| format!(" pH {}{}", ph.val, staleness.text(ph.update_time)))
                     .unwrap_or("".to_string());
 
                 let message = tank_string + &temp_string + &ph_string;
@@ -171,16 +183,6 @@ fn generate_status(
         .collect();
 
     status_results.map(|ss| ss.join(" "))
-}
-
-fn warn_text(maybe_time: Option<u64>, warning: &str) -> String {
-    match maybe_time {
-        Some(update_time) if is_stale(update_time) => warning.to_owned(),
-        _ => "".to_owned(),
-    }
-}
-fn is_stale(epoch_time_utc: u64) -> bool {
-    unimplemented!()
 }
 
 fn main() {
