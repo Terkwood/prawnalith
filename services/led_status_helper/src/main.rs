@@ -6,6 +6,7 @@ extern crate envy;
 extern crate redis;
 
 use std::slice::SliceConcatExt;
+use std::time;
 
 use redis::Commands;
 use rumqtt::{MqttClient, MqttOptions, QoS};
@@ -59,8 +60,15 @@ impl Staleness {
     }
 
     fn is_stale(&self, epoch_time_utc: u64) -> bool {
-        unimplemented!()
+        epoch_secs() - epoch_time_utc > self.deadline_seconds as u64
     }
+}
+
+fn epoch_secs() -> u64 {
+    time::SystemTime::now()
+        .duration_since(time::SystemTime::UNIX_EPOCH)
+        .unwrap()
+        .as_secs()
 }
 
 fn f_to_c(temp_f: f64) -> f64 {
