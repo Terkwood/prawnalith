@@ -24,6 +24,7 @@ struct Config {
     temp_unit: Option<char>,
     wait_secs: Option<u64>,
     warning: Option<String>,
+    seconds_until_stale: Option<u32>,
 }
 
 fn generate_mq_client_id() -> String {
@@ -43,6 +44,11 @@ struct Temp {
 struct PH {
     val: f64,
     update_time: Option<u64>,
+}
+
+struct Staleness {
+    warning: String,
+    deadline_seconds: u32,
 }
 
 fn f_to_c(temp_f: f64) -> f64 {
@@ -112,7 +118,7 @@ fn generate_status(
     conn: &redis::Connection,
     temp_unit: &char,
     namespace: &str,
-    warning: &str,
+    staleness: &Staleness,
 ) -> Result<String, redis::RedisError> {
     let num_tanks = get_num_tanks(&conn, namespace)?;
 
@@ -139,7 +145,7 @@ fn generate_status(
                             " {}°{}{}",
                             t,
                             temp_unit.to_ascii_uppercase(),
-                            warn_text(update_time, warning)
+                            warn_text(update_time, &staleness.warning)
                         )
                     })
                     .unwrap_or("".to_string());
@@ -220,14 +226,21 @@ fn main() {
 
     let wait_secs = config.wait_secs.unwrap_or(10);
 
-    let warning = &config.warning.unwrap_or("[!]".to_owned());
+    let staleness = {
+        let warning = &config.warning.unwrap_or("[!]".to_owned());
+        let deadline_seconds = &config.seconds_until_stale.unwrap_or(30);
+        Staleness {
+            warning: warning.to_string(),
+            deadline_seconds: *deadline_seconds,
+        }
+    };
 
     loop {
         let status = generate_status(
             &redis_conn,
             &config.temp_unit.unwrap_or('F'),
             &config.redis_namespace.clone().unwrap_or("".to_owned()),
-            warning,
+            &staleness,
         );
         mq_cli
             .publish(
