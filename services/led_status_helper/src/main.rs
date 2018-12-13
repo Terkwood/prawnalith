@@ -23,6 +23,7 @@ struct Config {
     mqtt_topic: String,
     temp_unit: Option<char>,
     wait_secs: Option<u64>,
+    warning: Option<String>,
 }
 
 fn generate_mq_client_id() -> String {
@@ -123,14 +124,19 @@ fn generate_status(
 
                 let tank_string = format!("#{}:", tank);
                 let temp_string = maybe_temp
-                    .map(move |t| match temp_unit {
-                        'c' | 'C' => t.c,
-                        _ => t.f,
+                    .map(move |t| {
+                        (
+                            match temp_unit {
+                                'c' | 'C' => t.c,
+                                _ => t.f,
+                            },
+                            t.update_time,
+                        )
                     })
-                    .map(|t| format!(" {}°{}", t, temp_unit.to_ascii_uppercase()))
+                    .map(|(t, update_time)| format!(" {}°{}", t, temp_unit.to_ascii_uppercase()))
                     .unwrap_or("".to_string());
                 let ph_string: String = maybe_ph
-                    .map(move |level| format!(" pH {}", level.val))
+                    .map(move |ph| format!(" pH {}", ph.val))
                     .unwrap_or("".to_string());
 
                 let message = tank_string + &temp_string + &ph_string;
