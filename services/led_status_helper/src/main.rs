@@ -112,6 +112,7 @@ fn generate_status(
     conn: &redis::Connection,
     temp_unit: &char,
     namespace: &str,
+    warning: &str,
 ) -> Result<String, redis::RedisError> {
     let num_tanks = get_num_tanks(&conn, namespace)?;
 
@@ -133,7 +134,14 @@ fn generate_status(
                             t.update_time,
                         )
                     })
-                    .map(|(t, update_time)| format!(" {}°{}", t, temp_unit.to_ascii_uppercase()))
+                    .map(|(t, update_time)| {
+                        format!(
+                            " {}°{}{}",
+                            t,
+                            temp_unit.to_ascii_uppercase(),
+                            warn_text(update_time, warning)
+                        )
+                    })
                     .unwrap_or("".to_string());
                 let ph_string: String = maybe_ph
                     .map(move |ph| format!(" pH {}", ph.val))
@@ -157,6 +165,16 @@ fn generate_status(
         .collect();
 
     status_results.map(|ss| ss.join(" "))
+}
+
+fn warn_text(maybe_time: Option<u64>, warning: &str) -> String {
+    match maybe_time {
+        Some(update_time) if is_stale(update_time) => warning.to_owned(),
+        _ => "".to_owned(),
+    }
+}
+fn is_stale(epoch_time_utc: u64) -> bool {
+    unimplemented!()
 }
 
 fn main() {
@@ -202,11 +220,14 @@ fn main() {
 
     let wait_secs = config.wait_secs.unwrap_or(10);
 
+    let warning = &config.warning.unwrap_or("[!]".to_owned());
+
     loop {
         let status = generate_status(
             &redis_conn,
             &config.temp_unit.unwrap_or('F'),
-            &config.redis_namespace.clone().unwrap_or("".to_string()),
+            &config.redis_namespace.clone().unwrap_or("".to_owned()),
+            warning,
         );
         mq_cli
             .publish(
