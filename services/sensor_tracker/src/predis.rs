@@ -15,13 +15,11 @@ pub fn update<'a, 'b>(
     redis_ctx: &RedisContext,
     measure: &model::Measurement,
     ext_device_id: &str,
-) -> Vec<REvent> {
+) -> Result<Vec<REvent>, redis::RedisError> {
     let mut delta_events: Vec<REvent> = vec![];
 
     println!("Received redis {} update: {:?}", measure.name(), measure);
-    let ext_device_namespace = &redis_ctx
-        .get_external_device_namespace(measure.name())
-        .unwrap();
+    let ext_device_namespace = &redis_ctx.get_external_device_namespace(measure.name())?;
     let device_id = internal_device_id(ext_device_id, ext_device_namespace).unwrap();
 
     println!("\tDevice ID (internal): {}", device_id);
@@ -63,7 +61,7 @@ pub fn update<'a, 'b>(
         }
     };
 
-    delta_events
+    Ok(delta_events)
 }
 
 fn update_sensor_set(
@@ -228,11 +226,11 @@ fn epoch_secs() -> u64 {
 
 pub fn publish_updates(redis_ctx: &RedisContext, topic: &str, updates: Vec<REvent>) {
     updates.iter().for_each(|delta_event| {
-        let published: Result<u64, _> = redis_ctx
-            .conn
-            .publish(topic, serde_json::to_string(delta_event).unwrap());
-        if let Err(e) = published {
-            println!("Error publishing to {}: {}", topic, e)
+        if let Ok(s) = serde_json::to_string(delta_event) {
+            let published: Result<u64, _> = redis_ctx.conn.publish(topic, s);
+            if let Err(e) = published {
+                println!("Error publishing to {}: {}", topic, e)
+            }
         }
     })
 }
