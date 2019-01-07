@@ -512,7 +512,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "sensor_tracker"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "dotenv 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "envy 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
