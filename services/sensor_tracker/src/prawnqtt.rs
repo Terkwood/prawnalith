@@ -69,7 +69,7 @@ fn generate_mq_client_id() -> String {
 }
 
 pub fn deser_message(msg: paho_mqtt::Message) -> Option<model::SensorMessage> {
-    serde_json::from_str(std::str::from_utf8(&*msg.payload()).unwrap())
-        .map(|r| Some(r))
-        .unwrap_or(None)
+    let r = std::str::from_utf8(&*msg.payload());
+    r.ok()
+        .and_then(|s| serde_json::from_str(s).map(|r| Some(r)).unwrap_or(None))
 }
