@@ -6,10 +6,10 @@ After=network.target
 Type=oneshot
 RemainAfterExit=yes
 # Another Type option: forking
-User=root
-WorkingDirectory=/var/prawnalith/cloud_images
-ExecStart=/bin/bash /var/prawnalith/cloud_images/start.sh
-ExecStop=/bin/bash /var/prawnalith/cloud_images/docker-compose.sh down
+User=pi
+WorkingDirectory=/var/prawnalith/local_images
+ExecStart=/bin/bash /var/prawnalith/local_images/start.sh
+ExecStop=/bin/bash /var/prawnalith/local_images/stop.sh
 Restart=no
 
 [Install]
