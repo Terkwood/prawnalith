@@ -1,0 +1,16 @@
+[Unit]
+Description=Prawnalith docker compose
+After=network.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# Another Type option: forking
+User=root
+WorkingDirectory=/var/prawnalith/cloud_images
+ExecStart=/bin/bash /var/prawnalith/cloud_images/start.sh
+ExecStop=/bin/bash /var/prawnalith/cloud_images/docker-compose.sh down
+Restart=no
+
+[Install]
+WantedBy=multi-user.target
