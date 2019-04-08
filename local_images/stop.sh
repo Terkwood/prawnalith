@@ -1,3 +1,4 @@
 #!/bin/bash
 docker-compose down
-sh ../services/stop.sh
+cd ../services
+sh stop.sh
