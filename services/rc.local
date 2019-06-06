@@ -1,0 +1,11 @@
+#!/bin/sh -e
+#
+# Put this in /etc/rc.local
+#
+
+cd /var/prawnalith/local_images
+sudo -u pi docker-compose up &
+cd /var/prawnalith/services
+sudo -u pi sh /var/prawnalith/services/start.sh
+
+exit 0
