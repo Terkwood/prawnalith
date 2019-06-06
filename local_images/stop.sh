@@ -1,4 +1,4 @@
 #!/bin/bash
 docker-compose down
-cd ../services
+cd /var/prawnalith/services
 sh stop.sh

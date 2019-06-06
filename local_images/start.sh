@@ -1,3 +1,3 @@
 nohup docker-compose up >/dev/null 2>&1 &
-cd ../services
+cd /var/prawnalith/services
 sh start.sh
