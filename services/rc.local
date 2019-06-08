@@ -5,7 +5,9 @@
 
 cd /var/prawnalith/local_images
 sudo -u pi docker-compose up &
+sleep 60
 cd /var/prawnalith/services
-sudo -u pi sh /var/prawnalith/services/start.sh
+sudo -u pi sh /var/prawnalith/services/start.sh &
 
 exit 0
+
