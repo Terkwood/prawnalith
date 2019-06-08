@@ -123,8 +123,8 @@ appears on the left side of the page.
         border-top: 1px solid #333;
     }
 
-    #menu .pure-menu li a {
-        margin-top: 1em
+    #menu .pure-menu li {
+        margin-bottom: 1em
     }
 
     /*
