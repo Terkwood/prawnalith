@@ -132,15 +132,14 @@ appears on the left side of the page.
     */
     #menu .pure-menu li a:hover,
     #menu .pure-menu li a:focus {
-        background: #333;
         color: hotpink;
     }
     /* Style anchor links in the menu */
     #menu .pure-menu a:link {
-        color: lightblue;
+        color:lightskyblue;
     }
     #menu .pure-menu a:visited {
-        color: lightskyblue;
+        color: #0078e7;
     }
     #menu .pure-menu a:active {
         color: orange;
