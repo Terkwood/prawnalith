@@ -220,6 +220,9 @@ impl Renderable<Model> for Model {
                             }
                         }
                         </li>
+                        <li class="pure-menu-item",>
+                            <a href="https://github.com/Terkwood/prawnalith",>{ "Github" }</a>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -249,9 +252,6 @@ impl Renderable<Model> for Model {
                         <div>
                             <input class="tgl tgl-friend", id="temp-units", type="checkbox", checked=self.use_fahrenheit, onclick=|_| Msg::ToggleTempUnits,/>
                             <label class="tgl-btn", data-tg-off="Temp ℃", data-tg-on="Temp ℉", for="temp-units",></label>
-                        </div>
-                        <div>
-                            <p><a href="https://github.com/Terkwood/prawnalith",>{ "Github repo" }</a></p>
                         </div>
                     </div>
                     }
