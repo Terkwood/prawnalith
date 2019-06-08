@@ -220,7 +220,7 @@ impl Renderable<Model> for Model {
                             }
                         }
                         </li>
-                        <li class="pure-menu-item",>
+                        <li class="pure-menu-item centered-menu-item",>
                             <a href="https://github.com/Terkwood/prawnalith",>{ "Github" }</a>
                         </li>
                     </ul>

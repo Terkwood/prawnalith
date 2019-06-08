@@ -122,13 +122,29 @@ appears on the left side of the page.
     #menu .pure-menu .menu-item-divided {
         border-top: 1px solid #333;
     }
-        /*
-        Change color of the anchor links on hover/focus.
-        */
-        #menu .pure-menu li a:hover,
-        #menu .pure-menu li a:focus {
-            background: #333;
-        }
+
+    #menu .pure-menu li a {
+        margin-top: 1em
+    }
+
+    /*
+    Change color of the anchor links on hover/focus.
+    */
+    #menu .pure-menu li a:hover,
+    #menu .pure-menu li a:focus {
+        background: #333;
+        color: hotpink;
+    }
+    /* Style anchor links in the menu */
+    #menu .pure-menu a:link {
+        color: lightblue;
+    }
+    #menu .pure-menu a:visited {
+        color: lightskyblue;
+    }
+    #menu .pure-menu a:active {
+        color: orange;
+    }
 
     /*
     This styles the selected menu item `<li>`.
@@ -137,12 +153,13 @@ appears on the left side of the page.
     #menu .pure-menu-heading {
         background: #1f8dd6;
     }
-        /*
-        This styles a link within a selected menu item `<li>`.
-        */
-        #menu .pure-menu-selected a {
-            color: #fff;
-        }
+
+    /*
+    This styles a link within a selected menu item `<li>`.
+    */
+    #menu .pure-menu-selected a {
+        color: #fff;
+    }
 
     /*
     This styles the menu heading.
@@ -343,16 +360,3 @@ Hides the menu at `48em`, but modify this based on your app's needs.
   .tgl-friend:checked + .tgl-btn:active:after {
     left: 10%;
   }
-  
-a:link {
-    color: lightblue;
-}
-a:visited {
-    color: lightskyblue;
-}
-a:hover {
-    color: hotpink;
-}
-a:active {
-    color: orange;
-} 
