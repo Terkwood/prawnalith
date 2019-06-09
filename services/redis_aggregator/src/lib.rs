@@ -303,11 +303,6 @@ fn publish(data: Vec<RDelta>, pubsub_ctx: &PubSubContext) -> Result<(), google_p
         messages: Some(messages),
     };
 
-    println!(
-        "Sending pubsub request with {} messages",
-        req.messages.clone().map(|ms| ms.len()).unwrap_or(0)
-    );
-
     pubsub_ctx
         .client
         .projects()
