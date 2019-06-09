@@ -1,6 +1,5 @@
 use hyper::net::HttpsConnector;
 use redis_context::RedisContext;
-use yup_oauth2::GetToken;
 
 use crate::pubsub::{PubSubClient, PubSubContext};
 use hyper_native_tls::NativeTlsClient;
@@ -51,6 +50,11 @@ impl PubSubConfig {
 
     /// Create a client used to publish to google pub/sub.
     /// See instructions at https://docs.rs/google-pubsub1_beta2/1.0.8+20181001/google_pubsub1_beta2/
+    /// 
+    /// You can see the access token if desired:
+    ///```
+    /// access.token(&vec!["https://www.googleapis.com/auth/pubsub"])
+    ///```
     pub fn to_pubsub_client(&self) -> PubSubClient {
         let secret_file = self
             .pubsub_secret_file
@@ -60,14 +64,7 @@ impl PubSubConfig {
         let client_secret = yup_oauth2::service_account_key_from_file(&secret_file).unwrap();
         let client =
             hyper::Client::with_connector(HttpsConnector::new(NativeTlsClient::new().unwrap()));
-        let mut access = yup_oauth2::ServiceAccountAccess::new(client_secret, client);
-
-        println!(
-            "{:?}",
-            access
-                .token(&vec!["https://www.googleapis.com/auth/pubsub"])
-                .unwrap()
-        );
+        let access = yup_oauth2::ServiceAccountAccess::new(client_secret, client);
 
         let client =
             hyper::Client::with_connector(HttpsConnector::new(NativeTlsClient::new().unwrap()));
