@@ -1,6 +1,6 @@
 [package]
 name = "redis_aggregator"
-version = "0.3.1"
+version = "0.3.2"
 authors = ["Terkwood <metaterkhorn@gmail.com>"]
 edition = "2018"
 
