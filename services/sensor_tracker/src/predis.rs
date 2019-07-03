@@ -97,7 +97,7 @@ fn update_area_hash(
     // We found the area associated with this
     // sensor ID, so we should update that area's
     // current reading.
-    let area_key = format!("{}/area/{}", redis_ctx.namespace, area_num);
+    let area_key = format!("{}/areas/{}", redis_ctx.namespace, area_num);
 
     let area_measure_count: Result<Option<u32>, _> = redis_ctx
         .conn
