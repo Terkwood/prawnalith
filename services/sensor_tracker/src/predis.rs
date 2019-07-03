@@ -33,17 +33,20 @@ pub fn update<'a, 'b>(
     // lookup associated tank
     let sensor_hash_key = &format!("{}/sensors/{}/{}", rn, measure.name(), device_id).to_string();
 
-    let tank_and_update_count: Result<Vec<Option<u64>>, _> = redis_ctx.conn.hget(
+    let tank_and_area_and_update_count: Result<Vec<Option<u64>>, _> = redis_ctx.conn.hget(
         sensor_hash_key,
-        vec!["tank", &format!("{}_update_count", measure.name())],
+        vec!["tank", "area", &format!("{}_update_count", measure.name())],
     );
 
-    if let Ok(v) = tank_and_update_count {
-        let rando_update = match v.get(0).unwrap_or(&None) {
-            Some(tank_num) => update_tank_hash(redis_ctx, tank_num, &measure),
-            None => ensure_sensor_hash_exists(redis_ctx, sensor_hash_key, ext_device_id),
+    if let Ok(v) = tank_and_area_and_update_count {
+        // Tank associated with this sensor?
+        let revent = match (v.get(0).unwrap_or(&None), v.get(1).unwrap_or(&None)) {
+            (Some(tank_num), _) => update_tank_hash(redis_ctx, tank_num, &measure),
+            (_, Some(area_num)) => update_area_hash(redis_ctx, area_num, &measure),
+            (None, None) => ensure_sensor_hash_exists(redis_ctx, sensor_hash_key, ext_device_id),
         };
-        if let Some(ev) = rando_update {
+
+        if let Some(ev) = revent {
             delta_events.push(ev)
         }
 
@@ -54,8 +57,9 @@ pub fn update<'a, 'b>(
             redis_ctx,
             sensor_hash_key,
             measure,
-            v.get(1).unwrap_or(&None),
+            v.get(2).unwrap_or(&None),
         );
+
         if let Some(ev) = sensor_updated {
             delta_events.push(ev)
         }
@@ -80,6 +84,57 @@ fn update_sensor_set(
         Ok(n) if n > 0 => Some(REvent::SetUpdated {
             key: set_sensor_type_key,
         }),
+        _ => None,
+    }
+}
+
+fn update_area_hash(
+    redis_ctx: &RedisContext,
+    area_num: &u64,
+    measure: &model::Measurement,
+) -> Option<REvent> {
+    // We found the area associated with this
+    // sensor ID, so we should update that area's
+    // current reading.
+    let area_key = format!("{}/area/{}", redis_ctx.namespace, area_num);
+
+    let area_measure_count: Result<Option<u32>, _> = redis_ctx
+        .conn
+        .hget(&area_key, &format!("{}_update_count", measure.name()));
+
+    let uc_name = format!("{}_update_count", measure.name());
+    let ut_name = format!("{}_update_time", measure.name());
+    let update: (Result<String, _>, Vec<&str>) = {
+        let mut data: Vec<(&str, String)> = measure.to_redis();
+
+        data.push((
+            &uc_name,
+            area_measure_count
+                .unwrap_or(None)
+                .map(|u| u + 1)
+                .unwrap_or(1)
+                .to_string(),
+        ));
+
+        data.push((&ut_name, epoch_secs().to_string()));
+        (
+            redis_ctx.conn.hset_multiple(&area_key, &data[..]),
+            data.iter().map(|(a, _)| *a).collect(),
+        )
+    };
+
+    match update {
+        (Err(e), _) => {
+            println!("update fails for {}: {:?}", area_key, e);
+            None
+        }
+        (Ok(_), fields) if fields.len() > 0 => {
+            let fs = fields.iter().map(|s| s.to_string()).collect();
+            Some(REvent::HashUpdated {
+                key: area_key.to_string(),
+                fields: fs,
+            })
+        }
         _ => None,
     }
 }
