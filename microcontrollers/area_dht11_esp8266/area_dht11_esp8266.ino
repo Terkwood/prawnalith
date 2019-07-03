@@ -32,6 +32,11 @@ WiFiClient wifi_client;
 
 // PUBSUB VARS
 PubSubClient mqtt_client(wifi_client);
+// WARNING WARNING WARNING 
+// WARNING WARNING WARNING 
+//      PubSubClient.h must be modified to support the next setting!
+//      ~/Documents/Arduino/libraries/PubSubClient/PubSubClient.h
+//      #define MQTT_MAX_PACKET_SIZE 256
 #define MQTT_MESSAGE_SIZE 256
 char mqtt_message[MQTT_MESSAGE_SIZE];
 #define MQTT_RETRY_MS 5000
