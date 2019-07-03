@@ -99,6 +99,9 @@ void setup(void)
   setup_mqtt();
 
   setup_dht_sensor();
+
+  Serial.print("device_id ");
+  Serial.println(DEVICE_ID);
 }
 
 void loop(void)
