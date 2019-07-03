@@ -19,20 +19,9 @@ pub fn update<'a, 'b>(
     let mut delta_events: Vec<REvent> = vec![];
 
     println!("Received redis {} update: {:?}", measure.name(), measure);
-    let device_id = match &measure {
-        &model::Measurement::DHT {
-            status: _,
-            humidity: _,
-            temp_f: _,
-            temp_c: _,
-            heat_index_f: _,
-            heat_index_c: _,
-        } => Uuid::parse_str(ext_device_id).unwrap(),
-        _ => {
-            let ext_device_namespace = &redis_ctx.get_external_device_namespace(measure.name())?;
-            internal_device_id(ext_device_id, ext_device_namespace).unwrap()
-        }
-    };
+
+    let ext_device_namespace = &redis_ctx.get_external_device_namespace(measure.name())?;
+    let device_id = internal_device_id(ext_device_id, ext_device_namespace).unwrap();
 
     println!("\tDevice ID (internal): {}", device_id);
     let rn = &redis_ctx.namespace;
