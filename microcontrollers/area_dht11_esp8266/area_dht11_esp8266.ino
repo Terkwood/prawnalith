@@ -13,7 +13,7 @@
 
 
 // WARNING! YOU MUST REPLACE THE EXAMPLE VALUE BELOW
-const char* DEVICE_ID = "b1c8ae88-8622-415f-951e-27a21888fe19";
+const char* DEVICE_ID = "ext_id_..._not_a_uuid";
 
 
 // WIFI CONFIGURABLE CONSTANTS
