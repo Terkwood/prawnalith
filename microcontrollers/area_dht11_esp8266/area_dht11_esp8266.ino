@@ -1,7 +1,14 @@
 #include <DHTesp.h>
 #include <WiFiClient.h>
 #include <ESP8266WiFi.h>
-// TODO did we alter MQTT_KEEPALIVE ? See ph_temp_sensor_esp8266
+// NB.  We have altered the `#define MQTT_KEEPALIVE 15` in PubSubClient.h
+//      to be set as `#define MQTT_KEEPALIVE 60`.  This is done in an effort
+//      to allow the time-intensive scrolling process not take so long that
+//      it exceeds the default keepalive in PubSubClient.h.
+//      If you're using the Arduino IDE, this can usually be found in
+//      ~/Documents/Arduino/libraries/PubSubClient/PubSubClient.h
+//      WE ALSO MODIFY MQTT MAX PACKET SIZE
+//      `#define MQTT_MAX_PACKET_SIZE 256`
 #include <PubSubClient.h>
 
 
@@ -25,7 +32,7 @@ WiFiClient wifi_client;
 
 // PUBSUB VARS
 PubSubClient mqtt_client(wifi_client);
-#define MQTT_MESSAGE_SIZE 128
+#define MQTT_MESSAGE_SIZE 256
 char mqtt_message[MQTT_MESSAGE_SIZE];
 #define MQTT_RETRY_MS 5000
 
@@ -51,11 +58,6 @@ void setup_wifi(void) {
 }
 
 void setup_dht_sensor(void) {
-  Serial.println();
-  Serial.println(ARDUINO_BOARD);
-  Serial.println("Status\tHumidity (%)\tTemperature (C)\t(F)\tHeatIndex (C)\t(F)");
-
-
   dht.setup(D4, DHTesp::DHT11); // Connect DHT sensor to GPIO 4
 }
 
@@ -64,6 +66,13 @@ void setup_mqtt(void) {
   randomSeed(micros());
 
   mqtt_client.setServer(mqtt_broker, mqtt_port);
+
+  Serial.print("Publishing to broker ");
+  Serial.print(mqtt_broker);
+  Serial.print(":");
+  Serial.print(mqtt_port);
+  Serial.print(" with topic ");
+  Serial.println(mqtt_topic);
 }
 
 
@@ -100,46 +109,31 @@ void setup(void)
 
   setup_dht_sensor();
 
-  Serial.print("device_id ");
+  Serial.print("prawnalith device_id ");
   Serial.println(DEVICE_ID);
+  Serial.println();
+  Serial.println(ARDUINO_BOARD);
 }
 
 void loop(void)
 {
   delay(MEASUREMENT_FREQ_MS);
 
-  float humidity = dht.getHumidity();
-  float temperature = dht.getTemperature();
-
-  Serial.print(dht.getStatusString());
-  Serial.print("\t");
-  Serial.print(humidity, 1);
-  Serial.print(" H%");
-  Serial.print("\t\t");
-  Serial.print(temperature, 1);
-  Serial.print(" C");
-  Serial.print("\t\t");
-  Serial.print(dht.toFahrenheit(temperature), 1);
-  Serial.print(" F");
-  Serial.print("\t\t");
-  Serial.print(dht.computeHeatIndex(temperature, humidity, false), 1);
-  Serial.print(" H%C");
-  Serial.print("\t\t");
-  Serial.print(dht.computeHeatIndex(dht.toFahrenheit(temperature), humidity, true), 1);
-  Serial.println(" H%F");
-
-  
   if (!mqtt_client.connected()) {
     connect_mqtt();
   }
   mqtt_client.loop();
 
+  float humidity = dht.getHumidity();
+  float temperature = dht.getTemperature();
+  
   // publish formatted message to MQTT topic
   snprintf(
     mqtt_message,
     MQTT_MESSAGE_SIZE,
-    "{ \"device_id\": \"%s\", \"temp_c\": %.2f, \"temp_f\": %.2f, \"humidity\": %.2f, \"heat_index_c\": %.2f, \"heat_index_f\": %.2f }",
+    "{ \"device_id\": \"%s\", \"status\": \"%s\", \"temp_c\": %.2f, \"temp_f\": %.2f, \"humidity\": %.2f, \"heat_index_c\": %.2f, \"heat_index_f\": %.2f }",
     DEVICE_ID,  // snprintf wants a const char*
+    dht.getStatusString(),
     temperature,
     dht.toFahrenheit(temperature),
     humidity,
@@ -147,6 +141,12 @@ void loop(void)
     dht.computeHeatIndex(dht.toFahrenheit(temperature), humidity, true)
   );
   
-  mqtt_client.publish(mqtt_topic, mqtt_message);
-} 
+  bool publish_result = mqtt_client.publish(mqtt_topic, mqtt_message);
 
+  if (!publish_result) {
+    Serial.println("MQTT publish failed.  Message too large?  Check that PubSubClient.h has the following workaround:");
+    Serial.println("#define MQTT_MAX_PACKET_SIZE 256");
+  }
+
+  Serial.println(mqtt_message);
+} 
