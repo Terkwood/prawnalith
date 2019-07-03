@@ -46,7 +46,7 @@ DeviceAddress device_addresses[MAX_ONE_WIRE_DEVICES];
 // millis time of last measurement
 long last_temp_measurement_ms;
 // how often to measure temperature
-const int temp_measurement_freq_ms = 5000;
+const int TEMP_MEASUREMENT_FREQ_MS = 5000;
 
 // Various resolutions are available for DS18B20 temp sensor
 // See https://cdn-shop.adafruit.com/datasheets/DS18B20.pdf
@@ -373,7 +373,7 @@ void loop(void)
   mqtt_client.loop();
 
 
-  if (temp_measurement_freq_ms + last_temp_measurement_ms < now) {
+  if (TEMP_MEASUREMENT_FREQ_MS + last_temp_measurement_ms < now) {
     // NOTE THAT THIS ONLY QUERIES THE FIRST DS18B20 YOU HAVE
     // CONNECTED TO YOUR ESP8266.  IF YOU HAVE MULTIPLE TEMP
     // SENSORS ATTACHED TO YOUR MICROCONTROLLER, YOU SHOULD
