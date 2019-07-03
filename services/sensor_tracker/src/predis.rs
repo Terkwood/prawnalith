@@ -42,8 +42,12 @@ pub fn update<'a, 'b>(
     if let Ok(v) = tank_and_area_and_update_count {
         // Tank associated with this sensor?
         let revent = match (v.get(0).unwrap_or(&None), v.get(1).unwrap_or(&None)) {
-            (Some(tank_num), _) => update_tank_hash(redis_ctx, tank_num, &measure),
-            (_, Some(area_num)) => update_area_hash(redis_ctx, area_num, &measure),
+            (Some(tank_num), _) => {
+                update_container_hash(redis_ctx, Container::Tanks, tank_num, &measure)
+            }
+            (_, Some(area_num)) => {
+                update_container_hash(redis_ctx, Container::Areas, area_num, &measure)
+            }
             (None, None) => ensure_sensor_hash_exists(redis_ctx, sensor_hash_key, ext_device_id),
         };
 
@@ -89,19 +93,39 @@ fn update_sensor_set(
     }
 }
 
-fn update_area_hash(
+enum Container {
+    Tanks,
+    Areas,
+}
+
+impl Container {
+    pub fn to_string(self) -> String {
+        match self {
+            Container::Tanks => "tanks".to_string(),
+            Container::Areas => "areas".to_string(),
+        }
+    }
+}
+
+fn update_container_hash(
     redis_ctx: &RedisContext,
-    area_num: &u64,
+    container: Container,
+    container_num: &u64,
     measure: &model::Measurement,
 ) -> Option<REvent> {
     // We found the area associated with this
     // sensor ID, so we should update that area's
     // current reading.
-    let area_key = format!("{}/areas/{}", redis_ctx.namespace, area_num);
+    let container_key = format!(
+        "{}/{}/{}",
+        redis_ctx.namespace,
+        container.to_string(),
+        container_num
+    );
 
-    let area_measure_count: Result<Option<u32>, _> = redis_ctx
+    let container_measure_count: Result<Option<u32>, _> = redis_ctx
         .conn
-        .hget(&area_key, &format!("{}_update_count", measure.name()));
+        .hget(&container_key, &format!("{}_update_count", measure.name()));
 
     let uc_name = format!("{}_update_count", measure.name());
     let ut_name = format!("{}_update_time", measure.name());
@@ -110,7 +134,7 @@ fn update_area_hash(
 
         data.push((
             &uc_name,
-            area_measure_count
+            container_measure_count
                 .unwrap_or(None)
                 .map(|u| u + 1)
                 .unwrap_or(1)
@@ -119,71 +143,20 @@ fn update_area_hash(
 
         data.push((&ut_name, epoch_secs().to_string()));
         (
-            redis_ctx.conn.hset_multiple(&area_key, &data[..]),
+            redis_ctx.conn.hset_multiple(&container_key, &data[..]),
             data.iter().map(|(a, _)| *a).collect(),
         )
     };
 
     match update {
         (Err(e), _) => {
-            println!("update fails for {}: {:?}", area_key, e);
+            println!("update fails for {}: {:?}", container_key, e);
             None
         }
         (Ok(_), fields) if fields.len() > 0 => {
             let fs = fields.iter().map(|s| s.to_string()).collect();
             Some(REvent::HashUpdated {
-                key: area_key.to_string(),
-                fields: fs,
-            })
-        }
-        _ => None,
-    }
-}
-
-fn update_tank_hash(
-    redis_ctx: &RedisContext,
-    tank_num: &u64,
-    measure: &model::Measurement,
-) -> Option<REvent> {
-    // We found the tank associated with this
-    // sensor ID, so we should update that tank's
-    // current reading.
-    let tank_key = format!("{}/tanks/{}", redis_ctx.namespace, tank_num);
-
-    let tank_measure_count: Result<Option<u32>, _> = redis_ctx
-        .conn
-        .hget(&tank_key, &format!("{}_update_count", measure.name()));
-
-    let uc_name = format!("{}_update_count", measure.name());
-    let ut_name = format!("{}_update_time", measure.name());
-    let update: (Result<String, _>, Vec<&str>) = {
-        let mut data: Vec<(&str, String)> = measure.to_redis();
-
-        data.push((
-            &uc_name,
-            tank_measure_count
-                .unwrap_or(None)
-                .map(|u| u + 1)
-                .unwrap_or(1)
-                .to_string(),
-        ));
-
-        data.push((&ut_name, epoch_secs().to_string()));
-        (
-            redis_ctx.conn.hset_multiple(&tank_key, &data[..]),
-            data.iter().map(|(a, _)| *a).collect(),
-        )
-    };
-
-    match update {
-        (Err(e), _) => {
-            println!("update fails for {}: {:?}", tank_key, e);
-            None
-        }
-        (Ok(_), fields) if fields.len() > 0 => {
-            let fs = fields.iter().map(|s| s.to_string()).collect();
-            Some(REvent::HashUpdated {
-                key: tank_key.to_string(),
+                key: container_key.to_string(),
                 fields: fs,
             })
         }
