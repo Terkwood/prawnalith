@@ -10,6 +10,8 @@
 //      to be set as `#define MQTT_KEEPALIVE 60`.  This is done in an effort
 //      to allow the time-intensive scrolling process not take so long that
 //      it exceeds the default keepalive in PubSubClient.h.
+//      If you're using the Arduino IDE, this can usually be found in
+//      ~/Documents/Arduino/libraries/PubSubClient/PubSubClient.h
 #include <PubSubClient.h>
 
 // WIFI SETUP
