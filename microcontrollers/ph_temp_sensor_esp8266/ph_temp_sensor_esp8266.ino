@@ -62,7 +62,7 @@ const int DS18B20_RESOLUTION = 12;
 
 
 // PH SENSOR SETUP
-#define PRINT_INTERVAL 800
+#define PUBLISH_INTERVAL 800
 #define PH_SENSOR_PIN A0            // pH meter Analog output to Arduino Analog Input 0
 
 #define PH_SAMPLING_INTERVAL 20
@@ -353,7 +353,7 @@ float celsius_reading, fahrenheit_reading;
 void loop(void)
 {
   static unsigned long ph_sampling_time = millis();
-  static unsigned long print_time = millis();
+  static unsigned long publish_time = millis();
   static float ph_value, raw_voltage;
 
   if (millis() - ph_sampling_time > PH_SAMPLING_INTERVAL)
@@ -390,7 +390,7 @@ void loop(void)
     last_temp_measurement_ms = millis();
   }
 
-  if (millis() - print_time > PRINT_INTERVAL)
+  if (millis() - publish_time > PUBLISH_INTERVAL)
   {
     // publish formatted message to MQTT topic
     snprintf(
@@ -404,7 +404,7 @@ void loop(void)
       raw_voltage
     );
     mqtt_client.publish(mqtt_topic, mqtt_message);
-    print_time = millis();
+    publish_time = millis();
 
     Serial.println(mqtt_message);
   }
