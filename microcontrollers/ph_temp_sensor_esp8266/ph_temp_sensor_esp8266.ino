@@ -46,7 +46,7 @@ DeviceAddress device_addresses[MAX_ONE_WIRE_DEVICES];
 // millis time of last measurement
 long last_temp_measurement_ms;
 // how often to measure temperature
-const int temp_measurement_freq_ms = 5000;
+const int TEMP_MEASUREMENT_FREQ_MS = 5000;
 
 // Various resolutions are available for DS18B20 temp sensor
 // See https://cdn-shop.adafruit.com/datasheets/DS18B20.pdf
@@ -62,7 +62,7 @@ const int DS18B20_RESOLUTION = 12;
 
 
 // PH SENSOR SETUP
-#define PRINT_INTERVAL 800
+#define PUBLISH_INTERVAL 800
 #define PH_SENSOR_PIN A0            // pH meter Analog output to Arduino Analog Input 0
 
 #define PH_SAMPLING_INTERVAL 20
@@ -353,7 +353,7 @@ float celsius_reading, fahrenheit_reading;
 void loop(void)
 {
   static unsigned long ph_sampling_time = millis();
-  static unsigned long print_time = millis();
+  static unsigned long publish_time = millis();
   static float ph_value, raw_voltage;
 
   if (millis() - ph_sampling_time > PH_SAMPLING_INTERVAL)
@@ -373,7 +373,7 @@ void loop(void)
   mqtt_client.loop();
 
 
-  if (temp_measurement_freq_ms + last_temp_measurement_ms < now) {
+  if (TEMP_MEASUREMENT_FREQ_MS + last_temp_measurement_ms < now) {
     // NOTE THAT THIS ONLY QUERIES THE FIRST DS18B20 YOU HAVE
     // CONNECTED TO YOUR ESP8266.  IF YOU HAVE MULTIPLE TEMP
     // SENSORS ATTACHED TO YOUR MICROCONTROLLER, YOU SHOULD
@@ -390,7 +390,7 @@ void loop(void)
     last_temp_measurement_ms = millis();
   }
 
-  if (millis() - print_time > PRINT_INTERVAL)
+  if (millis() - publish_time > PUBLISH_INTERVAL)
   {
     // publish formatted message to MQTT topic
     snprintf(
@@ -404,7 +404,7 @@ void loop(void)
       raw_voltage
     );
     mqtt_client.publish(mqtt_topic, mqtt_message);
-    print_time = millis();
+    publish_time = millis();
 
     Serial.println(mqtt_message);
   }
