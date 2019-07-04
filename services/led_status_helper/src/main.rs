@@ -60,6 +60,16 @@ struct Temp {
     update_time: Option<u64>,
 }
 
+/// Digital humidity and temp, e.g. DHT11 sensor
+struct DHT {
+    humidity: f64,
+    temp_f: f64,
+    temp_c: f64,
+    heat_index_f: f64,
+    heat_index_c: f64,
+    update_time: Option<u64>,
+}
+
 struct PH {
     val: f64,
     update_time: Option<u64>,
@@ -97,6 +107,51 @@ fn c_to_f(temp_c: f64) -> f64 {
     temp_c * 1.8 + 32.0
 }
 
+const NAN: f64 = -255.0;
+fn get_area_data(
+    conn: &redis::Connection,
+    area: i64,
+    namespace: &str,
+) -> Result<Option<DHT>, redis::RedisError> {
+    let numbers: Vec<Option<f64>> = conn.hget(
+        format!("{}/areas/{}", namespace, area),
+        vec![
+            "humidity",
+            "temp_f",
+            "temp_c",
+            "heat_index_f",
+            "heat_index_c",
+        ],
+    )?;
+
+    let update_time_vec: Vec<Option<u64>> = conn.hget(
+        format!("{}/areas/{}", namespace, area),
+        vec!["dht_update_time"],
+    )?;
+
+    let (humidity, init_temp_f, init_temp_c, heat_index_f, heat_index_c) = (
+        numbers.get(0),
+        numbers.get(1),
+        numbers.get(2),
+        numbers.get(3),
+        numbers.get(4),
+    );
+    let update_time = unnest_ref(update_time_vec.get(0));
+
+    let temp = safe_temp(init_temp_f, init_temp_c, update_time);
+
+    let (temp_f, temp_c) = temp.map(|t| (t.f, t.c)).unwrap_or((NAN, NAN));
+
+    Ok(Some(DHT {
+        humidity: unnest_ref(humidity).unwrap_or(NAN),
+        temp_f,
+        temp_c,
+        heat_index_f: unnest_ref(heat_index_f).unwrap_or(NAN),
+        heat_index_c: unnest_ref(heat_index_c).unwrap_or(NAN),
+        update_time,
+    }))
+}
+
 fn get_tank_data(
     conn: &redis::Connection,
     tank: i64,
@@ -115,7 +170,21 @@ fn get_tank_data(
         unnest_ref(update_times.get(0)),
         unnest_ref(update_times.get(1)),
     );
-    let temp = match (temp_f, temp_c) {
+    let temp = safe_temp(temp_f, temp_c, temp_update_time);
+    let ph = unnest_ref(numbers.get(2)).map(|val| PH {
+        val,
+        update_time: ph_update_time,
+    });
+
+    Ok((temp, ph))
+}
+
+fn safe_temp(
+    temp_f: Option<&Option<f64>>,
+    temp_c: Option<&Option<f64>>,
+    temp_update_time: Option<u64>,
+) -> Option<Temp> {
+    match (temp_f, temp_c) {
         (Some(&Some(f)), Some(&Some(c))) => Some(Temp {
             f,
             c,
@@ -132,13 +201,7 @@ fn get_tank_data(
             update_time: temp_update_time,
         }),
         _ => None,
-    };
-    let ph = unnest_ref(numbers.get(2)).map(|val| PH {
-        val,
-        update_time: ph_update_time,
-    });
-
-    Ok((temp, ph))
+    }
 }
 
 fn unnest_ref<A>(a: Option<&Option<A>>) -> Option<A>
@@ -167,7 +230,7 @@ fn generate_status(
                     return "".to_string(); // nothing to format
                 }
 
-                let tank_string = format!("#{}:", tank);
+                let tank_string = format!("T{}:", tank);
                 let temp_string = maybe_temp
                     .map(move |t| {
                         (
@@ -193,17 +256,8 @@ fn generate_status(
 
                 let message = tank_string + &ph_string + &temp_string;
 
-                // finally, right-align the message so it lays out nicely on the LEDs
-                let l = message.to_string().len();
-                if l <= 16 {
-                    format!("{: >16}", message)
-                } else if l <= 32 {
-                    format!("{: >32}", message)
-                } else if l <= 64 {
-                    format!("{: >64}", message)
-                } else {
-                    format!("{: >128}", message)
-                }
+                // lay out the message nicely
+                right_align(&message)
             })
         })
         .collect();
@@ -213,12 +267,27 @@ fn generate_status(
     let num_areas = get_num_containers(&conn, namespace, Container::Areas)?;
 
     let area_statuses: Result<Vec<String>, redis::RedisError> = (1..num_areas + 1)
-        .map(move |area| unimplemented!())
+        .map(move |area| {
+            get_area_data(&conn, area, namespace).map(move |maybe_dht| unimplemented!())
+        })
         .collect();
 
     let area_portion = area_statuses.map(|ss| ss.join(" "));
 
     tank_portion.and_then(|tp| area_portion.map(|ap| ap + " " + &tp))
+}
+
+fn right_align(message: &str) -> String {
+    let l = message.to_string().len();
+    if l <= 16 {
+        format!("{: >16}", message)
+    } else if l <= 32 {
+        format!("{: >32}", message)
+    } else if l <= 64 {
+        format!("{: >64}", message)
+    } else {
+        format!("{: >128}", message)
+    }
 }
 
 fn main() {
