@@ -268,7 +268,48 @@ fn generate_status(
 
     let area_statuses: Result<Vec<String>, redis::RedisError> = (1..num_areas + 1)
         .map(move |area| {
-            get_area_data(&conn, area, namespace).map(move |maybe_dht| unimplemented!())
+            get_area_data(&conn, area, namespace).map(move |maybe_dht| {
+                if let &None = &maybe_dht {
+                    return "".to_string(); // nothing to format
+                }
+
+                let area_string = format!("A{}:", area);
+
+                let data_string = maybe_dht
+                    .map(move |dht| {
+                        (
+                            dht.humidity,
+                            match temp_unit {
+                                'c' | 'C' => dht.temp_c,
+                                _ => dht.temp_f,
+                            },
+                            match temp_unit {
+                                'c' | 'C' => dht.heat_index_c,
+                                _ => dht.heat_index_f,
+                            },
+                            dht.update_time,
+                        )
+                    })
+                    .map(|(humidity, temp, heat_index, update_time)| {
+                        let stale = staleness.text(update_time);
+                        let temp_letter = temp_unit.to_ascii_uppercase();
+                        format!(
+                            "{}H%{} {}°{}{} {}h{}{}",
+                            humidity,
+                            stale,
+                            temp,
+                            temp_letter,
+                            stale,
+                            heat_index,
+                            temp_letter,
+                            stale,
+                        )
+                    })
+                    .unwrap_or("".to_string());
+
+                let message = area_string + &data_string;
+                right_align(&message)
+            })
         })
         .collect();
 
