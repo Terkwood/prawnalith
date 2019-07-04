@@ -124,7 +124,7 @@ fn get_area_data(
         ],
     )?;
 
-    let update_time_vec: Vec<Option<u64>> = conn.hget(
+    let update_time_vec: Vec<Option<String>> = conn.hget(
         format!("{}/areas/{}", namespace, area),
         vec!["dht_update_time"],
     )?;
@@ -136,7 +136,8 @@ fn get_area_data(
         numbers.get(3),
         numbers.get(4),
     );
-    let update_time = unnest_ref(update_time_vec.get(0));
+    let update_time =
+        cloning_unnest_ref(update_time_vec.get(0)).map(|s| s.parse::<u64>().unwrap_or(0));
 
     let temp = safe_temp(init_temp_f, init_temp_c, update_time);
 
@@ -201,6 +202,17 @@ fn safe_temp(
             update_time: temp_update_time,
         }),
         _ => None,
+    }
+}
+
+fn cloning_unnest_ref<A>(a: Option<&Option<A>>) -> Option<A>
+where
+    A: Clone,
+{
+    match a.map(|aa| aa.clone()) {
+        Some(Some(thing)) => Some(thing),
+        Some(None) => None,
+        None => None,
     }
 }
 
