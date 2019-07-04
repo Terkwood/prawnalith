@@ -124,6 +124,7 @@ fn get_area_data(
         ],
     )?;
 
+    // A redis string
     let update_time_vec: Option<String> = conn.hget(
         format!("{}/areas/{}", namespace, area),
         vec!["dht_update_time"],
@@ -271,7 +272,7 @@ fn generate_status(
                     return "".to_string(); // nothing to format
                 }
 
-                let area_string = format!("A{}:", area);
+                let area_string = format!("A{}: ", area);
 
                 let data_string = maybe_dht
                     .map(move |dht| {
