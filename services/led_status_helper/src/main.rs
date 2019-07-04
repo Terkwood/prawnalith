@@ -324,10 +324,16 @@ fn right_align(message: &str) -> String {
         format!("{: >16}", message)
     } else if l <= 32 {
         format!("{: >32}", message)
+    } else if l <= 48 {
+        format!("{: >48}", message)
     } else if l <= 64 {
         format!("{: >64}", message)
-    } else {
+    } else if l <= 96 {
+        format!("{: >96}", message)
+    } else if l <= 128 {
         format!("{: >128}", message)
+    } else {
+        format!("{: >256}", message)
     }
 }
 
