@@ -32,13 +32,41 @@ fn generate_mq_client_id() -> String {
     format!("led_status/{}", Uuid::new_v4())
 }
 
-fn get_num_tanks(conn: &redis::Connection, namespace: &str) -> Result<i64, redis::RedisError> {
-    conn.get(format!("{}/tanks", namespace))
+fn get_num_containers(
+    conn: &redis::Connection,
+    namespace: &str,
+    container: Container,
+) -> Result<i64, redis::RedisError> {
+    conn.get(format!("{}/{}", namespace, container.to_string()))
+}
+
+enum Container {
+    Tanks,
+    Areas,
+}
+
+impl Container {
+    pub fn to_string(self) -> String {
+        match self {
+            Container::Tanks => "tanks".to_string(),
+            Container::Areas => "areas".to_string(),
+        }
+    }
 }
 
 struct Temp {
     f: f64,
     c: f64,
+    update_time: Option<u64>,
+}
+
+/// Digital humidity and temp, e.g. DHT11 sensor
+struct DHT {
+    humidity: f64,
+    temp_f: f64,
+    temp_c: f64,
+    heat_index_f: f64,
+    heat_index_c: f64,
     update_time: Option<u64>,
 }
 
@@ -79,7 +107,54 @@ fn c_to_f(temp_c: f64) -> f64 {
     temp_c * 1.8 + 32.0
 }
 
-fn get_temp_ph(
+const NAN: f64 = -255.0;
+fn get_area_data(
+    conn: &redis::Connection,
+    area: i64,
+    namespace: &str,
+) -> Result<Option<DHT>, redis::RedisError> {
+    let numbers: Vec<Option<f64>> = conn.hget(
+        format!("{}/areas/{}", namespace, area),
+        vec![
+            "humidity",
+            "temp_f",
+            "temp_c",
+            "heat_index_f",
+            "heat_index_c",
+        ],
+    )?;
+
+    // A redis string
+    let update_time_vec: Option<String> = conn.hget(
+        format!("{}/areas/{}", namespace, area),
+        vec!["dht_update_time"],
+    )?;
+
+    let (humidity, init_temp_f, init_temp_c, heat_index_f, heat_index_c) = (
+        numbers.get(0),
+        numbers.get(1),
+        numbers.get(2),
+        numbers.get(3),
+        numbers.get(4),
+    );
+
+    let update_time = update_time_vec.map(|s| s.parse::<u64>().unwrap_or(0));
+
+    let temp = safe_temp(init_temp_f, init_temp_c, update_time);
+
+    let (temp_f, temp_c) = temp.map(|t| (t.f, t.c)).unwrap_or((NAN, NAN));
+
+    Ok(Some(DHT {
+        humidity: unnest_ref(humidity).unwrap_or(NAN),
+        temp_f,
+        temp_c,
+        heat_index_f: unnest_ref(heat_index_f).unwrap_or(NAN),
+        heat_index_c: unnest_ref(heat_index_c).unwrap_or(NAN),
+        update_time,
+    }))
+}
+
+fn get_tank_data(
     conn: &redis::Connection,
     tank: i64,
     namespace: &str,
@@ -97,7 +172,21 @@ fn get_temp_ph(
         unnest_ref(update_times.get(0)),
         unnest_ref(update_times.get(1)),
     );
-    let temp = match (temp_f, temp_c) {
+    let temp = safe_temp(temp_f, temp_c, temp_update_time);
+    let ph = unnest_ref(numbers.get(2)).map(|val| PH {
+        val,
+        update_time: ph_update_time,
+    });
+
+    Ok((temp, ph))
+}
+
+fn safe_temp(
+    temp_f: Option<&Option<f64>>,
+    temp_c: Option<&Option<f64>>,
+    temp_update_time: Option<u64>,
+) -> Option<Temp> {
+    match (temp_f, temp_c) {
         (Some(&Some(f)), Some(&Some(c))) => Some(Temp {
             f,
             c,
@@ -114,13 +203,7 @@ fn get_temp_ph(
             update_time: temp_update_time,
         }),
         _ => None,
-    };
-    let ph = unnest_ref(numbers.get(2)).map(|val| PH {
-        val,
-        update_time: ph_update_time,
-    });
-
-    Ok((temp, ph))
+    }
 }
 
 fn unnest_ref<A>(a: Option<&Option<A>>) -> Option<A>
@@ -140,16 +223,16 @@ fn generate_status(
     namespace: &str,
     staleness: &Staleness,
 ) -> Result<String, redis::RedisError> {
-    let num_tanks = get_num_tanks(&conn, namespace)?;
+    let num_tanks = get_num_containers(&conn, namespace, Container::Tanks)?;
 
-    let status_results: Result<Vec<String>, redis::RedisError> = (1..num_tanks + 1)
+    let tank_statuses: Result<Vec<String>, redis::RedisError> = (1..num_tanks + 1)
         .map(move |tank| {
-            get_temp_ph(&conn, tank, namespace).map(move |(maybe_temp, maybe_ph)| {
+            get_tank_data(&conn, tank, namespace).map(move |(maybe_temp, maybe_ph)| {
                 if let (&None, &None) = (&maybe_temp, &maybe_ph) {
                     return "".to_string(); // nothing to format
                 }
 
-                let tank_string = format!("#{}:", tank);
+                let tank_string = format!("T{}:", tank);
                 let temp_string = maybe_temp
                     .map(move |t| {
                         (
@@ -173,24 +256,85 @@ fn generate_status(
                     .map(move |ph| format!(" pH {}{}", ph.val, staleness.text(ph.update_time)))
                     .unwrap_or("".to_string());
 
-                let message = tank_string + &temp_string + &ph_string;
-
-                // finally, right-align the message so it lays out nicely on the LEDs
-                let l = message.to_string().len();
-                if l <= 16 {
-                    format!("{: >16}", message)
-                } else if l <= 32 {
-                    format!("{: >32}", message)
-                } else if l <= 64 {
-                    format!("{: >64}", message)
-                } else {
-                    format!("{: >128}", message)
-                }
+                tank_string + &ph_string + &temp_string
             })
         })
         .collect();
 
-    status_results.map(|ss| ss.join(" "))
+    let tank_portion = tank_statuses.map(|ss| ss.join(" "));
+
+    let num_areas = get_num_containers(&conn, namespace, Container::Areas)?;
+
+    let area_statuses: Result<Vec<String>, redis::RedisError> = (1..num_areas + 1)
+        .map(move |area| {
+            get_area_data(&conn, area, namespace).map(move |maybe_dht| {
+                if let &None = &maybe_dht {
+                    return "".to_string(); // nothing to format
+                }
+
+                let area_string = format!("A{}: ", area);
+
+                let data_string = maybe_dht
+                    .map(move |dht| {
+                        (
+                            dht.humidity,
+                            match temp_unit {
+                                'c' | 'C' => dht.temp_c,
+                                _ => dht.temp_f,
+                            },
+                            match temp_unit {
+                                'c' | 'C' => dht.heat_index_c,
+                                _ => dht.heat_index_f,
+                            },
+                            dht.update_time,
+                        )
+                    })
+                    .map(|(humidity, temp, heat_index, update_time)| {
+                        let stale = staleness.text(update_time);
+                        let temp_letter = temp_unit.to_ascii_uppercase();
+                        format!(
+                            "{}%H{} {}°{}{} {}h{}{}",
+                            humidity,
+                            stale,
+                            temp,
+                            temp_letter,
+                            stale,
+                            heat_index,
+                            temp_letter,
+                            stale,
+                        )
+                    })
+                    .unwrap_or("".to_string());
+
+                area_string + &data_string
+            })
+        })
+        .collect();
+
+    let area_portion = area_statuses.map(|ss| ss.join(" "));
+
+    tank_portion
+        .and_then(|tp| area_portion.map(|ap| ap + " " + &tp)) // join areas and tanks
+        .map(|msg| right_align(&msg)) // lay out the message nicely
+}
+
+fn right_align(message: &str) -> String {
+    let l = message.to_string().len();
+    if l <= 16 {
+        format!("{: >16}", message)
+    } else if l <= 32 {
+        format!("{: >32}", message)
+    } else if l <= 48 {
+        format!("{: >48}", message)
+    } else if l <= 64 {
+        format!("{: >64}", message)
+    } else if l <= 96 {
+        format!("{: >96}", message)
+    } else if l <= 128 {
+        format!("{: >128}", message)
+    } else {
+        format!("{: >256}", message)
+    }
 }
 
 fn main() {
