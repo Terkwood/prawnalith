@@ -32,8 +32,26 @@ fn generate_mq_client_id() -> String {
     format!("led_status/{}", Uuid::new_v4())
 }
 
-fn get_num_tanks(conn: &redis::Connection, namespace: &str) -> Result<i64, redis::RedisError> {
-    conn.get(format!("{}/tanks", namespace))
+fn get_num_containers(
+    conn: &redis::Connection,
+    namespace: &str,
+    container: Container,
+) -> Result<i64, redis::RedisError> {
+    conn.get(format!("{}/{}", namespace, container.to_string()))
+}
+
+enum Container {
+    Tanks,
+    Areas,
+}
+
+impl Container {
+    pub fn to_string(self) -> String {
+        match self {
+            Container::Tanks => "tanks".to_string(),
+            Container::Areas => "areas".to_string(),
+        }
+    }
 }
 
 struct Temp {
@@ -79,7 +97,7 @@ fn c_to_f(temp_c: f64) -> f64 {
     temp_c * 1.8 + 32.0
 }
 
-fn get_temp_ph(
+fn get_tank_data(
     conn: &redis::Connection,
     tank: i64,
     namespace: &str,
@@ -140,11 +158,11 @@ fn generate_status(
     namespace: &str,
     staleness: &Staleness,
 ) -> Result<String, redis::RedisError> {
-    let num_tanks = get_num_tanks(&conn, namespace)?;
+    let num_tanks = get_num_containers(&conn, namespace, Container::Tanks)?;
 
-    let status_results: Result<Vec<String>, redis::RedisError> = (1..num_tanks + 1)
+    let tank_statuses: Result<Vec<String>, redis::RedisError> = (1..num_tanks + 1)
         .map(move |tank| {
-            get_temp_ph(&conn, tank, namespace).map(move |(maybe_temp, maybe_ph)| {
+            get_tank_data(&conn, tank, namespace).map(move |(maybe_temp, maybe_ph)| {
                 if let (&None, &None) = (&maybe_temp, &maybe_ph) {
                     return "".to_string(); // nothing to format
                 }
@@ -173,7 +191,7 @@ fn generate_status(
                     .map(move |ph| format!(" pH {}{}", ph.val, staleness.text(ph.update_time)))
                     .unwrap_or("".to_string());
 
-                let message = tank_string + &temp_string + &ph_string;
+                let message = tank_string + &ph_string + &temp_string;
 
                 // finally, right-align the message so it lays out nicely on the LEDs
                 let l = message.to_string().len();
@@ -190,7 +208,17 @@ fn generate_status(
         })
         .collect();
 
-    status_results.map(|ss| ss.join(" "))
+    let tank_portion = tank_statuses.map(|ss| ss.join(" "));
+
+    let num_areas = get_num_containers(&conn, namespace, Container::Areas)?;
+
+    let area_statuses: Result<Vec<String>, redis::RedisError> = (1..num_areas + 1)
+        .map(move |area| unimplemented!())
+        .collect();
+
+    let area_portion = area_statuses.map(|ss| ss.join(" "));
+
+    tank_portion.and_then(|tp| area_portion.map(|ap| ap + " " + &tp))
 }
 
 fn main() {
