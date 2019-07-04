@@ -254,10 +254,7 @@ fn generate_status(
                     .map(move |ph| format!(" pH {}{}", ph.val, staleness.text(ph.update_time)))
                     .unwrap_or("".to_string());
 
-                let message = tank_string + &ph_string + &temp_string;
-
-                // lay out the message nicely
-                right_align(&message)
+                tank_string + &ph_string + &temp_string
             })
         })
         .collect();
@@ -307,15 +304,16 @@ fn generate_status(
                     })
                     .unwrap_or("".to_string());
 
-                let message = area_string + &data_string;
-                right_align(&message)
+                area_string + &data_string
             })
         })
         .collect();
 
     let area_portion = area_statuses.map(|ss| ss.join(" "));
 
-    tank_portion.and_then(|tp| area_portion.map(|ap| ap + " " + &tp))
+    tank_portion
+        .and_then(|tp| area_portion.map(|ap| ap + " " + &tp)) // join areas and tanks
+        .map(|msg| right_align(&msg)) // lay out the message nicely
 }
 
 fn right_align(message: &str) -> String {
