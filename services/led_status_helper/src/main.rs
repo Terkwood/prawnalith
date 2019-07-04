@@ -293,7 +293,7 @@ fn generate_status(
                         let stale = staleness.text(update_time);
                         let temp_letter = temp_unit.to_ascii_uppercase();
                         format!(
-                            "{}H%{} {}°{}{} {}h{}{}",
+                            "{}%H{} {}°{}{} {}h{}{}",
                             humidity,
                             stale,
                             temp,
