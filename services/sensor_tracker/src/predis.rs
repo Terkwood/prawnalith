@@ -34,16 +34,15 @@ pub fn update<'a, 'b>(
     // lookup associated area
     let sensor_hash_key = &format!("{}/devices/{}", rn, device_id).to_string();
 
-    let area_and_sensors_update_count: Result<Vec<Option<u64>>, _> = redis_ctx.conn.hget(
-        sensor_hash_key,
-        vec!["area", "sensors_update_count"],
-    );
+    let area_and_sensors_update_count: Result<Vec<Option<u64>>, _> = redis_ctx
+        .conn
+        .hget(sensor_hash_key, vec!["area", "sensors_update_count"]);
 
     if let Ok(v) = area_and_sensors_update_count {
         // Tank associated with this sensor?
         let revent = match v.get(0).unwrap_or(&None) {
             Some(area_num) => update_area_hash(redis_ctx, area_num, &sensor_message),
-            None  => ensure_device_hash_exists(redis_ctx, sensor_hash_key, ext_device_id),
+            None => ensure_device_hash_exists(redis_ctx, sensor_hash_key, ext_device_id),
         };
 
         if let Some(ev) = revent {
@@ -169,7 +168,7 @@ fn ensure_device_hash_exists(
 
                 let fields = vec![cf, ed];
                 result = Some(REvent::HashUpdated {
-                    key: sensor_hash_key.to_string(),
+                    key: device_hash_key.to_string(),
                     fields,
                 })
             }
@@ -205,7 +204,7 @@ fn update_device_hash(
         data.iter().for_each(|(f, _)| fields.push(f.to_string()));
 
         Some(REvent::HashUpdated {
-            key: sensor_hash_key.to_string(),
+            key: device_hash_key.to_string(),
             fields,
         })
     }
