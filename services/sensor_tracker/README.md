@@ -12,25 +12,24 @@ Additionally, it creates an entry in the Redis `<namespace>/sensors/<temp_or_ph>
 
 This is useful for sensors generating temperature and/or pH data.
 
-Such data comes into an MQTT topic looking like this:
+Such data might come into an MQTT topic looking like this:
 
 ```
 { "device_id": <hex>, "temp_f": 81.71, "temp_c": 23.45, "ph": 7.77, "ph_mv": 453.05 }
 ```
 
-If the sensor isn't, it will create the following type of stub record
-for the temp sensor based on a UUID V5 ID conversion:
+If the device hasn't ever been tracked, it will create the following type of stub record with an internal device ID.  The internal device ID is a (namespaced) UUID V5:
 
 ```
-HMSET <namespace>/sensors/<temp_or_ph>/<uuid_v5_id> create_time <epoch>
+HMSET <namespace>/devices/<device_internal_id> create_time <epoch>
 ```
 
 The operator is encouraged to later amend the hash to include
-a helpful reference to the tank which the sensor serves, so
+a helpful reference to the area which the sensing device serves, so
 that the LED status utility can properly format messages.
 
 ```
-HSET <namespace>/sensors/<temp_or_ph>/<device_internal_id> tank 0
+HSET <namespace>/devices/<device_internal_id> area 0
 ```
 
 ### Sample redis records

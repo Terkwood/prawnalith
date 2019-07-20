@@ -1,5 +1,8 @@
 /// This message is emitted to an MQTT channel by
 /// some device with access to a temp sensor (DS18B20, etc)
+/// `external_device_id` is usually reported as a
+/// e.g. "28654597090000e4"
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SensorMessage {
     pub device_id: String,
@@ -13,45 +16,7 @@ pub struct SensorMessage {
     pub heat_index_f: Option<f64>,
 }
 
-/// `external_device_id` is usually reported as a
-/// e.g. "28654597090000e4"
-impl SensorMessage {
-    pub fn measurements(&self) -> Vec<Measurement> {
-        let mut v: Vec<Measurement> = vec![];
-        if let (
-            Some(humidity),
-            Some(status),
-            Some(temp_f),
-            Some(temp_c),
-            Some(heat_index_f),
-            Some(heat_index_c),
-        ) = (
-            self.humidity,
-            &self.status,
-            self.temp_f,
-            self.temp_c,
-            self.heat_index_f,
-            self.heat_index_c,
-        ) {
-            v.push(Measurement::DHT {
-                status: status.to_owned(),
-                humidity,
-                temp_f,
-                temp_c,
-                heat_index_f,
-                heat_index_c,
-            })
-        } else if let (Some(temp_f), Some(temp_c)) = (self.temp_f, self.temp_c) {
-            v.push(Measurement::Temp { temp_f, temp_c })
-        }
 
-        if let (Some(ph), Some(ph_mv)) = (self.ph, self.ph_mv) {
-            v.push(Measurement::PH { ph, ph_mv })
-        }
-
-        v
-    }
-}
 
 #[derive(Debug)]
 pub enum Measurement {
