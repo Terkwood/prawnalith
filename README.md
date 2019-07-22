@@ -25,9 +25,7 @@ Includes several docker images and config which can be hosted on a Raspberry Pi 
 - ph & temp sensor tracker (listens for temp & pH updates provided by ESP8266 over MQTT and writes them to database)
 - led status helper (polls database for the temp & pH of individual tanks, and pushes a formatted message to MQTT; this can be read by LED microcontroller units)
 - redis update aggregator (pushes temp & pH level updates to google cloud/pub sub)
-- grafana setup in docker compose
 - mosquitto setup in docker compose
-- influx setup on docker compose (stores data queried by grafana)
 - redis setup in docker compose (stores miscellaneous data, including tank status for LED display)
 
 Includes basic examples of pH meter readings using an Arduino, and serial communication between an Arduino wired to an ESP8266.
