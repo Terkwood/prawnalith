@@ -70,7 +70,7 @@ pub fn update<'a, 'b>(
 fn update_sensor_set(
     redis_ctx: &RedisContext,
     rn: &str,
-    sensor_message: &model::SensorMessage,
+    sensor_message: &model::SensorMessage, // TODO wat ?
     device_id: Uuid,
 ) -> Option<REvent> {
     let set_device_key = format!("{}/devices", rn);
