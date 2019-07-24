@@ -7,8 +7,10 @@ use super::config::TrackerConfig;
 use crossbeam::Receiver;
 use uuid::Uuid;
 
-struct Client {}
-struct Message {}
+// TODO
+pub struct Client {}
+// TODO
+pub struct Message {}
 
 pub fn start_mqtt(config: &TrackerConfig) -> (Receiver<Option<Message>>, Client) {
     // DEFAULT CONFIGURATIONS LIVE HERE!

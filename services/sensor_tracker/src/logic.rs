@@ -3,10 +3,12 @@ use super::predis;
 use redis_context::RedisContext;
 use std::sync::mpsc::Receiver;
 
+use crate::prawnqtt::{Client, Message};
+
 pub fn receive_updates(
-    update_r: Receiver<Option<paho_mqtt::message::Message>>,
+    update_r: Receiver<Option<Message>>,
     redis_ctx: &RedisContext,
-    mqtt_cli: paho_mqtt::Client,
+    mqtt_cli: Client,
     delta_event_topic: &str,
 ) {
     loop {
