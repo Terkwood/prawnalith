@@ -13,7 +13,7 @@ rumqtt = "*"
 redis = "*"
 #redis_context = { git = "https://github.com/Terkwood/prawnalith/", branch = "unstable" }
 # TODO
-redis_delta = { git = "https://github.com/Terkwood/prawnalith/", branch = "tinker/rumqtt" }
+#redis_delta = { git = "https://github.com/Terkwood/prawnalith/", branch = "tinker/rumqtt" }
 serde = "*"
 serde_derive = "*"
 serde_json = "*"
