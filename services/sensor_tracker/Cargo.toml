@@ -12,7 +12,7 @@ envy = "*"
 # 🤖 This artificially low version of rand core will compile on ARMv7 
 rand_core="0.2.2"
 rumqtt = "*"
-redis = "*"
+redis = "^0.9"
 #TODO
 redis_context = { git = "https://github.com/Terkwood/prawnalith/", branch = "tinker/rumqtt" }
 # TODO
