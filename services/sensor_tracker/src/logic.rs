@@ -28,7 +28,7 @@ pub fn receive_updates(
                     });
                 }
             }
-            Err(_) if !mqtt_cli.is_connected() => {
+            Err(_) if unimplemented!() /*!mqtt_cli.is_connected()*/ => {
                 let _ = try_mqtt_reconnect(&mqtt_cli);
             }
             _ => (),
