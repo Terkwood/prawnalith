@@ -2,10 +2,10 @@
 #![feature(bind_by_move_pattern_guards)]
 extern crate dotenv;
 extern crate envy;
-extern crate paho_mqtt;
 extern crate redis;
 extern crate redis_context;
 extern crate redis_delta;
+extern crate rumqtt;
 #[macro_use]
 extern crate serde_derive;
 extern crate uuid;

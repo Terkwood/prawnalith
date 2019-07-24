@@ -1,17 +1,14 @@
 use super::model;
-use paho_mqtt;
+
+use rumqtt::{MqttClient, MqttOptions, QoS, ReconnectOptions};
+use std::{thread, time::Duration};
 
 use super::config::TrackerConfig;
 use uuid::Uuid;
 
 struct Client {}
 
-pub fn start_mqtt(
-    config: &TrackerConfig,
-) -> (
-    std::sync::mpsc::Receiver<Option<Message>>,
-    Client,
-) {
+pub fn start_mqtt(config: &TrackerConfig) {
     // DEFAULT CONFIGURATIONS LIVE HERE!
     let host = &config.mqtt_host.clone().unwrap_or("127.0.0.1".to_string());
     let port = &config.mqtt_port.clone().unwrap_or(1883);
@@ -23,6 +20,16 @@ pub fn start_mqtt(
 
     let server_uri = format!("tcp://{}:{}", host, port);
     let server_uri_print = server_uri.clone();
+}
+
+fn DEAD_start_paho_mqtt(
+    config: &TrackerConfig,
+) -> (
+    std::sync::mpsc::Receiver<Option<Message>>,
+    Client,
+) {
+
+    unimplemented!();
 
     // Create the client. Use an ID for a persisten session.
     // A real system should try harder to use a unique ID.

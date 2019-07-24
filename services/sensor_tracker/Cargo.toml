@@ -5,6 +5,8 @@ authors = ["Terkwood <metaterkhorn@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+crossbeam = "*"
+crossbeam-channel = "*"
 dotenv = "0.13"
 envy = "0.3"
 rumqtt = "*"
