@@ -4,4 +4,4 @@
 # see https://matchboxdorry.gitbooks.io/matchboxblog/content/blogs/build_and_run_arm_images.html
 cp /usr/bin/qemu-arm-static .
 
-docker build -f Dockerfile.test -t sensor-tracker-armhf:testing
+docker build . -f Dockerfile.test -t sensor-tracker-armhf:testing
