@@ -10,7 +10,8 @@ RUN apt-get install -y g++ cmake
 
 COPY . .
 
-RUN cargo install --path .
+#RUN cargo install --path .
 
-CMD ["sensor_tracker"]
+CMD ["tail","-f","/dev/null"]
+#CMD ["sensor_tracker"]
 
