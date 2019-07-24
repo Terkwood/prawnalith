@@ -6,3 +6,6 @@ cp /usr/bin/qemu-arm-static .
 
 docker build . -f Dockerfile.test -t prawnalith/sensor_tracker:test
 docker build . -f Dockerfile.prod -t prawnalith/sensor_tracker:prod
+
+# reclaim the 5MB used by qemu-arm-static 😈
+docker build --squash . -t prawnalith/sensor_tracker:prod
