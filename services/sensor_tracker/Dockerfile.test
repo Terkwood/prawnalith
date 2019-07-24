@@ -10,7 +10,8 @@ RUN rustup default nightly-2019-05-25
 
 COPY . .
 
-RUN cargo install --path .
+RUN cargo watch
+#RUN cargo install --path .
 
 CMD ["sensor_tracker"]
 
