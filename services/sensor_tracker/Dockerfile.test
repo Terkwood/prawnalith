@@ -1,0 +1,20 @@
+FROM arm32v7/rust
+
+COPY qemu-arm-static /usr/bin
+
+RUN apt-get update
+
+ENV NIGHTLY_DATE=2019-05-25
+
+# specify a known, working version of nightly 
+# to avoid Signal 11 mem alloc failures
+RUN rustup default nightly-${NIGHTLY_DATE}
+
+COPY . .
+
+#RUN cargo watch
+#RUN cargo install --path .
+
+CMD ["tail","-f","/dev/null"]
+#CMD ["sensor_tracker"]
+
