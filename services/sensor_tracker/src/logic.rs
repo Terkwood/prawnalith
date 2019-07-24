@@ -1,7 +1,7 @@
 use super::prawnqtt;
 use super::predis;
 use redis_context::RedisContext;
-use std::sync::mpsc::Receiver;
+use crossbeam_channel::Receiver;
 
 use crate::prawnqtt::{Client, Message};
 
