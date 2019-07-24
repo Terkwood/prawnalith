@@ -13,6 +13,9 @@ RUN rustup default nightly-2019-05-25
 
 COPY . .
 
+# 👀 https://github.com/actix/actix/issues/184 👀
+RUN cargo update
+
 #TODO restore
 #RUN cargo install --path .
 
