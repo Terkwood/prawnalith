@@ -43,7 +43,9 @@ pub fn receive_updates(
     }
 }
 
-fn try_mqtt_reconnect(cli: &paho_mqtt::Client) -> bool {
+// TODO trim
+/*
+fn try_mqtt_reconnect(cli: &Client) -> bool {
     println!("MQTT connection lost...");
     for i in 0..12 {
         println!("Retrying MQTT connection ({})", i);
@@ -56,3 +58,4 @@ fn try_mqtt_reconnect(cli: &paho_mqtt::Client) -> bool {
     println!("Unable to reconnect MQTT after several attempts.");
     false
 }
+*/
