@@ -13,7 +13,8 @@ RUN rustup default nightly-2019-05-25
 
 COPY . .
 
-# 👀 https://github.com/actix/actix/issues/184 👀
+# 🏗 make sure rand_hc builds
+# 👀 https://github.com/actix/actix/issues/184
 RUN cargo update
 
 #TODO restore
