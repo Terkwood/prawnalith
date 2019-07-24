@@ -6,7 +6,6 @@ use std::{thread, time::Duration};
 use super::config::TrackerConfig;
 use crossbeam::Receiver;
 use uuid::Uuid;
-use rumqtt::{MqttClient, Message};
 
 pub fn start_mqtt(config: &TrackerConfig) -> (Receiver<Option<Message>>, Client) {
     // DEFAULT CONFIGURATIONS LIVE HERE!
