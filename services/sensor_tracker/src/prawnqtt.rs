@@ -2,14 +2,15 @@ use super::model;
 use paho_mqtt;
 
 use super::config::TrackerConfig;
-use paho_mqtt::message::Message;
 use uuid::Uuid;
+
+struct Client {}
 
 pub fn start_mqtt(
     config: &TrackerConfig,
 ) -> (
     std::sync::mpsc::Receiver<Option<Message>>,
-    paho_mqtt::Client,
+    Client,
 ) {
     // DEFAULT CONFIGURATIONS LIVE HERE!
     let host = &config.mqtt_host.clone().unwrap_or("127.0.0.1".to_string());
