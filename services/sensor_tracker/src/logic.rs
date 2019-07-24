@@ -28,9 +28,12 @@ pub fn receive_updates(
                     });
                 }
             }
-            // TODO
-            /*!mqtt_cli.is_connected()*/
+
             Err(_) if unimplemented!()  => {
+                            // TODO
+            /* check for 
+               !mqtt_cli.is_connected()
+               */
                 let _ = try_mqtt_reconnect(&mqtt_cli);
             }
             _ => (),
