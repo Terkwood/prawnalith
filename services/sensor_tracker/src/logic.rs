@@ -28,7 +28,7 @@ pub fn receive_updates(
                 }
             }
 
-            Err(_) if mqtt_cli.is_connected => {
+            Err(_) if unimplemented!()=> {
                             // TODO
             /* check for 
                !mqtt_cli.is_connected()
