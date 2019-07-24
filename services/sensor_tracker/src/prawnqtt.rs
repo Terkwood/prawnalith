@@ -23,6 +23,13 @@ pub fn start_mqtt(config: &TrackerConfig) -> (Receiver<Option<Message>>, Client)
     let server_uri = format!("tcp://{}:{}", host, port);
     let server_uri_print = server_uri.clone();
 
+
+    let reconnection_options = ReconnectOptions::Always(10);
+    let mqtt_options = MqttOptions::new("test-pubsub2", broker, port)
+                                    .set_keep_alive(10)
+                                    .set_reconnect_opts(reconnection_options)
+                                    .set_clean_session(false);
+
     (unimplemented!(), unimplemented!())
 }
 
