@@ -11,7 +11,8 @@ dotenv = "*"
 envy = "*"
 rumqtt = "*"
 redis = "*"
-#redis_context = { git = "https://github.com/Terkwood/prawnalith/", branch = "unstable" }
+#TODO
+redis_context = { git = "https://github.com/Terkwood/prawnalith/", branch = "tinker/rumqtt" }
 # TODO
 #redis_delta = { git = "https://github.com/Terkwood/prawnalith/", branch = "tinker/rumqtt" }
 serde = "*"
