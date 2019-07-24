@@ -9,6 +9,7 @@ crossbeam = "*"
 crossbeam-channel = "*"
 dotenv = "*"
 envy = "*"
+rand_core="0.2.2"
 rumqtt = "*"
 redis = "*"
 #TODO
