@@ -8,12 +8,16 @@ RUN apt-get update
 # ⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️
 RUN rustup default nightly-2019-05-25
 
-RUN apt-get install -y g++ cmake
+#TODO TRIM
+#RUN apt-get install -y g++ cmake
 
 COPY . .
 
+#TODO restore
 #RUN cargo install --path .
 
-CMD ["tail","-f","/dev/null"]
+#TODO restore
 #CMD ["sensor_tracker"]
 
+#TODO TRIM
+CMD ["tail","-f","/dev/null"]
