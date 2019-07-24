@@ -282,6 +282,7 @@ dependencies = [
 name = "redis_context"
 version = "0.1.0"
 dependencies = [
+ "rand_core 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "redis 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "uuid 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
