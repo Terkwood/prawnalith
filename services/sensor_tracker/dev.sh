@@ -1,3 +1,3 @@
 #!/bin/bash
 
-cargo build
+cargo update && cargo build
