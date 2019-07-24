@@ -7,9 +7,6 @@ use super::config::TrackerConfig;
 use crossbeam::Receiver;
 use uuid::Uuid;
 
-// TODO
-pub struct Client {}
-
 pub fn start_mqtt(config: &TrackerConfig) -> (Receiver<Option<Message>>, Client) {
     // DEFAULT CONFIGURATIONS LIVE HERE!
     let host = &config.mqtt_host.clone().unwrap_or("127.0.0.1".to_string());

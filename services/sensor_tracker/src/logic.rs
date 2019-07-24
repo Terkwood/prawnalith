@@ -2,13 +2,12 @@ use super::prawnqtt;
 use super::predis;
 use redis_context::RedisContext;
 use crossbeam_channel::Receiver;
-
-use crate::prawnqtt::{Client, Message};
+use rumqtt::{MqttClient, Message};
 
 pub fn receive_updates(
     update_r: Receiver<Option<Message>>,
     redis_ctx: &RedisContext,
-    mqtt_cli: Client,
+    mqtt_cli: MqttClient,
     delta_event_topic: &str,
 ) {
     loop {
@@ -29,12 +28,17 @@ pub fn receive_updates(
                 }
             }
 
-            Err(_) if unimplemented!()  => {
+            Err(_) if mqtt_cli.is_connected => {
                             // TODO
             /* check for 
                !mqtt_cli.is_connected()
+
+               in match arm
                */
-                let _ = try_mqtt_reconnect(&mqtt_cli);
+
+              // TODO
+               // let _ = try_mqtt_reconnect(&mqtt_cli);
+
             }
             _ => (),
         }
