@@ -1,6 +1,6 @@
 use super::model;
 
-use rumqtt::{MqttClient, MqttOptions, QoS, ReconnectOptions};
+use rumqtt::{MqttClient, MqttOptions, QoS, ReconnectOptions, Message};
 use std::{thread, time::Duration};
 
 use super::config::TrackerConfig;
@@ -9,8 +9,6 @@ use uuid::Uuid;
 
 // TODO
 pub struct Client {}
-// TODO
-pub struct Message {}
 
 pub fn start_mqtt(config: &TrackerConfig) -> (Receiver<Option<Message>>, Client) {
     // DEFAULT CONFIGURATIONS LIVE HERE!
@@ -89,7 +87,7 @@ fn generate_mq_client_id() -> String {
     format!("sensor_tracker/{}", Uuid::new_v4())
 }
 
-pub fn deser_message(msg: paho_mqtt::Message) -> Option<model::SensorMessage> {
+pub fn deser_message(msg: Message) -> Option<model::SensorMessage> {
     let r = std::str::from_utf8(&*msg.payload());
     r.ok()
         .and_then(|s| serde_json::from_str(s).map(|r| Some(r)).unwrap_or(None))
