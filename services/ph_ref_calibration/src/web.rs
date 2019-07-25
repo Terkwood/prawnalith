@@ -38,19 +38,19 @@ fn resolve_external_id(
 #[get("/sensors/ph/calibration?<ext_id>", format = "text/csv")]
 fn lookup_ph_calibration_by_ext_id(
     ext_id: String,
-    redis_ctx: State<Arc<Mutex<RedisContext>>>,
+    state: State<Mutex<RedisContext>>,
 ) -> Result<String, WebError> {
     println!("ANY"); // TODO
-    let lock = redis_ctx.lock().unwrap();
+    let redis_ctx = state.lock().unwrap();
 
     println!("LOCKED"); // TODO
-    let namespace = lock.get_external_device_namespace("ph".to_string())?;
+    let namespace = redis_ctx.get_external_device_namespace("ph".to_string())?;
 
     println!("namespace {:?}", namespace); // TODO
     let id = external_id::resolve(&ext_id, namespace)?;
 
     println!("id {:?}", id); // TODO
-    let calibration = predis::lookup_ph_calibration(id, lock.deref())?;
+    let calibration = predis::lookup_ph_calibration(id, redis_ctx.deref())?;
 
     println!("calibration {:?}", calibration); // TODO
     Ok(calibration.as_csv())
@@ -63,11 +63,11 @@ fn lookup_ph_calibration_by_ext_id(
 #[get("/sensors/ph/<uuid>/calibration", format = "text/csv")]
 fn lookup_ph_calibration(
     uuid: String,
-    redis_ctx: State<Mutex<RedisContext>>,
+    state: State<Mutex<RedisContext>>,
 ) -> Result<String, WebError> {
     let id = Uuid::parse_str(&uuid)?;
 
-    let calibration = predis::lookup_ph_calibration(id, redis_ctx.lock().unwrap().deref())?;
+    let calibration = predis::lookup_ph_calibration(id, state.lock().unwrap().deref())?;
     Ok(calibration.as_csv())
 }
 
