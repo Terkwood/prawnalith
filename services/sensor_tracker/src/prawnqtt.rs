@@ -29,7 +29,15 @@ pub fn start_mqtt(config: &TrackerConfig) -> (Receiver<Option<Message>>, MqttCli
     let (mut mqtt_client, notifications) = MqttClient::start(mqtt_options).unwrap();
     mqtt_client.subscribe(topic, QoS::from_u8(qos)).unwrap();
 
-    (unimplemented!(), unimplemented!())
+    let (msg_in, msg_out) = crossbeam_channel::unbounded();
+
+    thread::spawn(move || {
+        for notification in notifications {
+            msg_in.send(notification)
+        }
+    })
+
+    (msg_out, mqtt_client)
 }
 
 fn DEAD_start_paho_mqtt(
