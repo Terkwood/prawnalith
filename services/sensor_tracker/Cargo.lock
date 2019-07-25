@@ -680,7 +680,7 @@ dependencies = [
 [[package]]
 name = "redis_context"
 version = "0.1.0"
-source = "git+https://github.com/Terkwood/prawnalith/?branch=tinker/rumqtt#44ca15f8d8aa60df7618966c23b11e337544ea98"
+source = "git+https://github.com/Terkwood/prawnalith/?branch=tinker/rumqtt#6e7eed729112cd4ea7dc10f2169651bf7406a4d3"
 dependencies = [
  "rand_core 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "redis 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -690,7 +690,7 @@ dependencies = [
 [[package]]
 name = "redis_delta"
 version = "0.1.2"
-source = "git+https://github.com/Terkwood/prawnalith/?branch=tinker/rumqtt#44ca15f8d8aa60df7618966c23b11e337544ea98"
+source = "git+https://github.com/Terkwood/prawnalith/?branch=tinker/rumqtt#6e7eed729112cd4ea7dc10f2169651bf7406a4d3"
 dependencies = [
  "rand_core 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.97 (registry+https://github.com/rust-lang/crates.io-index)",
