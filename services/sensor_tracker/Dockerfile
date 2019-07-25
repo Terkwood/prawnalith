@@ -22,7 +22,7 @@ RUN cargo update
 RUN cargo install --path .
 
 #TODO restore
-CMD ["sensor_tracker"]
+#CMD ["sensor_tracker"]
 
 #TODO TRIM
-#CMD ["tail","-f","/dev/null"]
+CMD ["tail","-f","/dev/null"]
