@@ -33,7 +33,7 @@ fn resolve_external_id(
 
 /// Try
 /// ```
-/// curl http://localhost:8000/sensors/ph/calibration\?ext_id\=aaaaffff000000f0\&device_type\=ph -H "Accept: text/csv"
+/// curl http://localhost:8000/sensors/ph/calibration\?ext_id\=aaaaffff000000f0 -H "Accept: text/csv"
 /// ```
 #[get("/sensors/ph/calibration?<ext_id>", format = "text/csv")]
 fn lookup_ph_calibration_by_ext_id(
