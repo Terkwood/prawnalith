@@ -1,8 +1,8 @@
 use super::prawnqtt;
 use super::predis;
-use redis_context::RedisContext;
 use crossbeam_channel::Receiver;
-use rumqtt::{MqttClient, Message};
+use redis_context::RedisContext;
+use rumqtt::{Message, MqttClient};
 
 pub fn receive_updates(
     update_r: Receiver<Option<Message>>,
@@ -28,16 +28,16 @@ pub fn receive_updates(
                 }
             }
 
-            Err(_) if unimplemented!()=> {
-                            // TODO
-            /* check for 
-               !mqtt_cli.is_connected()
+            Err(_) if unimplemented!() => {
+                // TODO
+                /* check for 
+                !mqtt_cli.is_connected()
+                
+                in match arm
+                */
 
-               in match arm
-               */
-
-              // TODO
-               // let _ = try_mqtt_reconnect(&mqtt_cli);
+                // TODO
+                // let _ = try_mqtt_reconnect(&mqtt_cli);
 
             }
             _ => (),
