@@ -26,7 +26,7 @@ pub fn update<'a, 'b>(
     println!("\tDevice ID (internal): {}", device_id);
     let rn = &redis_ctx.namespace;
 
-    let sensor_set_event = update_sensor_set(redis_ctx, rn, sensor_message, device_id);
+    let sensor_set_event = update_devices_set(redis_ctx, rn, sensor_message, device_id);
     if let Some(e) = sensor_set_event {
         delta_events.push(e)
     }
@@ -67,7 +67,7 @@ pub fn update<'a, 'b>(
     Ok(delta_events)
 }
 
-fn update_sensor_set(
+fn update_devices_set(
     redis_ctx: &RedisContext,
     rn: &str,
     sensor_message: &model::SensorMessage, // TODO wat ?

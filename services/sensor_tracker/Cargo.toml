@@ -13,7 +13,8 @@ envy = "*"
 rand_core="0.2.2"
 rumqtt = "*"
 redis = "^0.9"
-redis_context = { git = "https://github.com/Terkwood/prawnalith/", branch = "unstable" }
+# TODO restore branch
+redis_context = { git = "https://github.com/Terkwood/prawnalith/", branch = "feature/simplified-sensor-tracker-data" }
 redis_delta = { git = "https://github.com/Terkwood/prawnalith/", branch = "unstable" }
 serde = "*"
 serde_derive = "*"
