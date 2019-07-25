@@ -34,7 +34,9 @@ pub fn start_mqtt(config: &TrackerConfig) -> (Receiver<Option<Message>>, MqttCli
     thread::spawn(move || {
         for notification in notifications {
             if let Some(m) = deser_message(notification) {
-                msg_in.send(m)
+                if let Err(e) = msg_in.send(m) {
+                    println!("err sending {:?}", e)
+                }
             }
         }
     });
