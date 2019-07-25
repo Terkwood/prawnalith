@@ -35,16 +35,16 @@ fn resolve_external_id(
 /// ```
 /// curl http://localhost:8000/sensors/ph/calibration\?ext_id\=aaaaffff000000f0\&device_type\=ph -H "Accept: text/csv"
 /// ```
-#[get("/sensors/ph/calibration?<ext_id..>", format = "text/csv")]
+#[get("/sensors/ph/calibration?<ext_id>", format = "text/csv")]
 fn lookup_ph_calibration_by_ext_id(
-    ext_id: Form<ExtId>,
+    ext_id: ExtId,
     redis_ctx: State<Arc<Mutex<RedisContext>>>,
 ) -> Result<String, WebError> {
     let lock = redis_ctx.lock().unwrap();
     println!("LOCKED"); // TODO
-    let namespace = lock.get_external_device_namespace(ext_id.0.device_type)?;
+    let namespace = lock.get_external_device_namespace(ext_id.device_type)?;
     println!("namespace {:?}", namespace); // TODO
-    let id = external_id::resolve(&ext_id.0.ext_id, namespace)?;
+    let id = external_id::resolve(&ext_id.ext_id, namespace)?;
     println!("id {:?}", id); // TODO
     let calibration = predis::lookup_ph_calibration(id, lock.deref())?;
     println!("calibration {:?}", calibration); // TODO
