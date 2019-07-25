@@ -1,31 +1,37 @@
-use super::prawnqtt;
-use super::predis;
+use crate::predis;
 use crossbeam_channel::Receiver;
 use redis_context::RedisContext;
-use rumqtt::{Message, MqttClient};
+use rumqtt::{MqttClient, Notification};
 
 use crate::model::SensorMessage;
 
 pub fn receive_updates(
-    update_r: Receiver<Option<SensorMessage>>,
+    update_r: Receiver<Notification>,
     redis_ctx: &RedisContext,
     mqtt_cli: MqttClient,
     delta_event_topic: &str,
 ) {
     loop {
         match update_r.try_recv() {
-            Ok(Some(sensor_message)) => {
-                let ext_device_id: &str = &sensor_message.device_id;
+            Ok(Notification::Publish(p)) => {
+                let payload = p.payload;
+                if let Some(sensor_message) = deser_message(&payload) {
+                    let ext_device_id: &str = &sensor_message.device_id;
 
-                sensor_message.measurements().iter().for_each(|measure| {
-                    if let Ok(delta_events) = predis::update(redis_ctx, &measure, ext_device_id) {
-                        // emit all changed keys & hash field names to redis
-                        // on the appropriate redis pub/sub topic.
-                        // these will be processed later by the gcloud_push utility
-                        predis::publish_updates(redis_ctx, delta_event_topic, delta_events)
-                    }
-                });
+                    sensor_message.measurements().iter().for_each(|measure| {
+                        if let Ok(delta_events) = predis::update(redis_ctx, &measure, ext_device_id)
+                        {
+                            // emit all changed keys & hash field names to redis
+                            // on the appropriate redis pub/sub topic.
+                            // these will be processed later by the gcloud_push utility
+                            predis::publish_updates(redis_ctx, delta_event_topic, delta_events)
+                        }
+                    });
+                } else {
+                    println!("couldnt deserialize message payload: {:?}", payload)
+                }
             }
+            Ok(n) => println!("{:?}", n),
 
             Err(_) if unimplemented!() => {
                 // TODO
@@ -62,3 +68,9 @@ fn try_mqtt_reconnect(cli: &Client) -> bool {
     false
 }
 */
+
+fn deser_message(payload: &[u8]) -> Option<SensorMessage> {
+    let r = std::str::from_utf8(&payload);
+    r.ok()
+        .and_then(|s| serde_json::from_str(s).map(|r| Some(r)).unwrap_or(None))
+}

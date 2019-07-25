@@ -8,7 +8,7 @@ use std::sync::Arc;
 use std::{thread, time::Duration};
 use uuid::Uuid;
 
-pub fn start_mqtt(config: &TrackerConfig) -> (Receiver<Option<SensorMessage>>, MqttClient) {
+pub fn start_mqtt(config: &TrackerConfig) -> (Receiver<Notification>, MqttClient) {
     // DEFAULT CONFIGURATIONS LIVE HERE!
     let host = &config.mqtt_host.clone().unwrap_or("127.0.0.1".to_string());
     let port = &config.mqtt_port.clone().unwrap_or(1883);
@@ -32,22 +32,7 @@ pub fn start_mqtt(config: &TrackerConfig) -> (Receiver<Option<SensorMessage>>, M
         .subscribe(topic, QoS::from_u8(*qos).expect("qos"))
         .unwrap();
 
-    let (msg_in, msg_out) = crossbeam_channel::unbounded();
-
-    thread::spawn(move || {
-        for notification in notifications {
-            match notification {
-                Notification::Publish(p) => {
-                    if let Err(e) = msg_in.send(deser_message(&p.payload)) {
-                        println!("err sending {:?}", e)
-                    }
-                }
-                other => println!("{:?}", other),
-            }
-        }
-    });
-
-    (msg_out, mqtt_client)
+    (notifications, mqtt_client)
 }
 
 fn DEAD_start_paho_mqtt(
@@ -99,10 +84,4 @@ fn DEAD_start_paho_mqtt(
 
 fn generate_mq_client_id() -> String {
     format!("sensor_tracker/{}", Uuid::new_v4())
-}
-
-pub fn deser_message(payload: &[u8]) -> Option<model::SensorMessage> {
-    let r = std::str::from_utf8(&payload);
-    r.ok()
-        .and_then(|s| serde_json::from_str(s).map(|r| Some(r)).unwrap_or(None))
 }
