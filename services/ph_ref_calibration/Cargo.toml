@@ -1,6 +1,6 @@
 [package]
 name = "ph_ref_calibration"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Terkwood <metaterkhorn@gmail.com>"]
 edition = "2018"
 
@@ -8,11 +8,10 @@ edition = "2018"
 dotenv = "0.13.0"
 envy = "0.3.2"
 redis = "0.9.1"
-redis_context = { path = "../redis_context" }
+redis_context = { git = "https://github.com/Terkwood/prawnalith/", branch = "unstable" }
 rocket = "0.3.17"
 rocket_codegen = "0.3.17"
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
 uuid = { version = "0.7", features = ["v4", "v5"] }
-
