@@ -31,41 +31,14 @@ pub fn receive_updates(
                     println!("couldnt deserialize message payload: {:?}", payload)
                 }
             }
-            Ok(n) => println!("ignoring {:?}", n),
-            Err(e) => {
-                println!("err {:?}", e)
-                // TODO
-                /* check for 
-                if !mqtt_cli.is_connected()
-                
-                in match arm
-                */
-
-                // TODO
-                // let _ = try_mqtt_reconnect(&mqtt_cli);
-            }
+            Ok(n) => println!("IGNORE  {:?}", n),
+            Err(crossbeam_channel::TryRecvError::Empty) => (),
+            Err(e) => println!("ERROR    {:?}", e),
         }
 
         std::thread::sleep(std::time::Duration::from_millis(100))
     }
 }
-
-// TODO trim
-/*
-fn try_mqtt_reconnect(cli: &Client) -> bool {
-    println!("MQTT connection lost...");
-    for i in 0..12 {
-        println!("Retrying MQTT connection ({})", i);
-        std::thread::sleep(std::time::Duration::from_millis(5000));
-        if cli.reconnect().is_ok() {
-            println!("MQTT successfully reconnected");
-            return true;
-        }
-    }
-    println!("Unable to reconnect MQTT after several attempts.");
-    false
-}
-*/
 
 fn deser_message(payload: &[u8]) -> Option<SensorMessage> {
     let r = std::str::from_utf8(&payload);
