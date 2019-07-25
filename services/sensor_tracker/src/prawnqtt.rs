@@ -37,7 +37,7 @@ pub fn start_mqtt(config: &TrackerConfig) -> (Receiver<Option<Message>>, MqttCli
                 msg_in.send(m)
             }
         }
-    })
+    });
 
     (msg_out, mqtt_client)
 }
