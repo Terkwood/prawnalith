@@ -1,6 +1,6 @@
 use super::model;
 
-use rumqtt::{Message, MqttClient, MqttOptions, QoS, ReconnectOptions};
+use rumqtt::{Message, MqttClient, MqttOptions, Notification, Publish, QoS, ReconnectOptions};
 use std::{thread, time::Duration};
 
 use super::config::TrackerConfig;
@@ -35,9 +35,13 @@ pub fn start_mqtt(config: &TrackerConfig) -> (Receiver<Option<Message>>, MqttCli
 
     thread::spawn(move || {
         for notification in notifications {
-            if let Some(m) = deser_message(notification) {
-                if let Err(e) = msg_in.send(m) {
-                    println!("err sending {:?}", e)
+            match notification {
+                Notification::Publish(p) => {
+                    if let Some(m) = deser_message(p.payload) {
+                        if let Err(e) = msg_in.send(m) {
+                            println!("err sending {:?}", e)
+                        }
+                    }
                 }
             }
         }
