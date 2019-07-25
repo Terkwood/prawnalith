@@ -13,7 +13,7 @@ COPY . .
 # 🏗 make sure rand_hc builds
 # 👀 https://github.com/actix/actix/issues/184
 # 👀 https://github.com/rust-random/rand/issues/645
-RUN cargo update
+# RUN cargo update #TODO restore
 
 #TODO restore
 #RUN cargo install --path .
