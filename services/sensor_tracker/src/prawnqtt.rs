@@ -33,7 +33,7 @@ pub fn start_mqtt(config: &TrackerConfig) -> (Receiver<Option<Message>>, MqttCli
 
     thread::spawn(move || {
         for notification in notifications {
-            msg_in.send(notification)
+            msg_in.send(deser_message(notification))
         }
     })
 
