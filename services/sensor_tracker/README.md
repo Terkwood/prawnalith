@@ -20,26 +20,16 @@ Such data might come into an MQTT topic looking like this:
 
 If the device hasn't ever been tracked, it will create the following type of stub record with an internal device ID.  The internal device ID is a (namespaced) UUID V5:
 
-<<<<<<< HEAD
-```
-HMSET <namespace>/devices/<device_internal_id> create_time <epoch>
-=======
 ```text
 HMSET <namespace>/sensors/<temp_or_ph>/<uuid_v5_id> create_time <epoch>
->>>>>>> unstable
 ```
 
 The operator is encouraged to later amend the hash to include
 a helpful reference to the area which the sensing device serves, so
 that the LED status utility can properly format messages.
 
-<<<<<<< HEAD
-```
-HSET <namespace>/devices/<device_internal_id> area 0
-=======
 ```text
 HSET <namespace>/sensors/<temp_or_ph>/<device_internal_id> tank 0
->>>>>>> unstable
 ```
 
 ## Docker builds
@@ -50,9 +40,9 @@ See `build.sh` and `run.sh` for entry points.
 
 #### temp sensor
 
-`> hgetall namespace/sensors/temp/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa`
+`> hgetall namespace/devices/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa`
 
-```
+```text
  1) "create_time"
  2) "1540598539"
  3) "ext_device_id"
@@ -69,11 +59,11 @@ See `build.sh` and `run.sh` for entry points.
 14) "1"
 ```
 
-**pH sensor**
+#### pH sensor
 
-`> hgetall namespace/sensors/ph/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa`
+`> hgetall namespace/devices/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa`
 
-```
+```text
  1) "low_ph_ref"
  2) "4.00"
  3) "low_mv"
@@ -96,19 +86,19 @@ See `build.sh` and `run.sh` for entry points.
 20) "286cbc98090000bd"
 ```
 
-**tank counter**
+#### area counter
 
-`> get namespace/tanks`
+`> get namespace/areas`
 
-```
+```text
 "1"
 ```
 
-**tank hash**
+#### area hash
 
-`> hgetall namespace/tanks/1`
+`> hgetall namespace/areas/1`
 
-```
+```text
 hgetall namespace/tanks/1
  1) "temp_f"
  2) "81.16"
