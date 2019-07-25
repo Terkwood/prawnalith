@@ -27,6 +27,7 @@ pub fn start_mqtt(config: &TrackerConfig) -> (Receiver<Option<Message>>, MqttCli
         .set_clean_session(false);
 
     let (mut mqtt_client, notifications) = MqttClient::start(mqtt_options).unwrap();
+    mqtt_client.subscribe(topic, QoS::from_u8(qos)).unwrap();
 
     (unimplemented!(), unimplemented!())
 }
