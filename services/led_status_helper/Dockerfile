@@ -10,9 +10,11 @@ ENV RUST_BACKTRACE 1
 # ⚠️ specify a known, working version of nightly 
 # ⚠️ to avoid Signal 11 mem alloc failures 😩🔥
 # ⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️
-# RUN rustup default nightly-${NIGHTLY_DATE}
+RUN rustup default nightly-${NIGHTLY_DATE}
 
 COPY . .
+
+RUN cargo update
 
 CMD ["tail","-f","/dev/null"]
 
