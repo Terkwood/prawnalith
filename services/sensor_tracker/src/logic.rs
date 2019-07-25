@@ -8,7 +8,6 @@ use crate::model::SensorMessage;
 pub fn receive_updates(
     update_r: Receiver<Notification>,
     redis_ctx: &RedisContext,
-    mqtt_cli: MqttClient,
     delta_event_topic: &str,
 ) {
     loop {
