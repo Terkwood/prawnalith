@@ -22,7 +22,7 @@ pub fn start_mqtt(config: &TrackerConfig) -> (Receiver<Option<Message>>, MqttCli
 
     let reconnection_options = ReconnectOptions::Always(10);
     let mqtt_options = MqttOptions::new(generate_mq_client_id(), host, *port)
-        .set_keep_alive(keep_alive)
+        .set_keep_alive(*keep_alive)
         .set_reconnect_opts(reconnection_options)
         .set_clean_session(false);
 
