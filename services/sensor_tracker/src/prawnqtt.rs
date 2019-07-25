@@ -42,6 +42,9 @@ pub fn start_mqtt(config: &TrackerConfig) -> (Receiver<Option<SensorMessage>>, M
                         println!("err sending {:?}", e)
                     }
                 }
+                other => {
+                    println!("{:?}", other)
+                }
             }
         }
     });
