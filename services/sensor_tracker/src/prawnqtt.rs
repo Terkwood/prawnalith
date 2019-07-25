@@ -1,10 +1,10 @@
 use super::model;
 
-use rumqtt::{Message, MqttClient, MqttOptions, Notification, Publish, QoS, ReconnectOptions};
-use std::{thread, time::Duration};
-use std::sync::Arc;
 use super::config::TrackerConfig;
 use crossbeam::Receiver;
+use rumqtt::{Message, MqttClient, MqttOptions, Notification, Publish, QoS, ReconnectOptions};
+use std::sync::Arc;
+use std::{thread, time::Duration};
 use uuid::Uuid;
 
 pub fn start_mqtt(config: &TrackerConfig) -> (Receiver<Option<Message>>, MqttClient) {
@@ -37,10 +37,8 @@ pub fn start_mqtt(config: &TrackerConfig) -> (Receiver<Option<Message>>, MqttCli
         for notification in notifications {
             match notification {
                 Notification::Publish(p) => {
-                    if let Some(m) = deser_message(p.payload) {
-                        if let Err(e) = msg_in.send(m) {
-                            println!("err sending {:?}", e)
-                        }
+                    if let Err(e) = msg_in.send(deser_message(p.payload)) {
+                        println!("err sending {:?}", e)
                     }
                 }
             }
