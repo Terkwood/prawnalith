@@ -24,10 +24,6 @@ RUN cargo update
 RUN cargo install --path .
 
 # 🛀 shrink image size
-RUN cargo clean
-RUN rustup uninstall nightly-${NIGHTLY_DATE}
-RUN rustup uninstall 1.36.0-armv7-unknown-linux-gnueabihf
-RUN rm -rf /usr/local/cargo/registry
-RUN rm -rf /usr/local/cargo/git
+RUN sh shrink_docker_image.sh
 
 CMD ["sensor_tracker"]
