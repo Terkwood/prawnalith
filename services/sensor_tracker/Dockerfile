@@ -15,6 +15,8 @@ COPY . .
 # 👀 https://github.com/rust-random/rand/issues/645
 RUN cargo update
 
+ENV RUST_BACKTRACE 1
+
 #TODO restore
 #RUN cargo install --path .
 
