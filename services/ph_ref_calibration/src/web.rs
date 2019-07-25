@@ -35,20 +35,16 @@ fn resolve_external_id(
 /// ```
 /// curl http://localhost:8000/sensors/ph/calibration\?ext_id\=aaaaffff000000f0\&device_type\=ph -H "Accept: text/csv"
 /// ```
-#[get(
-    "/sensors/ph/calibration?<ext_id>&<device_type>",
-    format = "text/csv"
-)]
+#[get("/sensors/ph/calibration?<ext_id>", format = "text/csv")]
 fn lookup_ph_calibration_by_ext_id(
     ext_id: String,
-    device_type: String,
     redis_ctx: State<Arc<Mutex<RedisContext>>>,
 ) -> Result<String, WebError> {
     println!("ANY"); // TODO
     let lock = redis_ctx.lock().unwrap();
 
     println!("LOCKED"); // TODO
-    let namespace = lock.get_external_device_namespace(device_type)?;
+    let namespace = lock.get_external_device_namespace("ph".to_string())?;
 
     println!("namespace {:?}", namespace); // TODO
     let id = external_id::resolve(&ext_id, namespace)?;
@@ -67,7 +63,7 @@ fn lookup_ph_calibration_by_ext_id(
 #[get("/sensors/ph/<uuid>/calibration", format = "text/csv")]
 fn lookup_ph_calibration(
     uuid: String,
-    redis_ctx: State<Arc<Mutex<RedisContext>>>,
+    redis_ctx: State<Mutex<RedisContext>>,
 ) -> Result<String, WebError> {
     let id = Uuid::parse_str(&uuid)?;
 
@@ -75,7 +71,7 @@ fn lookup_ph_calibration(
     Ok(calibration.as_csv())
 }
 
-pub fn startup(redis_ctx: Arc<Mutex<RedisContext>>) {
+pub fn startup(redis_ctx: Mutex<RedisContext>) {
     rocket::ignite()
         .manage(redis_ctx)
         .mount(

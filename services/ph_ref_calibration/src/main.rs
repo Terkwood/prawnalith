@@ -14,7 +14,7 @@ mod predis;
 mod web;
 mod web_error;
 
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 
 use redis_context::RedisContext;
 
@@ -40,5 +40,5 @@ fn main() {
         )
     };
 
-    web::startup(Arc::new(Mutex::new(redis_ctx)));
+    web::startup(Mutex::new(redis_ctx));
 }
