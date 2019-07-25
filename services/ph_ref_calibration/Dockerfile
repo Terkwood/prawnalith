@@ -6,11 +6,12 @@ RUN apt-get update
 
 ENV RUST_BACKTRACE 1
 
+# 🚀 rocket.rs requires nightly
 # ⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️
 # ⚠️ specify a known, working version of nightly 
 # ⚠️ to avoid Signal 11 mem alloc failures 😩🔥
 # ⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️
-#RUN rustup default nightly-${NIGHTLY_DATE}
+RUN rustup default nightly-${NIGHTLY_DATE}
 
 WORKDIR /ph_ref_calibration
 
