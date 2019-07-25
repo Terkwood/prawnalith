@@ -4,16 +4,17 @@ use crossbeam_channel::Receiver;
 use redis_context::RedisContext;
 use rumqtt::{Message, MqttClient};
 
+use crate::model::SensorMessage;
+
 pub fn receive_updates(
-    update_r: Receiver<Option<Message>>,
+    update_r: Receiver<Option<SensorMessage>>,
     redis_ctx: &RedisContext,
     mqtt_cli: MqttClient,
     delta_event_topic: &str,
 ) {
     loop {
         match update_r.try_recv() {
-            Ok(Some(paho)) => {
-                if let Some(sensor_message) = prawnqtt::deser_message(unimplemented!()) {
+            Ok(Some(sensor_message)) => {
                     let ext_device_id: &str = &sensor_message.device_id;
 
                     sensor_message.measurements().iter().for_each(|measure| {
@@ -25,7 +26,7 @@ pub fn receive_updates(
                             predis::publish_updates(redis_ctx, delta_event_topic, delta_events)
                         }
                     });
-                }
+                
             }
 
             Err(_) if unimplemented!() => {
