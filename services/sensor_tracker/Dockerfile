@@ -8,9 +8,6 @@ RUN apt-get update
 # ⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️
 RUN rustup default nightly-2019-05-25
 
-#TODO TRIM
-#RUN apt-get install -y g++ cmake
-
 COPY . .
 
 # 🏗 make sure rand_hc builds
@@ -19,7 +16,7 @@ COPY . .
 RUN cargo update
 
 #TODO restore
-RUN cargo install --path .
+#RUN cargo install --path .
 
 #TODO restore
 #CMD ["sensor_tracker"]
