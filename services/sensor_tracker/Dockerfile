@@ -17,11 +17,6 @@ RUN cargo update
 
 ENV RUST_BACKTRACE 1
 
-#TODO restore
-#RUN cargo install --path .
+RUN cargo install --path .
 
-#TODO restore
-#CMD ["sensor_tracker"]
-
-#TODO TRIM
-CMD ["tail","-f","/dev/null"]
+CMD ["sensor_tracker"]
