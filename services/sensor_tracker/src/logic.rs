@@ -1,4 +1,4 @@
-use crossbeam_channel::Receiver;
+use crossbeam_channel::{select, Receiver};
 use redis_context::RedisContext;
 use rumqtt::Notification;
 
@@ -11,32 +11,30 @@ pub fn receive_updates(
     delta_event_topic: &str,
 ) {
     loop {
-        match update_r.try_recv() {
-            // TODO use select! macro
-            Ok(Notification::Publish(p)) => {
-                let payload = p.payload;
-                if let Some(sensor_message) = deser_message(&payload) {
-                    let ext_device_id: &str = &sensor_message.device_id;
+        select! {
+            recv(update_r) -> msg => match msg {
+                Ok(Notification::Publish(p)) => {
+                    let payload = p.payload;
+                    if let Some(sensor_message) = deser_message(&payload) {
+                        let ext_device_id: &str = &sensor_message.device_id;
 
-                    sensor_message.measurements().iter().for_each(|measure| {
-                        if let Ok(delta_events) = predis::update(redis_ctx, &measure, ext_device_id)
-                        {
-                            // emit all changed keys & hash field names to redis
-                            // on the appropriate redis pub/sub topic.
-                            // these will be processed later by the gcloud_push utility
-                            predis::publish_updates(redis_ctx, delta_event_topic, delta_events)
-                        }
-                    });
-                } else {
-                    println!("couldnt deserialize message payload: {:?}", payload)
-                }
+                        sensor_message.measurements().iter().for_each(|measure| {
+                            if let Ok(delta_events) = predis::update(redis_ctx, &measure, ext_device_id)
+                            {
+                                // emit all changed keys & hash field names to redis
+                                // on the appropriate redis pub/sub topic.
+                                // these will be processed later by the gcloud_push utility
+                                predis::publish_updates(redis_ctx, delta_event_topic, delta_events)
+                            }
+                        });
+                    } else {
+                        println!("couldnt deserialize message payload: {:?}", payload)
+                    }
+                },
+                Ok(n) => println!("IGNORE  {:?}", n),
+                Err(e) => println!("ERROR    {:?}", e),
             }
-            Ok(n) => println!("IGNORE  {:?}", n),
-            Err(crossbeam_channel::TryRecvError::Empty) => (),
-            Err(e) => println!("ERROR    {:?}", e),
         }
-
-        std::thread::sleep(std::time::Duration::from_millis(100))
     }
 }
 
