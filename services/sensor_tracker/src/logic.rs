@@ -12,6 +12,7 @@ pub fn receive_updates(
 ) {
     loop {
         match update_r.try_recv() {
+            // TODO use select! macro
             Ok(Notification::Publish(p)) => {
                 let payload = p.payload;
                 if let Some(sensor_message) = deser_message(&payload) {
@@ -30,21 +31,19 @@ pub fn receive_updates(
                     println!("couldnt deserialize message payload: {:?}", payload)
                 }
             }
-            Ok(n) => println!("{:?}", n),
-
-            Err(_) if unimplemented!() => {
+            Ok(n) => println!("ignoring {:?}", n),
+            Err(e) => {
+                println!("err {:?}", e)
                 // TODO
                 /* check for 
-                !mqtt_cli.is_connected()
+                if !mqtt_cli.is_connected()
                 
                 in match arm
                 */
 
                 // TODO
                 // let _ = try_mqtt_reconnect(&mqtt_cli);
-
             }
-            _ => (),
         }
 
         std::thread::sleep(std::time::Duration::from_millis(100))
