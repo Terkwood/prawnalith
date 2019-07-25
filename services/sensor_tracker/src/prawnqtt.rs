@@ -37,7 +37,7 @@ pub fn start_mqtt(config: &TrackerConfig) -> (Receiver<Option<Message>>, MqttCli
         for notification in notifications {
             match notification {
                 Notification::Publish(p) => {
-                    if let Err(e) = msg_in.send(deser_message(p.payload)) {
+                    if let Err(e) = msg_in.send(deser_message(&p.payload)) {
                         println!("err sending {:?}", e)
                     }
                 }
@@ -99,8 +99,8 @@ fn generate_mq_client_id() -> String {
     format!("sensor_tracker/{}", Uuid::new_v4())
 }
 
-pub fn deser_message(payload: Arc<Vec<u8>>) -> Option<model::SensorMessage> {
-    let r = std::str::from_utf8(payload);
+pub fn deser_message(payload: &[u8]) -> Option<model::SensorMessage> {
+    let r = std::str::from_utf8(&payload);
     r.ok()
         .and_then(|s| serde_json::from_str(s).map(|r| Some(r)).unwrap_or(None))
 }
