@@ -1,9 +1,9 @@
-use crate::predis;
 use crossbeam_channel::Receiver;
 use redis_context::RedisContext;
-use rumqtt::{MqttClient, Notification};
+use rumqtt::Notification;
 
 use crate::model::SensorMessage;
+use crate::predis;
 
 pub fn receive_updates(
     update_r: Receiver<Notification>,
