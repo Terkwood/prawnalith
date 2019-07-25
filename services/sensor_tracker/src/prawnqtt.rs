@@ -2,7 +2,7 @@ use super::model;
 
 use rumqtt::{Message, MqttClient, MqttOptions, Notification, Publish, QoS, ReconnectOptions};
 use std::{thread, time::Duration};
-
+use std::sync::Arc;
 use super::config::TrackerConfig;
 use crossbeam::Receiver;
 use uuid::Uuid;
@@ -101,8 +101,8 @@ fn generate_mq_client_id() -> String {
     format!("sensor_tracker/{}", Uuid::new_v4())
 }
 
-pub fn deser_message(msg: Message) -> Option<model::SensorMessage> {
-    let r = std::str::from_utf8(&*msg.payload);
+pub fn deser_message(payload: Arc<Vec<u8>>) -> Option<model::SensorMessage> {
+    let r = std::str::from_utf8(payload);
     r.ok()
         .and_then(|s| serde_json::from_str(s).map(|r| Some(r)).unwrap_or(None))
 }
