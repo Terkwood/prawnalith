@@ -1,13 +1,14 @@
 use super::model;
 
 use super::config::TrackerConfig;
+use crate::model::SensorMessage;
 use crossbeam::Receiver;
 use rumqtt::{Message, MqttClient, MqttOptions, Notification, Publish, QoS, ReconnectOptions};
 use std::sync::Arc;
 use std::{thread, time::Duration};
 use uuid::Uuid;
 
-pub fn start_mqtt(config: &TrackerConfig) -> (Receiver<Option<Message>>, MqttClient) {
+pub fn start_mqtt(config: &TrackerConfig) -> (Receiver<Option<SensorMessage>>, MqttClient) {
     // DEFAULT CONFIGURATIONS LIVE HERE!
     let host = &config.mqtt_host.clone().unwrap_or("127.0.0.1".to_string());
     let port = &config.mqtt_port.clone().unwrap_or(1883);
