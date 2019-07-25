@@ -1,4 +1,0 @@
-FROM prawnalith/sensor_tracker:test
-
-RUN rm /usr/bin/qemu-arm-static
-

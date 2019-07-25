@@ -33,6 +33,10 @@ that the LED status utility can properly format messages.
 HSET <namespace>/sensors/<temp_or_ph>/<device_internal_id> tank 0
 ```
 
+## Docker builds
+
+See `build.sh` and `run.sh` for entry points.
+
 ### Sample redis records
 
 #### temp sensor
