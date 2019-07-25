@@ -14,6 +14,7 @@ pub struct ExtId {
 /// to a millivolt reading from an SEN0169 pH meter.
 /// These are used to construct the linear scale
 /// which will provide the pH reading at the microcontroller.
+#[derive(Debug)]
 pub struct PhCalibration {
     pub low: PhRefValue,
     pub hi: PhRefValue,
@@ -28,6 +29,7 @@ impl PhCalibration {
     }
 }
 
+#[derive(Debug)]
 pub struct PhRefValue {
     pub ph_ref: f32, // pH reference level
     pub mv: f32,     // millivolt reading

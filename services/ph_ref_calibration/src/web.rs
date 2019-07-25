@@ -41,11 +41,13 @@ fn lookup_ph_calibration_by_ext_id(
     redis_ctx: State<Arc<Mutex<RedisContext>>>,
 ) -> Result<String, WebError> {
     let lock = redis_ctx.lock().unwrap();
+    println!("LOCKED"); // TODO
     let namespace = lock.get_external_device_namespace(ext_id.0.device_type)?;
-
+    println!("namespace {:?}", namespace); // TODO
     let id = external_id::resolve(&ext_id.0.ext_id, namespace)?;
-
+    println!("id {:?}", id); // TODO
     let calibration = predis::lookup_ph_calibration(id, lock.deref())?;
+    println!("calibration {:?}", calibration); // TODO
     Ok(calibration.as_csv())
 }
 
