@@ -15,18 +15,16 @@ pub fn receive_updates(
     loop {
         match update_r.try_recv() {
             Ok(Some(sensor_message)) => {
-                    let ext_device_id: &str = &sensor_message.device_id;
+                let ext_device_id: &str = &sensor_message.device_id;
 
-                    sensor_message.measurements().iter().for_each(|measure| {
-                        if let Ok(delta_events) = predis::update(redis_ctx, &measure, ext_device_id)
-                        {
-                            // emit all changed keys & hash field names to redis
-                            // on the appropriate redis pub/sub topic.
-                            // these will be processed later by the gcloud_push utility
-                            predis::publish_updates(redis_ctx, delta_event_topic, delta_events)
-                        }
-                    });
-                
+                sensor_message.measurements().iter().for_each(|measure| {
+                    if let Ok(delta_events) = predis::update(redis_ctx, &measure, ext_device_id) {
+                        // emit all changed keys & hash field names to redis
+                        // on the appropriate redis pub/sub topic.
+                        // these will be processed later by the gcloud_push utility
+                        predis::publish_updates(redis_ctx, delta_event_topic, delta_events)
+                    }
+                });
             }
 
             Err(_) if unimplemented!() => {
