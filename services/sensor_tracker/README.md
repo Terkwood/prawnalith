@@ -1,6 +1,6 @@
 # Sensor tracker
 
-# Purpose
+## Purpose
 
 This utility listens for temperature- and pH-related sensor reports.
 
@@ -14,27 +14,41 @@ This is useful for sensors generating temperature and/or pH data.
 
 Such data might come into an MQTT topic looking like this:
 
-```
+```json
 { "device_id": <hex>, "temp_f": 81.71, "temp_c": 23.45, "ph": 7.77, "ph_mv": 453.05 }
 ```
 
 If the device hasn't ever been tracked, it will create the following type of stub record with an internal device ID.  The internal device ID is a (namespaced) UUID V5:
 
+<<<<<<< HEAD
 ```
 HMSET <namespace>/devices/<device_internal_id> create_time <epoch>
+=======
+```text
+HMSET <namespace>/sensors/<temp_or_ph>/<uuid_v5_id> create_time <epoch>
+>>>>>>> unstable
 ```
 
 The operator is encouraged to later amend the hash to include
 a helpful reference to the area which the sensing device serves, so
 that the LED status utility can properly format messages.
 
+<<<<<<< HEAD
 ```
 HSET <namespace>/devices/<device_internal_id> area 0
+=======
+```text
+HSET <namespace>/sensors/<temp_or_ph>/<device_internal_id> tank 0
+>>>>>>> unstable
 ```
+
+## Docker builds
+
+See `build.sh` and `run.sh` for entry points.
 
 ### Sample redis records
 
-**temp sensor**
+#### temp sensor
 
 `> hgetall namespace/sensors/temp/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa`
 
