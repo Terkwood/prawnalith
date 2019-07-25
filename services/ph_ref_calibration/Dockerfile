@@ -20,9 +20,15 @@ COPY . .
 # 🏗 satisfy rocket, ring, cookie
 RUN cargo update
 
-RUN cargo install --path .
+#TODO
+CMD ["tail","-f","/dev/null"]
 
+#TODO
+#RUN cargo install --path .
+
+#TODO
 # 🛀 shrink image size
-RUN sh shrink_docker_image.sh
+#RUN sh shrink_docker_image.sh
 
-CMD ["ph_ref_calibration"]
+#TODO
+#CMD ["ph_ref_calibration"]
