@@ -44,6 +44,7 @@ fn lookup_ph_calibration_by_ext_id(
     device_type: String,
     redis_ctx: State<Arc<Mutex<RedisContext>>>,
 ) -> Result<String, WebError> {
+    println!("ANY"); // TODO
     let lock = redis_ctx.lock().unwrap();
 
     println!("LOCKED"); // TODO
