@@ -13,7 +13,7 @@ pub fn receive_updates(
     loop {
         match update_r.try_recv() {
             Ok(Some(paho)) => {
-                if let Some(sensor_message) = prawnqtt::deser_message(paho) {
+                if let Some(sensor_message) = prawnqtt::deser_message(unimplemented!()) {
                     let ext_device_id: &str = &sensor_message.device_id;
 
                     sensor_message.measurements().iter().for_each(|measure| {
