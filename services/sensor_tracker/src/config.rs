@@ -11,7 +11,7 @@ pub struct TrackerConfig {
     pub mqtt_port: Option<u16>,
     pub mqtt_topic: String,
     pub mqtt_keep_alive: Option<u16>,
-    pub mqtt_qos: Option<u16>,
+    pub mqtt_qos: Option<u8>,
 }
 
 impl TrackerConfig {

@@ -28,7 +28,7 @@ pub fn start_mqtt(config: &TrackerConfig) -> (Receiver<Option<Message>>, MqttCli
 
     let (mut mqtt_client, notifications) = MqttClient::start(mqtt_options).unwrap();
     mqtt_client
-        .subscribe(topic, QoS::from_u8(qos).expect("qos"))
+        .subscribe(topic, QoS::from_u8(*qos).expect("qos"))
         .unwrap();
 
     let (msg_in, msg_out) = crossbeam_channel::unbounded();
