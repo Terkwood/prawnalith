@@ -35,7 +35,7 @@ HSET <namespace>/sensors/<temp_or_ph>/<device_internal_id> tank 0
 
 ## Docker builds
 
-_TODO_
+See `build.sh` and `run.sh` for entry points.
 
 ### Sample redis records
 
