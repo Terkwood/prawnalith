@@ -17,10 +17,8 @@ WORKDIR /ph_ref_calibration
 
 COPY . .
 
-# 🏗 make sure rand_hc builds
-# 👀 https://github.com/actix/actix/issues/184
-# 👀 https://github.com/rust-random/rand/issues/645
-#RUN cargo update
+# 🏗 satisfy rocket, ring, cookie
+RUN cargo update
 
 RUN cargo install --path .
 
