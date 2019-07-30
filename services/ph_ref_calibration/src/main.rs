@@ -21,6 +21,8 @@ use routes::*;
 #[database("redis")]
 pub struct RedisConn(redis::Connection);
 
+/// Uses rocket configuration magic to specify the redis data's
+/// "namespace". [Read more here](https://rocket.rs/v0.4/guide/configuration/)
 pub struct Namespace(String);
 
 fn main() {
