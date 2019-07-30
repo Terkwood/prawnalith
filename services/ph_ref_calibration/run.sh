@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker run --rm -ti -d prawnalith/ph_ref_calibration -p 8000
+docker run -p 8000 --rm -ti -d prawnalith/ph_ref_calibration
