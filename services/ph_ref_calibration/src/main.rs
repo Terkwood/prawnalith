@@ -2,7 +2,8 @@
 
 #[macro_use]
 extern crate rocket;
-#[macro_use] extern crate rocket_contrib;
+#[macro_use]
+extern crate rocket_contrib;
 
 #[macro_use]
 extern crate serde_derive;
@@ -18,8 +19,8 @@ use rocket_contrib::databases::redis;
 
 use crate::config::Config;
 
-#[database("sqlite_logs")]
-struct RedisConn(redis::Connection);
+#[database("redis")]
+pub struct RedisConn(redis::Connection);
 
 fn main() {
     dotenv::dotenv().expect("Unable to load .env file");
@@ -29,8 +30,8 @@ fn main() {
         Err(e) => panic!("Unable to parse config ({})", e),
     };
 
-    let redis_namespace = config.redis_namespace.unwrap_or("".to_string());
+    let redis_namespace = &config.redis_namespace.unwrap_or("".to_string());
 
     // TODO
-    web::startup(unimplemented!());
+    web::startup(redis_namespace);
 }
