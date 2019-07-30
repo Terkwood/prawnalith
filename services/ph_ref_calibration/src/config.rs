@@ -1,7 +1,6 @@
+/// Note that _most of the configuration is given
+/// in Rocket.toml_.  [See documentation at rocket.rs](https://rocket.rs/v0.4/guide/state/#usage)
 #[derive(Deserialize, Debug, Clone)]
 pub struct Config {
-    pub redis_auth: Option<String>,
-    pub redis_host: Option<String>,
-    pub redis_port: Option<u16>,
     pub redis_namespace: Option<String>,
 }

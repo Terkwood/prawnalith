@@ -1,16 +1,21 @@
 use redis::Commands;
 use uuid::Uuid;
 
-use redis_context::RedisContext;
-
 use super::model::*;
+
+pub struct RedisConfig {
+    redis_host: String,
+    redis_port: u16,
+    redis_auth: Option<String>,
+    namespace: String,
+}
 
 pub fn lookup_ph_calibration(
     id: Uuid,
-    redis_ctx: &RedisContext,
+    redis_cfg: &RedisConfig,
 ) -> Result<PhCalibration, redis::RedisError> {
-    let r: Vec<Option<f32>> = redis_ctx.conn.hget(
-        format!("{}/sensors/ph/{}", redis_ctx.namespace, id),
+    let r: Vec<Option<f32>> = redis_cfg.conn.hget(
+        format!("{}/sensors/ph/{}", redis_cfg.namespace, id),
         vec!["low_ph_ref", "low_mv", "hi_ph_ref", "hi_mv"],
     )?;
     Ok(PhCalibration {
