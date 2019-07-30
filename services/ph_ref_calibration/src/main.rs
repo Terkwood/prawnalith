@@ -21,7 +21,7 @@ use routes::*;
 #[database("redis")]
 pub struct RedisConn(redis::Connection);
 
-struct Namespace(String);
+pub struct Namespace(String);
 
 fn main() {
     rocket::ignite()

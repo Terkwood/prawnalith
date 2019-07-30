@@ -5,7 +5,7 @@ use crate::model::*;
 use crate::RedisConn;
 
 pub fn lookup_ph_calibration(
-    redis_conn: RedisConn,
+    redis_conn: &RedisConn,
     namespace: &str,
     id: Uuid,
 ) -> Result<PhCalibration, redis::RedisError> {
@@ -27,7 +27,7 @@ pub fn lookup_ph_calibration(
 
 /// This is the "name" field that will be used to form a V5 UUID
 pub fn get_external_device_namespace(
-    redis_conn: RedisConn,
+    redis_conn: &RedisConn,
     namespace: &str,
     device_type: &str,
 ) -> Result<Uuid, redis::RedisError> {
