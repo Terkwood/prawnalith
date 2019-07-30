@@ -7,7 +7,6 @@ extern crate rocket_contrib;
 
 extern crate serde_derive;
 
-mod config;
 mod external_id;
 mod model;
 mod predis;

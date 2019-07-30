@@ -43,14 +43,10 @@ pub fn lookup_ph_calibration_by_ext_id(
     let ext_device_namespace =
         predis::get_external_device_namespace(&redis_conn, &namespace.0, "ph")?;
 
-    // TODO
-    println!("ext device namespace {:?}", ext_device_namespace);
     let id = external_id::resolve(&ext_id, ext_device_namespace)?;
 
-    println!("id {:?}", id); // TODO
     let calibration = predis::lookup_ph_calibration(&redis_conn, &namespace.0, id)?;
 
-    println!("calibration {:?}", calibration); // TODO
     Ok(calibration.as_csv())
 }
 
