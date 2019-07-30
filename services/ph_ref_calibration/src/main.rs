@@ -5,33 +5,45 @@ extern crate rocket;
 #[macro_use]
 extern crate rocket_contrib;
 
-#[macro_use]
 extern crate serde_derive;
 
 mod config;
 mod external_id;
 mod model;
 mod predis;
-mod web;
+mod routes;
 mod web_error;
 
 use rocket_contrib::databases::redis;
 
-use crate::config::Config;
+use routes::*;
 
 #[database("redis")]
 pub struct RedisConn(redis::Connection);
 
+struct Namespace(String);
+
 fn main() {
-    dotenv::dotenv().expect("Unable to load .env file");
-
-    let config = match envy::from_env::<Config>() {
-        Ok(config) => config,
-        Err(e) => panic!("Unable to parse config ({})", e),
-    };
-
-    let redis_namespace = &config.redis_namespace.unwrap_or("".to_string());
-
-    // TODO
-    web::startup(redis_namespace);
+    rocket::ignite()
+        .attach(rocket::fairing::AdHoc::on_attach(
+            "Namespace Config",
+            |rocket| {
+                let namespace = rocket
+                    .config()
+                    .get_str("namespace")
+                    .unwrap_or("shrimpfiesta")
+                    .to_string();
+                Ok(rocket.manage(Namespace(namespace)))
+            },
+        ))
+        .attach(RedisConn::fairing())
+        .mount(
+            "/",
+            routes![
+                resolve_external_id,
+                lookup_ph_calibration_by_ext_id,
+                lookup_ph_calibration
+            ],
+        )
+        .launch();
 }

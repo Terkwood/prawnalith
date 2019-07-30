@@ -1,2 +1,5 @@
+[global]
+namespace = "shrimpfiesta"
+
 [global.databases]
 redis = { url = "redis://yourhost:6379" }
