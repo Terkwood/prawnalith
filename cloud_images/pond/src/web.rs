@@ -165,6 +165,11 @@ pub fn push_redis(data: Json<PushData>, conn: RedisDbConn, config: State<Config>
     }
 }
 
+#[get("/ping")]
+pub fn ping() -> Status {
+    Status::NoContent
+}
+
 pub fn startup(config: Config) {
     rocket::ignite()
         .manage(config)
