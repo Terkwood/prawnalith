@@ -12,18 +12,12 @@ ENV RUST_BACKTRACE 1
 # ⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️
 RUN rustup default nightly-${NIGHTLY_DATE}
 
-WORKDIR /sensor_tracker
-
 COPY . .
 
-# 🏗 make sure rand_hc builds
-# 👀 https://github.com/actix/actix/issues/184
-# 👀 https://github.com/rust-random/rand/issues/645
 RUN cargo update
 
 RUN cargo install --path .
 
-# 🛀 shrink image size
 RUN sh shrink_docker_image.sh
 
-CMD ["sensor_tracker"]
+CMD ["led_status_helper"]
