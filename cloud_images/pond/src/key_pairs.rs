@@ -79,7 +79,7 @@ fn redis_key_for_rsa_pub_key(namespace: &str) -> String {
 pub fn fetch_from_redis(
     conn: &RedisDbConn,
     namespace: &str,
-) -> Result<HashMap<SigningKeyId, PubKey>, redis::RedisError> {
+) -> Result<HashMap<SigningKeyId, PubKey>, rocket_contrib::databases::redis::RedisError> {
     let r: HashMap<String, String> = conn.hgetall(redis_key_for_rsa_pub_key(namespace))?;
     Ok(r.iter()
         .map(|(k, v)| (SigningKeyId(k.to_string()), PubKey(v.to_string())))
