@@ -16,6 +16,8 @@ services:
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
     restart: always
+    depends_on:
+      - pond
   redis:
     image: "redis"
     volumes:
