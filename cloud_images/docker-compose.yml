@@ -4,7 +4,7 @@ services:
     image: "prawnalith/pond:latest"
     build: "pond/."
     labels:
-      autoheal: "true"
+      autoheal: true
     ports:
       - "443:8000"
     volumes:
