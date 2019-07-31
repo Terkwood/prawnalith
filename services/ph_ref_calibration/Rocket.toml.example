@@ -1,0 +1,6 @@
+[global]
+address = "0.0.0.0"
+namespace = "shrimpfiesta"
+
+[global.databases]
+redis = { url = "redis://yourhost:6379" }
