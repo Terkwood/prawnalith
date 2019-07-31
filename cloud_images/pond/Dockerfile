@@ -31,6 +31,6 @@ COPY --from=builder \
 # .env, Rocket.toml, etc will be mounted here
 WORKDIR /data
 
-HEALTHCHECK CMD curl --fail http://0.0.0.0:8000/ping || exit 1
+HEALTHCHECK CMD curl --fail --insecure https://0.0.0.0:8000/ping || exit 1
 
 CMD [ "/usr/local/bin/pond" ]
