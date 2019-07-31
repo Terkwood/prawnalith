@@ -1,21 +1,21 @@
 [package]
 name = "pond"
-version = "0.4.1"
+version = "0.4.2"
 authors = ["Terkwood <metaterkhorn@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-base64 = "0.10"
-dotenv = "0.13"
-envy = "0.3"
+base64 = "*"
+dotenv = "*"
+envy = "*"
 frank_jwt = "3.0"
-hashbrown = "0.1"
-lazy_static = "1.2"
+hashbrown = "*"
+lazy_static = "*"
 openssl = "0.10"
-redis = "0.9"
+redis = "*"
 redis_delta = { git = "https://github.com/Terkwood/prawnalith/", branch = "unstable" }
-regex = "1"
-reqwest = "0.9"
+regex = "*"
+reqwest = "*"
 rocket = { version = "0.4.2", features = [ "tls" ] }
 rust-crypto = "^0.2"
 serde = "1"
