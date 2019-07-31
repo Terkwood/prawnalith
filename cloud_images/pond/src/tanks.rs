@@ -57,7 +57,10 @@ impl Tank {
 }
 
 /// Fetch the status of all tanks from Redis.
-pub fn fetch_all(conn: RedisDbConn, namespace: &str) -> Result<Vec<Tank>, redis::RedisError> {
+pub fn fetch_all(
+    conn: RedisDbConn,
+    namespace: &str,
+) -> Result<Vec<Tank>, rocket_contrib::databases::redis::RedisError> {
     // figure out how many tanks you need to query
     let num_tanks = fetch_num_tanks(&conn, namespace)?;
 
@@ -72,7 +75,10 @@ pub fn fetch_all(conn: RedisDbConn, namespace: &str) -> Result<Vec<Tank>, redis:
     Ok(result)
 }
 
-fn fetch_num_tanks(conn: &RedisDbConn, namespace: &str) -> Result<u16, redis::RedisError> {
+fn fetch_num_tanks(
+    conn: &RedisDbConn,
+    namespace: &str,
+) -> Result<u16, rocket_contrib::databases::redis::RedisError> {
     let key = Key::AllTanks {
         ns: Namespace(namespace.to_owned()),
     }
@@ -96,7 +102,7 @@ fn fetch_tank_status(
     id: u16,
     conn: &RedisDbConn,
     namespace: &str,
-) -> Result<Option<Tank>, redis::RedisError> {
+) -> Result<Option<Tank>, rocket_contrib::databases::redis::RedisError> {
     let key = Key::Tank {
         ns: Namespace(namespace.to_owned()),
         id,
