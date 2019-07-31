@@ -31,4 +31,9 @@ COPY --from=builder \
 # .env, Rocket.toml, etc will be mounted here
 WORKDIR /data
 
+# add curl so that we can do a simple healthcheck
+RUN apk add curl
+
+HEALTHCHECK CMD curl --fail http://0.0.0.0:8000/ping || exit 1
+
 CMD [ "/usr/local/bin/pond" ]
