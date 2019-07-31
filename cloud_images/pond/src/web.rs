@@ -22,7 +22,7 @@ pub fn tanks(
     _user: AuthorizedUser,
     conn: RedisDbConn,
     config: State<Config>,
-) -> Result<CorsResponder, redis::RedisError> {
+) -> Result<CorsResponder, rocket_contrib::databases::redis::RedisError> {
     Ok(CorsResponder {
         inner: Json(tanks::fetch_all(conn, &config.redis_namespace)?),
         header: config

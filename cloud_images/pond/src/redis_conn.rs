@@ -1,3 +1,5 @@
+use rocket_contrib::databases::redis;
+
 #[database("redis")]
 pub struct RedisDbConn(pub redis::Connection);
 
