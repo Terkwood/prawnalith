@@ -16,8 +16,14 @@ COPY . .
 
 RUN cargo update
 
-RUN cargo install --path .
+#TODO
+CMD ["tail","-f","/dev/null"]
 
-RUN sh shrink_docker_image.sh
+#TODO
+#RUN cargo install --path .
 
-CMD ["led_status_helper"]
+#TODO
+#RUN sh shrink_docker_image.sh
+
+#TODO
+#CMD ["led_status_helper"]
