@@ -5,6 +5,8 @@ extern crate dotenv;
 extern crate envy;
 extern crate redis;
 
+mod model;
+
 use std::slice::SliceConcatExt;
 use std::time;
 
@@ -12,6 +14,8 @@ use redis::Commands;
 use rumqtt::{MqttClient, MqttOptions, QoS};
 
 use uuid::Uuid;
+
+use model::SensorReadings;
 
 #[derive(Deserialize, Debug, Clone)]
 struct Config {
@@ -97,8 +101,7 @@ fn get_area_data(
     conn: &redis::Connection,
     area: i64,
     namespace: &str,
-) -> Result<Option<bool>, redis::RedisError> {
-    // TODO result type is wrong
+) -> Result<Option<SensorReadings>, redis::RedisError> {
     unimplemented!()
 }
 
@@ -217,49 +220,62 @@ fn generate_status(
     namespace: &str,
     staleness: &Staleness,
 ) -> Result<String, redis::RedisError> {
-    let num_tanks = get_num_areas(&conn, namespace)?;
+    let num_areas = get_num_areas(&conn, namespace)?;
 
-    let tank_statuses: Result<Vec<String>, redis::RedisError> = (1..num_tanks + 1)
-        .map(move |tank| {
-            get_tank_data(&conn, tank, namespace).map(move |(maybe_temp, maybe_ph)| {
-                if let (&None, &None) = (&maybe_temp, &maybe_ph) {
+    let area_statuses: Result<Vec<String>, redis::RedisError> = (1..num_areas + 1)
+        .map(move |area| {
+            get_area_data(&conn, area, namespace).map(move |maybe_sensor_readings| {
+                if let Some(sensor_readings) = maybe_sensor_readings {
+                    let area_string = format!("A{}", area);
+
+                    let ph_string: String = sensor_readings
+                        .ph
+                        .map(move |ph| {
+                            format!(" pH {}{}", ph, staleness.text(sensor_readings.update_time))
+                        })
+                        .unwrap_or("".to_string());
+
+                    // hope that both temps are present 🙈
+                    let temp = match (sensor_readings.temp_c, sensor_readings.temp_f) {
+                        (None, None) => None,
+                        _ => Some(Temp {
+                            f: sensor_readings.temp_f.unwrap_or(-999.),
+                            c: sensor_readings.temp_c.unwrap_or(-999.),
+                            update_time: sensor_readings.update_time,
+                        }),
+                    };
+
+                    let temp_string = temp
+                        .map(move |t| {
+                            (
+                                match temp_unit {
+                                    'c' | 'C' => t.c,
+                                    _ => t.f,
+                                },
+                                t.update_time,
+                            )
+                        })
+                        .map(|(t, update_time)| {
+                            format!(
+                                " {}°{}{}",
+                                t,
+                                temp_unit.to_ascii_uppercase(),
+                                staleness.text(update_time)
+                            )
+                        })
+                        .unwrap_or("".to_string());
+
+                    area_string + &ph_string + &temp_string
+                } else {
                     return "".to_string(); // nothing to format
                 }
-
-                let tank_string = format!("T{}:", tank);
-                let temp_string = maybe_temp
-                    .map(move |t| {
-                        (
-                            match temp_unit {
-                                'c' | 'C' => t.c,
-                                _ => t.f,
-                            },
-                            t.update_time,
-                        )
-                    })
-                    .map(|(t, update_time)| {
-                        format!(
-                            " {}°{}{}",
-                            t,
-                            temp_unit.to_ascii_uppercase(),
-                            staleness.text(update_time)
-                        )
-                    })
-                    .unwrap_or("".to_string());
-                let ph_string: String = maybe_ph
-                    .map(move |ph| format!(" pH {}{}", ph.val, staleness.text(ph.update_time)))
-                    .unwrap_or("".to_string());
-
-                tank_string + &ph_string + &temp_string
             })
         })
         .collect();
 
-    let tank_portion = tank_statuses.map(|ss| ss.join(" "));
-
     let num_areas = get_num_areas(&conn, namespace)?;
 
-    let area_statuses: Result<Vec<String>, redis::RedisError> = (1..num_areas + 1)
+    let dead_area_statuses: Result<Vec<String>, redis::RedisError> = (1..num_areas + 1)
         .map(move |area| {
             dead_get_area_data(&conn, area, namespace).map(move |maybe_dht| {
                 if let &None = &maybe_dht {
@@ -305,10 +321,8 @@ fn generate_status(
         })
         .collect();
 
-    let area_portion = area_statuses.map(|ss| ss.join(" "));
-
-    tank_portion
-        .and_then(|tp| area_portion.map(|ap| ap + " " + &tp)) // join areas and tanks
+    area_statuses
+        .map(|ss| ss.join(" "))
         .map(|msg| right_align(&msg)) // lay out the message nicely
 }
 

@@ -21,9 +21,15 @@ COPY . .
 # 👀 https://github.com/rust-random/rand/issues/645
 RUN cargo update
 
-RUN cargo install --path .
+#TODO
+CMD ["tail","-f","/dev/null"]
+
+#TODO 
+#RUN cargo install --path .
 
 # 🛀 shrink image size
-RUN sh shrink_docker_image.sh
+#TODO
+#RUN sh shrink_docker_image.sh
 
-CMD ["sensor_tracker"]
+#TODO
+#CMD ["sensor_tracker"]

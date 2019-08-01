@@ -2,7 +2,7 @@ use crossbeam_channel::{select, Receiver};
 use redis_context::RedisContext;
 use rumqtt::Notification;
 
-use crate::model::SensorMessage;
+use crate::model::SensorReadings;
 use crate::predis;
 
 pub fn receive_updates(
@@ -35,7 +35,7 @@ pub fn receive_updates(
     }
 }
 
-fn deser_message(payload: &[u8]) -> Option<SensorMessage> {
+fn deser_message(payload: &[u8]) -> Option<SensorReadings> {
     let r = std::str::from_utf8(&payload);
     r.ok()
         .and_then(|s| serde_json::from_str(s).map(|r| Some(r)).unwrap_or(None))
