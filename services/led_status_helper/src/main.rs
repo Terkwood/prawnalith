@@ -32,26 +32,10 @@ fn generate_mq_client_id() -> String {
     format!("led_status/{}", Uuid::new_v4())
 }
 
-fn get_num_containers(
-    conn: &redis::Connection,
-    namespace: &str,
-    container: Container,
-) -> Result<i64, redis::RedisError> {
-    conn.get(format!("{}/{}", namespace, container.to_string()))
-}
+const AREAS: &str = "areas";
 
-enum Container {
-    Tanks,
-    Areas,
-}
-
-impl Container {
-    pub fn to_string(self) -> String {
-        match self {
-            Container::Tanks => "tanks".to_string(),
-            Container::Areas => "areas".to_string(),
-        }
-    }
+fn get_num_areas(conn: &redis::Connection, namespace: &str) -> Result<i64, redis::RedisError> {
+    conn.get(format!("{}/{}", namespace, AREAS.to_string()))
 }
 
 struct Temp {
@@ -108,7 +92,17 @@ fn c_to_f(temp_c: f64) -> f64 {
 }
 
 const NAN: f64 = -255.0;
+
 fn get_area_data(
+    conn: &redis::Connection,
+    area: i64,
+    namespace: &str,
+) -> Result<Option<bool>, redis::RedisError> {
+    // TODO result type is wrong
+    unimplemented!()
+}
+
+fn dead_get_area_data(
     conn: &redis::Connection,
     area: i64,
     namespace: &str,
@@ -160,11 +154,11 @@ fn get_tank_data(
     namespace: &str,
 ) -> Result<(Option<Temp>, Option<PH>), redis::RedisError> {
     let numbers: Vec<Option<f64>> = conn.hget(
-        format!("{}/tanks/{}", namespace, tank),
+        format!("{}/{}/{}", namespace, AREAS, tank),
         vec!["temp_f", "temp_c", "ph"],
     )?;
     let update_times: Vec<Option<u64>> = conn.hget(
-        format!("{}/tanks/{}", namespace, tank),
+        format!("{}/{}/{}", namespace, AREAS, tank),
         vec!["temp_update_time", "ph_update_time"],
     )?;
     let (temp_f, temp_c) = (numbers.get(0), numbers.get(1));
@@ -223,7 +217,7 @@ fn generate_status(
     namespace: &str,
     staleness: &Staleness,
 ) -> Result<String, redis::RedisError> {
-    let num_tanks = get_num_containers(&conn, namespace, Container::Tanks)?;
+    let num_tanks = get_num_areas(&conn, namespace)?;
 
     let tank_statuses: Result<Vec<String>, redis::RedisError> = (1..num_tanks + 1)
         .map(move |tank| {
@@ -263,11 +257,11 @@ fn generate_status(
 
     let tank_portion = tank_statuses.map(|ss| ss.join(" "));
 
-    let num_areas = get_num_containers(&conn, namespace, Container::Areas)?;
+    let num_areas = get_num_areas(&conn, namespace)?;
 
     let area_statuses: Result<Vec<String>, redis::RedisError> = (1..num_areas + 1)
         .map(move |area| {
-            get_area_data(&conn, area, namespace).map(move |maybe_dht| {
+            dead_get_area_data(&conn, area, namespace).map(move |maybe_dht| {
                 if let &None = &maybe_dht {
                     return "".to_string(); // nothing to format
                 }
