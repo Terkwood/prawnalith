@@ -1,23 +1,19 @@
 version: '3'
 services:
+  stream:
+    image: "prawnalith/video:latest"
+    build: "gstreamer/."
+    ports:
+      - "8888:5001"
   pond:
     image: "prawnalith/pond:latest"
     build: "pond/."
-    labels:
-      autoheal: "true"
     ports:
       - "443:8000"
     volumes:
       - "/var/volumes/pond:/data"
     depends_on:
       - "redis"
-  autoheal:
-    image: "willfarrell/autoheal"
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"
-    restart: always
-    depends_on:
-      - pond
   redis:
     image: "redis"
     volumes:

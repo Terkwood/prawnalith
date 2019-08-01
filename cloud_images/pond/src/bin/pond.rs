@@ -8,7 +8,12 @@ use pond::web;
 use std::process;
 use std::thread;
 
+const NAME: &'static str = env!("CARGO_PKG_NAME");
+const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+
 fn main() {
+    println!("🔢 {:<8} {}", NAME, VERSION);
+
     dotenv::dotenv().expect("Unable to load .env file");
 
     let config = Config::new();

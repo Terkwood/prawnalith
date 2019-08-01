@@ -23,12 +23,14 @@ RUN cargo build --release
 
 # Now, we need to build our _real_ Docker container, copying in `pond`.
 FROM alpine:latest
-RUN apk --no-cache add ca-certificates
+RUN apk --no-cache add ca-certificates curl
 COPY --from=builder \
     /home/rust/src/target/x86_64-unknown-linux-musl/release/pond \
     /usr/local/bin/
 
 # .env, Rocket.toml, etc will be mounted here
 WORKDIR /data
+
+HEALTHCHECK CMD curl --fail --insecure https://0.0.0.0:8000/ping || exit 1
 
 CMD [ "/usr/local/bin/pond" ]

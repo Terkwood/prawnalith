@@ -22,7 +22,7 @@ pub fn tanks(
     _user: AuthorizedUser,
     conn: RedisDbConn,
     config: State<Config>,
-) -> Result<CorsResponder, redis::RedisError> {
+) -> Result<CorsResponder, rocket_contrib::databases::redis::RedisError> {
     Ok(CorsResponder {
         inner: Json(tanks::fetch_all(conn, &config.redis_namespace)?),
         header: config
@@ -165,11 +165,16 @@ pub fn push_redis(data: Json<PushData>, conn: RedisDbConn, config: State<Config>
     }
 }
 
+#[get("/ping")]
+pub fn ping() -> Status {
+    Status::NoContent
+}
+
 pub fn startup(config: Config) {
     rocket::ignite()
         .manage(config)
         .attach(RedisDbConn::fairing())
-        .mount("/", routes![tanks, tanks_options, push_redis])
+        .mount("/", routes![tanks, tanks_options, push_redis, ping])
         .launch();
 }
 
