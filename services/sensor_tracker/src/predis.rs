@@ -13,7 +13,7 @@ use uuid::Uuid;
 /// Will create a new sensor record for this device if one does not already exist.
 pub fn update<'a, 'b>(
     redis_ctx: &RedisContext,
-    sensor_message: &model::SensorMessage,
+    sensor_message: &model::SensorReadings,
     ext_device_id: &str,
 ) -> Result<Vec<REvent>, redis::RedisError> {
     let mut delta_events: Vec<REvent> = vec![];
@@ -70,7 +70,7 @@ pub fn update<'a, 'b>(
 fn update_devices_set(
     redis_ctx: &RedisContext,
     rn: &str,
-    sensor_message: &model::SensorMessage, // TODO wat ?
+    sensor_message: &model::SensorReadings, // TODO wat ?
     device_id: Uuid,
 ) -> Option<REvent> {
     let set_device_key = format!("{}/devices", rn);
@@ -90,7 +90,7 @@ fn update_devices_set(
 fn update_area_hash(
     redis_ctx: &RedisContext,
     container_num: &u64,
-    sensor_message: &model::SensorMessage,
+    sensor_message: &model::SensorReadings,
 ) -> Option<REvent> {
     // We found the area associated with this
     // sensor ID, so we should update that area's
@@ -180,7 +180,7 @@ fn ensure_device_hash_exists(
 fn update_device_hash(
     redis_ctx: &RedisContext,
     device_hash_key: &str,
-    sensor_message: &model::SensorMessage,
+    sensor_message: &model::SensorReadings,
     maybe_sensor_upd_count: &Option<u64>,
 ) -> Option<REvent> {
     let upd_c = &format!("sensors_update_count");

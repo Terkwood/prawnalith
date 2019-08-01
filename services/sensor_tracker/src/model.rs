@@ -4,7 +4,7 @@
 /// e.g. "28654597090000e4"
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct SensorMessage {
+pub struct SensorReadings {
     pub device_id: String,
     pub temp_f: Option<f64>,
     pub temp_c: Option<f64>,
@@ -16,7 +16,7 @@ pub struct SensorMessage {
     pub heat_index_f: Option<f64>,
 }
 
-impl SensorMessage {
+impl SensorReadings {
     pub fn to_redis(&self) -> Vec<(&str, String)> {
         let mut data = vec![];
         if let Some(s) = &self.status {
