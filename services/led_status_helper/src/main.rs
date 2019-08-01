@@ -174,7 +174,6 @@ fn generate_status(
                         .map(move |h| format!(" {}%H{}", h, stale()))
                         .unwrap_or("".to_string());
 
-                    // hope that both temps are present 🙈
                     let temp = match (sensor_readings.temp_c, sensor_readings.temp_f) {
                         (None, None) => None,
                         _ => Some(Temp {
