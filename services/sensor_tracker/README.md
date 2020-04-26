@@ -12,21 +12,20 @@ Additionally, it creates an entry in the Redis `<namespace>/sensors/<temp_or_ph>
 
 This is useful for sensors generating temperature and/or pH data.
 
-Such data comes into an MQTT topic looking like this:
+Such data might come into an MQTT topic looking like this:
 
 ```json
 { "device_id": <hex>, "temp_f": 81.71, "temp_c": 23.45, "ph": 7.77, "ph_mv": 453.05 }
 ```
 
-If the sensor isn't, it will create the following type of stub record
-for the temp sensor based on a UUID V5 ID conversion:
+If the device hasn't ever been tracked, it will create the following type of stub record with an internal device ID.  The internal device ID is a (namespaced) UUID V5:
 
 ```text
 HMSET <namespace>/sensors/<temp_or_ph>/<uuid_v5_id> create_time <epoch>
 ```
 
 The operator is encouraged to later amend the hash to include
-a helpful reference to the tank which the sensor serves, so
+a helpful reference to the area which the sensing device serves, so
 that the LED status utility can properly format messages.
 
 ```text
@@ -41,9 +40,9 @@ See `build.sh` and `run.sh` for entry points.
 
 #### temp sensor
 
-`> hgetall namespace/sensors/temp/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa`
+`> hgetall namespace/devices/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa`
 
-```
+```text
  1) "create_time"
  2) "1540598539"
  3) "ext_device_id"
@@ -60,11 +59,11 @@ See `build.sh` and `run.sh` for entry points.
 14) "1"
 ```
 
-**pH sensor**
+#### pH sensor
 
-`> hgetall namespace/sensors/ph/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa`
+`> hgetall namespace/devices/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa`
 
-```
+```text
  1) "low_ph_ref"
  2) "4.00"
  3) "low_mv"
@@ -87,19 +86,19 @@ See `build.sh` and `run.sh` for entry points.
 20) "286cbc98090000bd"
 ```
 
-**tank counter**
+#### area counter
 
-`> get namespace/tanks`
+`> get namespace/areas`
 
-```
+```text
 "1"
 ```
 
-**tank hash**
+#### area hash
 
-`> hgetall namespace/tanks/1`
+`> hgetall namespace/areas/1`
 
-```
+```text
 hgetall namespace/tanks/1
  1) "temp_f"
  2) "81.16"

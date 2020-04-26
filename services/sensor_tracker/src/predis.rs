@@ -7,48 +7,50 @@ use serde_json;
 use std::time::SystemTime;
 use uuid::Uuid;
 
+const SENSORS_UPDATE_COUNT: &str = "sensors_update_count";
+const SENSORS_UPDATE_TIME: &str = "sensors_update_time";
+
+const AREA_HASH_FIELD: &str = "area";
+
+const AREAS: &str = "areas";
+const DEVICES: &str = "devices";
+
 /// Updates redis so that the individual measurement is applied to the correct tank.
 /// Also records the measurement to a record associated with the sensor itself.
 /// Keeps track of how many updates have been applied to each tank and sensor record.
 /// Will create a new sensor record for this device if one does not already exist.
 pub fn update<'a, 'b>(
     redis_ctx: &RedisContext,
-    measure: &model::Measurement,
+    sensor_message: &model::SensorReadings,
     ext_device_id: &str,
 ) -> Result<Vec<REvent>, redis::RedisError> {
     let mut delta_events: Vec<REvent> = vec![];
 
-    println!("Received redis {} update: {:?}", measure.name(), measure);
+    println!("Received redis update: {:?}", sensor_message);
 
-    let ext_device_namespace = &redis_ctx.get_external_device_namespace(measure.name())?;
+    let ext_device_namespace = &redis_ctx.get_external_device_namespace()?;
     let device_id = internal_device_id(ext_device_id, ext_device_namespace).unwrap();
 
     println!("\tDevice ID (internal): {}", device_id);
     let rn = &redis_ctx.namespace;
 
-    let sensor_set_event = update_sensor_set(redis_ctx, rn, measure, device_id);
+    let sensor_set_event = update_devices_set(redis_ctx, rn, sensor_message, device_id);
     if let Some(e) = sensor_set_event {
         delta_events.push(e)
     }
 
-    // lookup associated tank
-    let sensor_hash_key = &format!("{}/sensors/{}/{}", rn, measure.name(), device_id).to_string();
+    // lookup associated area
+    let sensor_hash_key = &format!("{}/{}/{}", rn, DEVICES, device_id).to_string();
 
-    let tank_and_area_and_update_count: Result<Vec<Option<u64>>, _> = redis_ctx.conn.hget(
-        sensor_hash_key,
-        vec!["tank", "area", &format!("{}_update_count", measure.name())],
-    );
+    let area_and_sensors_update_count: Result<Vec<Option<u64>>, _> = redis_ctx
+        .conn
+        .hget(sensor_hash_key, vec![AREA_HASH_FIELD, SENSORS_UPDATE_COUNT]);
 
-    if let Ok(v) = tank_and_area_and_update_count {
+    if let Ok(v) = area_and_sensors_update_count {
         // Tank associated with this sensor?
-        let revent = match (v.get(0).unwrap_or(&None), v.get(1).unwrap_or(&None)) {
-            (Some(tank_num), _) => {
-                update_container_hash(redis_ctx, Container::Tanks, tank_num, &measure)
-            }
-            (_, Some(area_num)) => {
-                update_container_hash(redis_ctx, Container::Areas, area_num, &measure)
-            }
-            (None, None) => ensure_sensor_hash_exists(redis_ctx, sensor_hash_key, ext_device_id),
+        let revent = match v.get(0).unwrap_or(&None) {
+            Some(area_num) => update_area_hash(redis_ctx, area_num, &sensor_message),
+            None => ensure_device_hash_exists(redis_ctx, sensor_hash_key, ext_device_id),
         };
 
         if let Some(ev) = revent {
@@ -58,10 +60,10 @@ pub fn update<'a, 'b>(
         // record a hit on the updates that the sensor has seen
         // and also record the most recent measurement on the record
         // for this individual sensor
-        let sensor_updated = update_sensor_hash(
+        let sensor_updated = update_device_hash(
             redis_ctx,
             sensor_hash_key,
-            measure,
+            sensor_message,
             v.get(2).unwrap_or(&None),
         );
 
@@ -73,90 +75,67 @@ pub fn update<'a, 'b>(
     Ok(delta_events)
 }
 
-fn update_sensor_set(
+fn update_devices_set(
     redis_ctx: &RedisContext,
     rn: &str,
-    measure: &model::Measurement,
+    sensor_message: &model::SensorReadings, // TODO wat ?
     device_id: Uuid,
 ) -> Option<REvent> {
-    let set_sensor_type_key = format!("{}/sensors/{}", rn, measure.name());
+    let set_device_key = format!("{}/{}", rn, DEVICES);
     // add to the member set if it doesn't already exist
-    let sensors_added: Result<u64, _> = redis_ctx
+    let devices_added: Result<u64, _> = redis_ctx
         .conn
-        .sadd(&set_sensor_type_key, &format!("{}", device_id));
+        .sadd(&set_device_key, &format!("{}", device_id));
 
-    match sensors_added {
+    match devices_added {
         Ok(n) if n > 0 => Some(REvent::SetUpdated {
-            key: set_sensor_type_key,
+            key: set_device_key,
         }),
         _ => None,
     }
 }
 
-enum Container {
-    Tanks,
-    Areas,
-}
-
-impl Container {
-    pub fn to_string(self) -> String {
-        match self {
-            Container::Tanks => "tanks".to_string(),
-            Container::Areas => "areas".to_string(),
-        }
-    }
-}
-
-fn update_container_hash(
+fn update_area_hash(
     redis_ctx: &RedisContext,
-    container: Container,
-    container_num: &u64,
-    measure: &model::Measurement,
+    area_num: &u64,
+    sensor_readings: &model::SensorReadings,
 ) -> Option<REvent> {
     // We found the area associated with this
     // sensor ID, so we should update that area's
     // current reading.
-    let container_key = format!(
-        "{}/{}/{}",
-        redis_ctx.namespace,
-        container.to_string(),
-        container_num
-    );
+    let area_key = format!("{}/{}/{}", redis_ctx.namespace, AREAS, area_num);
 
-    let container_measure_count: Result<Option<u32>, _> = redis_ctx
-        .conn
-        .hget(&container_key, &format!("{}_update_count", measure.name()));
+    let area_measure_count: Result<Option<u32>, _> =
+        redis_ctx.conn.hget(&area_key, SENSORS_UPDATE_COUNT);
 
-    let uc_name = format!("{}_update_count", measure.name());
-    let ut_name = format!("{}_update_time", measure.name());
     let update: (Result<String, _>, Vec<&str>) = {
-        let mut data: Vec<(&str, String)> = measure.to_redis();
+        let mut data: Vec<(&str, String)> = sensor_readings.to_redis();
 
         data.push((
-            &uc_name,
-            container_measure_count
+            SENSORS_UPDATE_COUNT,
+            area_measure_count
                 .unwrap_or(None)
                 .map(|u| u + 1)
                 .unwrap_or(1)
                 .to_string(),
         ));
 
-        data.push((&ut_name, epoch_secs().to_string()));
+        data.push((SENSORS_UPDATE_TIME, epoch_secs().to_string()));
         (
-            redis_ctx.conn.hset_multiple(&container_key, &data[..]),
+            redis_ctx.conn.hset_multiple(&area_key, &data[..]),
             data.iter().map(|(a, _)| *a).collect(),
         )
     };
 
     match update {
         (Err(e), _) => {
-            println!("update fails for {}: {:?}", container_key, e);
+            println!("update fails for {}: {:?}", area_key, e);
             None
         }
         (Ok(_), fields) if fields.len() > 0 => {
             let fs = fields.iter().map(|s| s.to_string()).collect();
             Some(REvent::HashUpdated {
-                key: container_key.to_string(),
+                key: area_key.to_string(),
                 fields: fs,
             })
         }
@@ -164,9 +143,12 @@ fn update_container_hash(
     }
 }
 
-fn ensure_sensor_hash_exists(
+const CREATE_TIME_FIELD: &str = "create_time";
+const EXT_DEVICE_ID_FIELD: &str = "ext_device_id";
+
+fn ensure_device_hash_exists(
     redis_ctx: &RedisContext,
-    sensor_hash_key: &str,
+    device_hash_key: &str,
     ext_device_id_str: &str,
 ) -> Option<REvent> {
     // We know that there's no associated "tank"
@@ -178,23 +160,24 @@ fn ensure_sensor_hash_exists(
 
     redis_ctx
         .conn
-        .exists(sensor_hash_key)
+        .exists(device_hash_key)
         .iter()
         .for_each(|e: &bool| {
             if !e {
-                let cf = "create_time".to_string();
-                let ed = "ext_device_id".to_string();
                 let field_vals = &vec![
-                    (&cf, format!("{}", epoch_secs())),
-                    (&ed, ext_device_id_str.to_string()),
+                    (CREATE_TIME_FIELD, format!("{}", epoch_secs())),
+                    (EXT_DEVICE_ID_FIELD, ext_device_id_str.to_string()),
                 ][..];
-                // new sensor, make note of when it is created
+                // new device, make note of when it is created
                 let _: Result<Vec<bool>, _> =
-                    redis_ctx.conn.hset_multiple(sensor_hash_key, field_vals);
+                    redis_ctx.conn.hset_multiple(device_hash_key, field_vals);
 
-                let fields = vec![cf, ed];
+                let fields = vec![
+                    CREATE_TIME_FIELD.to_string(),
+                    EXT_DEVICE_ID_FIELD.to_string(),
+                ];
                 result = Some(REvent::HashUpdated {
-                    key: sensor_hash_key.to_string(),
+                    key: device_hash_key.to_string(),
                     fields,
                 })
             }
@@ -203,34 +186,33 @@ fn ensure_sensor_hash_exists(
     result
 }
 
-fn update_sensor_hash(
+fn update_device_hash(
     redis_ctx: &RedisContext,
-    sensor_hash_key: &str,
-    measure: &model::Measurement,
+    device_hash_key: &str,
+    sensor_message: &model::SensorReadings,
     maybe_sensor_upd_count: &Option<u64>,
 ) -> Option<REvent> {
-    let upd_c = &format!("{}_update_count", measure.name());
     let mut data: Vec<(&str, String)> = vec![(
-        upd_c,
+        SENSORS_UPDATE_COUNT,
         maybe_sensor_upd_count
             .map(|u| u + 1)
             .unwrap_or(1)
             .to_string(),
     )];
-    data.extend(measure.to_redis());
-    let ut = &format!("{}_update_time", measure.name());
-    data.push((ut, epoch_secs().to_string()));
+    data.extend(sensor_message.to_redis());
 
-    let redis_result: Result<(), _> = redis_ctx.conn.hset_multiple(sensor_hash_key, &data[..]);
+    data.push((SENSORS_UPDATE_TIME, epoch_secs().to_string()));
+
+    let redis_result: Result<(), _> = redis_ctx.conn.hset_multiple(device_hash_key, &data[..]);
     if let Err(e) = redis_result {
-        println!("couldn't update sensor record {}: {:?}", sensor_hash_key, e);
+        println!("couldn't update device record {}: {:?}", device_hash_key, e);
         None
     } else {
         let mut fields: Vec<String> = vec![];
         data.iter().for_each(|(f, _)| fields.push(f.to_string()));
 
         Some(REvent::HashUpdated {
-            key: sensor_hash_key.to_string(),
+            key: device_hash_key.to_string(),
             fields,
         })
     }

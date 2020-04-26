@@ -1,6 +1,6 @@
 [package]
 name = "sensor_tracker"
-version = "0.3.1"
+version = "0.4.1"
 authors = ["Terkwood <metaterkhorn@gmail.com>"]
 edition = "2018"
 
@@ -13,7 +13,8 @@ envy = "*"
 rand_core="0.2.2"
 rumqtt = "*"
 redis = "^0.9"
-redis_context = { git = "https://github.com/Terkwood/prawnalith/", branch = "unstable" }
+# TODO restore branch
+redis_context = { git = "https://github.com/Terkwood/prawnalith/", branch = "fix/data" }
 redis_delta = { git = "https://github.com/Terkwood/prawnalith/", branch = "unstable" }
 serde = "*"
 serde_derive = "*"

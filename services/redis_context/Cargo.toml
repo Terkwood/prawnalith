@@ -1,6 +1,6 @@
 [package]
 name = "redis_context"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Terkwood <metaterkhorn@gmail.com>"]
 edition = "2018"
 
@@ -8,4 +8,4 @@ edition = "2018"
 # 🤖 This artificially low version of rand core will compile on ARMv7 
 rand_core="0.2.2"
 redis = "0.9"
-uuid = { version = "0.7", features = ["v4", "v5"] } # v4 is random, v5 is name-based
+uuid = { version = "0.7", features = ["v4", "v5"] }

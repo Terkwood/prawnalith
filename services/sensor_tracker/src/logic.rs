@@ -2,7 +2,7 @@ use crossbeam_channel::{select, Receiver};
 use redis_context::RedisContext;
 use rumqtt::Notification;
 
-use crate::model::SensorMessage;
+use crate::model::SensorReadings;
 use crate::predis;
 
 pub fn receive_updates(
@@ -18,17 +18,14 @@ pub fn receive_updates(
                     if let Some(sensor_message) = deser_message(&payload) {
                         let ext_device_id: &str = &sensor_message.device_id;
 
-                        sensor_message.measurements().iter().for_each(|measure| {
-                            if let Ok(delta_events) = predis::update(redis_ctx, &measure, ext_device_id)
-                            {
-                                // emit all changed keys & hash field names to redis
-                                // on the appropriate redis pub/sub topic.
-                                // these will be processed later by the gcloud_push utility
-                                predis::publish_updates(redis_ctx, delta_event_topic, delta_events)
-                            }
-                        });
-                    } else {
-                        println!("couldnt deserialize message payload: {:?}", payload)
+                        if let Ok(delta_events) =
+                            predis::update(redis_ctx, &sensor_message, ext_device_id)
+                        {
+                            // emit all changed keys & hash field names to redis
+                            // on the appropriate redis pub/sub topic.
+                            // these will be processed later by the gcloud_push utility
+                            predis::publish_updates(redis_ctx, delta_event_topic, delta_events)
+                        };
                     }
                 },
                 Ok(n) => println!("IGNORE  {:?}", n),
@@ -38,7 +35,7 @@ pub fn receive_updates(
     }
 }
 
-fn deser_message(payload: &[u8]) -> Option<SensorMessage> {
+fn deser_message(payload: &[u8]) -> Option<SensorReadings> {
     let r = std::str::from_utf8(&payload);
     r.ok()
         .and_then(|s| serde_json::from_str(s).map(|r| Some(r)).unwrap_or(None))
