@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 base64 = "0.10"
-crossbeam-channel = "0.3"
+crossbeam-channel = "0.4"
 dotenv = "0.13"
 envy = "0.3"
 hashbrown = "0.1"
